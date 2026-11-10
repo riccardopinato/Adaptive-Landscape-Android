@@ -49,5 +49,10 @@
   "gpuLoading": "Mer : chargement du rendu…",
   "fullscreenPreview": "Grand aperçu",
   "closePreview": "Fermer l'aperçu",
-  "previewPanoramic": "Aperçu panoramique · réglez les icônes dans l'éditeur"
+  "previewPanoramic": "Aperçu panoramique · réglez les icônes dans l'éditeur",
+  "renderQuality": "Qualité du rendu de la mer",
+  "qualityBalanced": "Équilibrée",
+  "qualityHigh": "Haute",
+  "qualityUltra": "Ultra · 4K",
+  "qualityExplain": "Ultra affine les détails du GPU. Le vrai 4K dépend de l'écran, du navigateur et des performances."
 }

@@ -51,3 +51,10 @@ Beach v0.2 sky/sun/cloud scene rejected as inconsistent with the intended origin
 - Make GPU vs fallback renderer state visible, rather than falsely claiming a pixel-shaded sea when unavailable. Improve fallback mesh density.
 - Improve independently authored multi-scale water surface/foam/sand color shader and add panoramic full-screen preview to inspect on high-DPI browser.
 - Add widget and phase-grid regression tests. **Acceptance remains pending until user has actually inspected the deployed Web**. Mobile APK physical QA unchanged/deferred.
+
+## Beach v0.4.0 — 4K realism target, not yet validated
+
+- [CODED] Offline original 24×42 packed RGB565 ocean tonal reference for large-scale natural optical variations; no external asset or network, source is new generated artwork.
+- [CODED] Revised high-detail Flutter GPU shader for water/caustics/foam with pixel-scale detail and stable no-land invariant. [CODED] Web quality tiers Balanced/High/Ultra persisted in schema2; Kotlin ignores optional quality tier.
+- [TEST GATE] Analyze, test, Web and APK source builds, no Play signing changes.
+- [USER VISUAL GATE OPEN] Actual 4K rendering/FPS, subjective near-photographic quality and performance on user's browser and Android device not certified. See BEACH_4K_ART_DIRECTION.md.

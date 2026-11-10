@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../core/beach_mask.dart';
 import '../core/icon_field.dart';
+import '../core/ocean_tone_atlas.dart';
 
 enum BeachRenderStatus { loading, gpu, fallback }
 
@@ -15,6 +16,7 @@ class BeachGpuSurface {
   static ui.Image? _mask;
   static ui.FragmentShader? _shader;
   static ui.FragmentProgram? _program;
+  static ui.Image? _toneAtlas;
   static final ValueNotifier<BeachRenderStatus> status =
       ValueNotifier(BeachRenderStatus.loading);
   static bool _programUnavailable = false;
@@ -39,7 +41,7 @@ class BeachGpuSurface {
 
   static bool paint(Canvas canvas, Size size, IconField field, double phase,
       {required ui.FragmentProgram? program, String palette = 'original',
-       bool night = false}) {
+       bool night = false, String renderQuality = 'ultra'}) {
     if (program == null || size.isEmpty) {
       if (_programUnavailable) _report(BeachRenderStatus.fallback);
       return false;
@@ -73,7 +75,10 @@ class BeachGpuSurface {
       shader.setFloat(3, palette == 'sunset' ? 1 : palette == 'mint' ? 2 : 0);
       shader.setFloat(4, night ? 1 : 0);
       shader.setFloat(5, BeachMask.isEmpty(field) ? 0 : 1);
+      shader.setFloat(6, renderQuality == 'balanced' ? 0 : renderQuality == 'high' ? 1 : 2);
       shader.setImageSampler(0, _mask!, filterQuality: ui.FilterQuality.high);
+      _toneAtlas ??= OceanToneAtlas.decode();
+      shader.setImageSampler(1, _toneAtlas!, filterQuality: ui.FilterQuality.high);
       canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
       _report(BeachRenderStatus.gpu);
       return true;

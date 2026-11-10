@@ -49,5 +49,10 @@
   "gpuLoading": "Mar: carregando renderização…",
   "fullscreenPreview": "Prévia ampliada",
   "closePreview": "Fechar prévia",
-  "previewPanoramic": "Prévia panorâmica · calibre ícones no editor"
+  "previewPanoramic": "Prévia panorâmica · calibre ícones no editor",
+  "renderQuality": "Qualidade de renderização do mar",
+  "qualityBalanced": "Equilibrada",
+  "qualityHigh": "Alta",
+  "qualityUltra": "Ultra · 4K",
+  "qualityExplain": "Ultra aumenta os detalhes gerados na GPU. O 4K real depende do ecrã, do navegador e do desempenho."
 }

@@ -49,5 +49,10 @@
   "gpuLoading": "Meer: Renderer lädt…",
   "fullscreenPreview": "Große Vorschau",
   "closePreview": "Vorschau schließen",
-  "previewPanoramic": "Panorama-Vorschau · Home-Icons im Editor kalibrieren"
+  "previewPanoramic": "Panorama-Vorschau · Home-Icons im Editor kalibrieren",
+  "renderQuality": "Meeres-Renderqualität",
+  "qualityBalanced": "Ausgewogen",
+  "qualityHigh": "Hoch",
+  "qualityUltra": "Ultra · 4K",
+  "qualityExplain": "Ultra erhöht GPU-Details. Tatsächliches 4K hängt von Bildschirm, Browser und Leistung ab."
 }

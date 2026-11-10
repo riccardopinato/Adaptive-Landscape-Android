@@ -261,6 +261,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             Positioned.fill(child: CustomPaint(painter: ScenePainter(
               scene: _config.scene, field: IconField.fromConfig(_config),
               beachProgram: _beachProgram, palette: _config.palette,
+              renderQuality: _config.renderQuality,
               night: _config.night, phase: _config.reduceMotion ? 0 :
                 ((_animation.value * 240).floor() / 240) * math.pi * 2,
             ))),
@@ -447,6 +448,21 @@ class _WallpaperEditorState extends State<WallpaperEditor>
           key: const Key('al-ocean-layout-status'),
           style: style.bodySmall,
         ),
+      if (_config.scene == 'beach') ...[
+        section(l.renderQuality),
+        Wrap(spacing: 8, runSpacing: 6, children: [
+          ChoiceChip(label: Text(l.qualityBalanced),
+            selected: _config.renderQuality == 'balanced',
+            onSelected: (_) => _apply(_config.copyWith(renderQuality: 'balanced'))),
+          ChoiceChip(label: Text(l.qualityHigh),
+            selected: _config.renderQuality == 'high',
+            onSelected: (_) => _apply(_config.copyWith(renderQuality: 'high'))),
+          ChoiceChip(label: Text(l.qualityUltra),
+            selected: _config.renderQuality == 'ultra',
+            onSelected: (_) => _apply(_config.copyWith(renderQuality: 'ultra'))),
+        ]),
+        Text(l.qualityExplain, style: style.bodySmall),
+      ],
       section(l.appearance),
       Wrap(spacing: 8, children: [
         ChoiceChip(label: Text(l.original), selected: _config.palette == 'original',
@@ -469,7 +485,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       const SizedBox(height: 10),
       Text(WallpaperChannel.supported ? l.wallpaperHint : l.unsupported, style: style.bodySmall),
       const SizedBox(height: 6),
-      const Text('Beach Web v0.3.3', style: TextStyle(fontSize: 11)),
+      const Text('Beach Web v0.4.0', style: TextStyle(fontSize: 11)),
       if (_error != null) SelectableText('${l.failure}: $_error',
         style: TextStyle(color: Theme.of(context).colorScheme.error)),
     ]);
@@ -502,6 +518,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               scene: _config.scene, field: IconField.fromConfig(_config),
               beachProgram: _beachProgram,
               night: _config.night, palette: _config.palette,
+              renderQuality: _config.renderQuality,
               phase: _config.reduceMotion ? 0 :
                   ((_animation.value * 240).floor() / 240) * math.pi * 2,
             ))),

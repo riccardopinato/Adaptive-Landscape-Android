@@ -57,6 +57,7 @@ class LandscapeConfig {
     this.night = false,
     this.motion = 1.0,
     this.reduceMotion = false,
+    this.renderQuality = 'ultra',
   });
 
   static const int schemaVersion = 2;
@@ -71,6 +72,8 @@ class LandscapeConfig {
   final bool night;
   final double motion;
   final bool reduceMotion;
+  /// Web GPU shading tier; Android native wallpaper ignores this optional key.
+  final String renderQuality;
 
   int get cellCount => columns * rows;
   (double, double) cellCenter(int index) {
@@ -84,7 +87,7 @@ class LandscapeConfig {
         'occupied': (occupied.where((i) => i >= 0 && i < cellCount).toList()..sort()),
         'zones': zones.map((x) => x.toJson()).toList(),
         'palette': palette, 'night': night, 'motion': motion,
-        'reduceMotion': reduceMotion,
+        'reduceMotion': reduceMotion, 'renderQuality': renderQuality,
       };
 
   String encode() => jsonEncode(toJson());
@@ -131,6 +134,8 @@ class LandscapeConfig {
       night: m['night'] == true,
       motion: d('motion', 1.0, 0.0, 2.0),
       reduceMotion: m['reduceMotion'] == true,
+      renderQuality: m['renderQuality'] == 'balanced' ? 'balanced' :
+          m['renderQuality'] == 'high' ? 'high' : 'ultra',
     );
   }
 
@@ -138,6 +143,7 @@ class LandscapeConfig {
     String? scene, int? columns, int? rows, double? top, double? span,
     Set<int>? occupied, List<LayoutZone>? zones, String? palette,
     bool? night, double? motion, bool? reduceMotion,
+    String? renderQuality,
   }) => LandscapeConfig(
         scene: scene ?? this.scene,
         columns: columns ?? this.columns, rows: rows ?? this.rows,
@@ -145,6 +151,7 @@ class LandscapeConfig {
         occupied: occupied ?? this.occupied, zones: zones ?? this.zones,
         palette: palette ?? this.palette, night: night ?? this.night,
         motion: motion ?? this.motion, reduceMotion: reduceMotion ?? this.reduceMotion,
+        renderQuality: renderQuality ?? this.renderQuality,
       );
 }
 
