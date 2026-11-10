@@ -110,3 +110,19 @@ saved profile data. Web image is not transmitted or exported. The Android
 wallpaper retains its independently selected private photo from v0.4.2.
 
 This is for **subjective Web evaluation**, not physical Android certification.
+
+
+## Beach v0.4.4 — user-tunable optical realism (experimental)
+
+Native Android GLSL and Flutter Web now accept a compatible schema2
+`photoRefraction` and `foamIntensity` (both 0–1). These are visual
+control parameters, not evidence that any single photograph looks realistic.
+Three tiny cyclic flow components produce layered periodic refraction rather
+than continuous sliding/tiling. In real-photo mode, synthetic foam is
+attenuated to avoid replacing the genuine foam already present in photographs.
+Palette/quality/profile compatibility remains.
+
+Only a truly photographic source can yield authentic texture; no invented
+"4K photo" should be represented as a photograph. No photo assets are
+redistributed without source license + provenance. See
+[CC0 photo sourcing notes](docs/PHOTO_SOURCES_CC0.md).
