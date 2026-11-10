@@ -83,5 +83,8 @@
   "calibrateTop": "Margem superior",
   "calibrateHeight": "Altura da grelha",
   "calibrateSide": "Margens laterais",
-  "nativeFramePacingNote": "Taxas alvo no ecrã inicial: Equilibrada ~12fps, Alta ~16fps, Ultra até 20fps; poupança de energia ~8fps. FPS, aquecimento e bateria reais exigem medição no telefone."
+  "nativeFramePacingNote": "Taxas alvo no ecrã inicial: Equilibrada ~12fps, Alta ~16fps, Ultra até 20fps; poupança de energia ~8fps. FPS, aquecimento e bateria reais exigem medição no telefone.",
+  "qaSnapshotCopy": "Copiar resumo do teste físico",
+  "qaSnapshotHint": "Copia apenas definições e estado do renderer, sem capturas, identificadores pessoais ou nomes de apps instaladas.",
+  "qaSnapshotCopied": "Resumo do teste copiado"
 }
