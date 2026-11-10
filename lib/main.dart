@@ -120,7 +120,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       final file = await FilePicker.pickFile(type: FileType.image);
       if (file == null) return;
       final claimedSize = file.lengthSync() ?? await file.length();
-      if (claimedSize != null && claimedSize > 12 * 1024 * 1024) {
+      if (claimedSize > 12 * 1024 * 1024) {
         throw const FormatException('Ocean photograph exceeds 12 MB');
       }
       final bytes = await file.readAsBytes();
@@ -153,7 +153,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         buffer.dispose();
       }
       if (!mounted) {
-        decoded?.dispose();
+        decoded.dispose();
         return;
       }
       final previous = _webPhotograph;
