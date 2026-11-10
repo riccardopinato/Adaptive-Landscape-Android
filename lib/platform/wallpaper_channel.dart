@@ -1,11 +1,13 @@
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class WallpaperConfig {
-  const WallpaperConfig({this.scene = 'meadow', this.occupied = '', this.configJson});
+  const WallpaperConfig({this.scene = 'meadow', this.occupied = '', this.configJson, this.nativeBackend});
   final String scene;
   final String occupied;
   final String? configJson;
+  final String? nativeBackend;
 }
 
 class WallpaperChannel {
@@ -19,6 +21,7 @@ class WallpaperChannel {
       scene: data?['scene'] == 'beach' ? 'beach' : 'meadow',
       occupied: (data?['occupied'] ?? '').toString(),
       configJson: data?['config'] is String ? data!['config'] as String : null,
+      nativeBackend: data?['backend'] is String ? data!['backend'] as String : null,
     );
   }
 
@@ -29,6 +32,12 @@ class WallpaperChannel {
       'occupied': config.occupied,
       if (config.configJson != null) 'config': config.configJson,
     });
+  }
+
+  /// A one-time user-selected local screenshot; never uploaded or persisted.
+  Future<Uint8List?> pickHomeScreenshot() async {
+    if (!supported) return null;
+    return _channel.invokeMethod<Uint8List>('pickHomeScreenshot');
   }
 
   Future<void> openLiveWallpaperPicker() async {

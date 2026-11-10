@@ -54,5 +54,11 @@
   "qualityBalanced": "Équilibrée",
   "qualityHigh": "Haute",
   "qualityUltra": "Ultra · 4K",
-  "qualityExplain": "Ultra affine les détails du GPU. Le vrai 4K dépend de l'écran, du navigateur et des performances."
+  "qualityExplain": "Ultra affine les détails du GPU. Le vrai 4K dépend de l'écran, du navigateur et des performances.",
+  "loadHomeScreenshot": "Calibrer depuis une capture d'accueil",
+  "hideHomeScreenshot": "Masquer la capture",
+  "screenshotCalibrationHint": "Prenez une capture d'écran d'accueil, choisissez-la ici puis marquez les icônes et dossiers. Pour les widgets, utilisez Zones. La capture est temporaire et n'est ni stockée ni envoyée. Les positions dépendent du lanceur.",
+  "nativeGpuActive": "Android : rendu OpenGL à la résolution de l'écran (à vérifier)",
+  "nativeGpuFallback": "Android : OpenGL indisponible ; rendu Canvas de secours de faible qualité.",
+  "nativeGpuUnknown": "Android : statut du rendu indisponible. Installez le fond puis rouvrez l'application."
 }

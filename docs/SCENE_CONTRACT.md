@@ -20,3 +20,7 @@ This is a **normative data contract**, not a claim of pixel-equivalent physical 
 ### Beach 0.3.2 shoreline semantics
 
 `shoreBase = clamp(sum(influence kernels),0,1) - 0.32 + influence * (0.010 sin(38y+0.8)+0.006 sin(83y+31x))`. Sea-only default is a strict invariant when all markers are empty; water tides cannot generate sand on an empty beach. The three/four optional dock icons are serialized as `zones[]` with `kind: 'dock'`, at y≈0.941. No silent dock assumption. Web GPU uses an influence-only mask and shades water natively at display framebuffer resolution; Kotlin uses raster and is not 4K certified.
+
+### Android v0.4.1 native EGL renderer and screenshot calibration
+
+The Android `renderQuality` optional setting is read from schema2 and passed to the first-party EGL14/GLES20 shader. This changes detail cost only; no native photographic 4K asset. Canvas remains last-resort emergency fallback. Color/geometry formulas differ from Flutter/Web, so visual parity MUST be tested. The Android editor accepts a user-selected screenshot **in memory** to help align its existing normalized icon/widget grid to the Home; screenshot content is not part of schema2 and no package names/launcher structures are collected. WallpaperService still cannot discover icons automatically.
