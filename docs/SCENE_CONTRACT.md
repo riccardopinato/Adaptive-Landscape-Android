@@ -39,3 +39,13 @@ Android renderer status `gpu_photo_native` is reported only after an EGL
 frame sampled a successfully uploaded photo; `gpu_native` means procedural
 water, and `cpu_360px_fallback` remains a degraded emergency path. No
 claim about Web/native pixel parity or automatic launcher detection.
+
+
+### v0.4.5 optional `gridInset`
+
+A symmetric normalized side margin (0..0.20) is added as an **optional**
+schema2 field. It maps each grid center to
+`x = gridInset + (col+0.5)*(1-2*gridInset)/columns`.
+The native Android geometry applies the same equation. Older profiles
+without the key behave exactly as before with `gridInset=0`.
+This is user-calibrated; no launcher APIs or location of real icons are read.
