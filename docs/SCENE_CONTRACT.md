@@ -24,3 +24,18 @@ This is a **normative data contract**, not a claim of pixel-equivalent physical 
 ### Android v0.4.1 native EGL renderer and screenshot calibration
 
 The Android `renderQuality` optional setting is read from schema2 and passed to the first-party EGL14/GLES20 shader. This changes detail cost only; no native photographic 4K asset. Canvas remains last-resort emergency fallback. Color/geometry formulas differ from Flutter/Web, so visual parity MUST be tested. The Android editor accepts a user-selected screenshot **in memory** to help align its existing normalized icon/widget grid to the Home; screenshot content is not part of schema2 and no package names/launcher structures are collected. WallpaperService still cannot discover icons automatically.
+
+
+### v0.4.2 separate local photo data
+
+Schema-2 JSON is unchanged. A user-selected ocean photograph is not an
+icon/layout attribute, not a JSON export field and not imported with profiles.
+Android stores one photo for the current installation in private no-backup
+storage, selected via ACTION_OPEN_DOCUMENT and used by every Beach profile.
+The privacy-protected screenshot for calibration remains transient and
+unrelated to the photo.
+
+Android renderer status `gpu_photo_native` is reported only after an EGL
+frame sampled a successfully uploaded photo; `gpu_native` means procedural
+water, and `cpu_360px_fallback` remains a degraded emergency path. No
+claim about Web/native pixel parity or automatic launcher detection.
