@@ -77,5 +77,10 @@
   "waterTuning": "Réglages de réalisme de l'eau",
   "refractionIntensity": "Réfraction de la photo",
   "foamIntensityLabel": "Écume du rivage",
-  "waterTuningHint": "Réglez avec modération : les détails photo doivent dominer. La vitesse des vagues est indépendante de la réfraction."
+  "waterTuningHint": "Réglez avec modération : les détails photo doivent dominer. La vitesse des vagues est indépendante de la réfraction.",
+  "calibrateZoomTitle": "Calibrage précis de l'accueil · zoom",
+  "calibrateZoomHint": "Zoomez à deux doigts (jusqu'à 5×), naviguez sur la capture et touchez les cellules. Déplacez les zones des widgets. Vérifiez les marges sur le lanceur réel.",
+  "calibrateTop": "Marge supérieure",
+  "calibrateHeight": "Hauteur de la grille",
+  "calibrateSide": "Marges latérales"
 }
