@@ -13,6 +13,9 @@ uniform float uHasLand;
 uniform float uQuality; // 0=balanced 1=high 2=ultra
 uniform sampler2D uOccupancy;
 uniform sampler2D uToneAtlas;
+uniform sampler2D uPhotograph;
+uniform float uUsePhoto;
+uniform float uPhotoAspect;
 out vec4 fragColor;
 
 float hash21(vec2 p) {
@@ -129,6 +132,25 @@ void main() {
     float facet = smoothstep(0.82, 0.97, micro);
     water += vec3(0.027, 0.048, 0.049) * (highlight * 0.78 + facet * 0.24);
     water += (micro - 0.5) * vec3(0.008, 0.012, 0.010);
+  }
+
+  // v0.4.3: user-owned real water is the primary source when selected.
+  // Center-crop to viewport aspect, never stretch a photograph.
+  // The displacement is small and strictly periodic; no synthetic stripes
+  // or large flat masks are painted across the real open water.
+  if (uUsePhoto > 0.5) {
+    float coverAspect = uSize.x / max(1.0, uSize.y);
+    float xScale = min(1.0, coverAspect / max(uPhotoAspect, 0.01));
+    float yScale = min(1.0, uPhotoAspect / max(coverAspect, 0.01));
+    vec2 microWarp = vec2(
+      0.0019 * sin(phase + uv.y * 17.0) + 0.0006 * sin(2.0 * phase - uv.x * 31.0),
+      0.0016 * cos(phase - uv.x * 18.0) + 0.0005 * cos(2.0 * phase + uv.y * 29.0));
+    vec2 sampleUV = clamp((uv + microWarp - 0.5) *
+      vec2(xScale, yScale) + 0.5, vec2(0.001), vec2(0.999));
+    water = texture(uPhotograph, sampleUV).rgb;
+    // Underwater shallows may lift brightness near marked icons only;
+    // keep the actual photo visible even beside the emerging coast.
+    water = mix(water, vec3(0.35, 0.76, 0.72), shallow * 0.05);
   }
 
   // Underwater sand, wet sand and soft dry cream where icons form land.
