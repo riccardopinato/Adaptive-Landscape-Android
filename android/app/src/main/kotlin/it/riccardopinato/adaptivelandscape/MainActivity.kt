@@ -26,8 +26,8 @@ class MainActivity : FlutterActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == OCEAN_PICKER) {
             val callback = oceanResult ?: return
-            oceanResult = null
             if (resultCode != Activity.RESULT_OK || data?.data == null) {
+                oceanResult = null
                 callback.success(false)
                 return
             }
@@ -37,10 +37,16 @@ class MainActivity : FlutterActivity() {
                     OceanPhotoStore.import(this, uri)
                     getSharedPreferences("adaptive_landscape", MODE_PRIVATE).edit()
                         .putLong(OceanPhotoStore.CHANGE_KEY, System.currentTimeMillis()).apply()
-                    runOnUiThread { callback.success(true) }
+                    runOnUiThread {
+                        oceanResult = null
+                        callback.success(true)
+                    }
                 } catch (error: Exception) {
-                    runOnUiThread { callback.error("PHOTO_IMPORT_FAILED",
-                        error.message ?: "Could not import image", null) }
+                    runOnUiThread {
+                        oceanResult = null
+                        callback.error("PHOTO_IMPORT_FAILED",
+                            error.message ?: "Could not import image", null)
+                    }
                 }
             }
             return
@@ -52,9 +58,11 @@ class MainActivity : FlutterActivity() {
             callback.success(null)
             return
         }
-        try {
+        val screenshotUri = data.data!!
+        thread(name = "screenshot-picker-read") {
+          try {
             val contents = ByteArrayOutputStream()
-            contentResolver.openInputStream(data.data!!).use { stream ->
+            contentResolver.openInputStream(screenshotUri).use { stream ->
                 requireNotNull(stream) { "Screenshot not accessible" }
                 val buffer = ByteArray(16 * 1024)
                 while (true) {
@@ -65,9 +73,13 @@ class MainActivity : FlutterActivity() {
                     contents.write(buffer, 0, n)
                 }
             }
-            callback.success(contents.toByteArray())
-        } catch (_: Exception) {
-            callback.error("IMAGE_READ_FAILED", "Unable to read the selected image.", null)
+            val bytes = contents.toByteArray()
+            runOnUiThread { callback.success(bytes) }
+          } catch (_: Exception) {
+            runOnUiThread {
+              callback.error("IMAGE_READ_FAILED", "Unable to read the selected image.", null)
+            }
+          }
         }
     }
 
@@ -128,6 +140,10 @@ class MainActivity : FlutterActivity() {
                         }
                     }
                     "clearOceanPhoto" -> {
+                        if (oceanResult != null) {
+                            result.error("IMAGE_BUSY", "Ocean photo import is in progress", null)
+                            return@setMethodCallHandler
+                        }
                         if (!OceanPhotoStore.remove(this)) {
                             result.error("DELETE_FAILED", "Could not remove ocean photo", null)
                         } else {
