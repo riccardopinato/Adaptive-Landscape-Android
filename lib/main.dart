@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/icon_field.dart';
+import 'core/animation_timing.dart';
 import 'core/landscape_config.dart';
 import 'core/profile_store.dart';
 import 'l10n/app_localizations.dart';
@@ -63,8 +64,8 @@ class _WallpaperEditorState extends State<WallpaperEditor>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && !_config.reduceMotion) {
-      _animation.repeat();
+    if (state == AppLifecycleState.resumed) {
+      _updateTicker();
     } else {
       _animation.stop();
     }
@@ -96,8 +97,12 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   }
 
   void _updateTicker() {
-    if (_config.reduceMotion || _config.motion == 0) {
+    final duration = motionLoopDuration(_config.motion);
+    if (_config.reduceMotion || duration == Duration.zero) {
       _animation.stop();
+    } else if (_animation.duration != duration) {
+      _animation.duration = duration;
+      _animation.repeat();
     } else if (!_animation.isAnimating) {
       _animation.repeat();
     }
@@ -385,7 +390,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               scene: _config.scene, field: IconField.fromConfig(_config),
               night: _config.night, palette: _config.palette,
               phase: _config.reduceMotion ? 0 :
-                  ((_animation.value * 240).floor() / 240) * math.pi * 2 * _config.motion,
+                  ((_animation.value * 240).floor() / 240) * math.pi * 2,
             ))),
             if (_mode == 'grid') ...List.generate(_config.cellCount, (i) {
               final (x, y) = _config.cellCenter(i);
