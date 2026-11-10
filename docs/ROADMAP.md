@@ -138,3 +138,15 @@ Detailed user test contract: [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V04
   background behavior and device-specific EGL reliability.
 - [DO NOT CLAIM] 4K photo at Ultra: texture resolution is at most 2560px,
   with 4K framebuffer shading possible on compatible surfaces.
+
+
+## Prephysical handoff — version 0.4.6 QA only
+
+- [CODED] Local privacy-limited QA snapshot in editor; 6 ARB locales.
+- [CODED] Opt-in Windows PowerShell and Linux/macOS ADB evidence scripts,
+  offline and no screenshot/logcat collection by default.
+- [CODED] Build source SHA in internal CI APK and Web preview.
+- [CODED] End-to-end physical QA worksheet, stable signing and install safety.
+- [PENDING CI] Full stacked source validation.
+- [PENDING HUMAN] Physical device test, visual acceptance and signing.
+- [MERGE BLOCKED] PR #13/#16/#17/#18/#19/#20 and prephysical chain.
