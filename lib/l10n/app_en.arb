@@ -83,5 +83,8 @@
   "calibrateTop": "Grid top offset",
   "calibrateHeight": "Grid vertical span",
   "calibrateSide": "Grid side margins",
-  "nativeFramePacingNote": "Native frame targets while visible: Balanced ~12fps, High ~16fps, Ultra up to 20fps; battery saver caps at ~8fps. Real FPS, heat and battery must be measured on a phone."
+  "nativeFramePacingNote": "Native frame targets while visible: Balanced ~12fps, High ~16fps, Ultra up to 20fps; battery saver caps at ~8fps. Real FPS, heat and battery must be measured on a phone.",
+  "qaSnapshotCopy": "Copy physical QA summary",
+  "qaSnapshotHint": "Copies only scene settings and renderer status; no screenshots, personal device identifiers or installed app names.",
+  "qaSnapshotCopied": "QA summary copied to clipboard"
 }
