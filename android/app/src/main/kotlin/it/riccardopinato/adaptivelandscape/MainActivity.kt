@@ -2,6 +2,7 @@ package it.riccardopinato.adaptivelandscape
 
 import android.app.WallpaperManager
 import android.app.Activity
+import kotlin.concurrent.thread
 import java.io.ByteArrayOutputStream
 import android.content.ComponentName
 import android.content.Intent
@@ -14,13 +15,36 @@ import org.json.JSONObject
 class MainActivity : FlutterActivity() {
     companion object {
         private const val SCREENSHOT_PICKER = 9127
+        private const val OCEAN_PICKER = 9128
         private const val MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024
     }
 
     private var screenshotResult: MethodChannel.Result? = null
+    private var oceanResult: MethodChannel.Result? = null
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == OCEAN_PICKER) {
+            val callback = oceanResult ?: return
+            oceanResult = null
+            if (resultCode != Activity.RESULT_OK || data?.data == null) {
+                callback.success(false)
+                return
+            }
+            val uri = data.data!!
+            thread(name = "ocean-photo-import") {
+                try {
+                    OceanPhotoStore.import(this, uri)
+                    getSharedPreferences("adaptive_landscape", MODE_PRIVATE).edit()
+                        .putLong(OceanPhotoStore.CHANGE_KEY, System.currentTimeMillis()).apply()
+                    runOnUiThread { callback.success(true) }
+                } catch (error: Exception) {
+                    runOnUiThread { callback.error("PHOTO_IMPORT_FAILED",
+                        error.message ?: "Could not import image", null) }
+                }
+            }
+            return
+        }
         if (requestCode != SCREENSHOT_PICKER) return
         val callback = screenshotResult ?: return
         screenshotResult = null
@@ -58,6 +82,7 @@ class MainActivity : FlutterActivity() {
                         "occupied" to prefs.getString("occupied", ""),
                         "config" to prefs.getString("config_v2", null),
                         "backend" to prefs.getString("render_backend_v1", "not_started"),
+                        "hasOceanPhoto" to OceanPhotoStore.exists(this),
                     ))
                     "save" -> {
                         val scene = call.argument<String>("scene")
@@ -82,6 +107,34 @@ class MainActivity : FlutterActivity() {
                         if (config != null) write.putString("config_v2", config)
                         if (write.commit()) result.success(null)
                         else result.error("SAVE_FAILED", "Could not save wallpaper settings.", null)
+                    }
+                    "pickOceanPhoto" -> {
+                        if (oceanResult != null) {
+                            result.error("IMAGE_BUSY", "Photo picker already open", null)
+                            return@setMethodCallHandler
+                        }
+                        oceanResult = result
+                        try {
+                            startActivityForResult(
+                                Intent(Intent.ACTION_OPEN_DOCUMENT)
+                                    .addCategory(Intent.CATEGORY_OPENABLE)
+                                    .setType("image/*")
+                                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+                                OCEAN_PICKER
+                            )
+                        } catch (error: Exception) {
+                            oceanResult = null
+                            result.error("PICKER_UNAVAILABLE", error.message, null)
+                        }
+                    }
+                    "clearOceanPhoto" -> {
+                        if (!OceanPhotoStore.remove(this)) {
+                            result.error("DELETE_FAILED", "Could not remove ocean photo", null)
+                        } else {
+                            prefs.edit().putLong(OceanPhotoStore.CHANGE_KEY,
+                                System.currentTimeMillis()).apply()
+                            result.success(null)
+                        }
                     }
                     "pickHomeScreenshot" -> {
                         if (screenshotResult != null) {
