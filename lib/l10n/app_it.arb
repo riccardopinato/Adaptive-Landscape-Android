@@ -54,5 +54,11 @@
   "qualityBalanced": "Bilanciata",
   "qualityHigh": "Alta",
   "qualityUltra": "Ultra · 4K",
-  "qualityExplain": "Ultra aumenta i dettagli generati dalla GPU. Il 4K effettivo dipende da risoluzione dello schermo, browser e prestazioni."
+  "qualityExplain": "Ultra aumenta i dettagli generati dalla GPU. Il 4K effettivo dipende da risoluzione dello schermo, browser e prestazioni.",
+  "loadHomeScreenshot": "Usa screenshot della Home per calibrare",
+  "hideHomeScreenshot": "Nascondi screenshot",
+  "screenshotCalibrationHint": "Fai uno screenshot della Home, selezionalo qui e tocca nell'anteprima le posizioni di app e cartelle. Per i widget usa «Zone». La foto è temporanea e non viene inviata né salvata dall'app. La posizione reale può variare secondo il launcher.",
+  "nativeGpuActive": "Android: rendering OpenGL a risoluzione dello schermo (da verificare sulla Home)",
+  "nativeGpuFallback": "Android: OpenGL non disponibile; è attiva la vecchia resa sgranata di emergenza.",
+  "nativeGpuUnknown": "Android: stato del wallpaper non ancora disponibile. Installa il wallpaper e riapri l'app."
 }

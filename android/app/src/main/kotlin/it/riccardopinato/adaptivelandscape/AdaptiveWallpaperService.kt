@@ -26,6 +26,8 @@ class AdaptiveWallpaperService : WallpaperService() {
         private val handler = Handler(Looper.getMainLooper())
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val coastalBeach = CoastalBeachRenderer()
+        private val gpuOcean = GpuOceanRenderer()
+        private var backendStatus = ""
         private var visible = false
         private var settings = WallpaperState()
         private var offset = 0.5f
@@ -51,6 +53,13 @@ class AdaptiveWallpaperService : WallpaperService() {
         private fun reload() {
             settings = WallpaperState.fromPrefs(prefs)
             coastalBeach.invalidate()
+            gpuOcean.invalidateLayout()
+        }
+
+        private fun reportBackend(name: String) {
+            if (name == backendStatus) return
+            backendStatus = name
+            prefs.edit().putString("render_backend_v1", name).apply()
         }
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
@@ -69,7 +78,13 @@ class AdaptiveWallpaperService : WallpaperService() {
 
         override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
             super.onSurfaceChanged(holder, format, width, height)
+            gpuOcean.resetSurface()
             if (visible) drawFrame()
+        }
+
+        override fun onSurfaceDestroyed(holder: SurfaceHolder) {
+            gpuOcean.resetSurface()
+            super.onSurfaceDestroyed(holder)
         }
 
         override fun onOffsetsChanged(xOffset: Float, yOffset: Float, xOffsetStep: Float,
@@ -83,6 +98,7 @@ class AdaptiveWallpaperService : WallpaperService() {
             handler.removeCallbacks(frame)
             prefs.unregisterOnSharedPreferenceChangeListener(this)
             coastalBeach.dispose()
+            gpuOcean.dispose()
             super.onDestroy()
         }
 
@@ -90,6 +106,21 @@ class AdaptiveWallpaperService : WallpaperService() {
 
         private fun drawFrame() {
             if (!surfaceHolder.surface.isValid) return
+            if (settings.scene == "beach") {
+                val frameSize = surfaceHolder.surfaceFrame
+                val phase = if (settings.staticScene) 0.0 else
+                    (SystemClock.uptimeMillis() - startTime).coerceAtLeast(0L) /
+                    12000.0 * 2 * PI * settings.motion
+                if (gpuOcean.render(surfaceHolder.surface,
+                        frameSize.width(), frameSize.height(), settings, phase)) {
+                    reportBackend("gpu_native")
+                    return
+                }
+                // A driver with no EGL2 support must keep the wallpaper visible.
+                reportBackend("cpu_360px_fallback")
+            } else {
+                reportBackend("meadow_canvas")
+            }
             var canvas: Canvas? = null
             try {
                 canvas = surfaceHolder.lockCanvas() ?: return

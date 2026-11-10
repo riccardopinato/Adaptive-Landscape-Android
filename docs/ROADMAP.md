@@ -58,3 +58,10 @@ Beach v0.2 sky/sun/cloud scene rejected as inconsistent with the intended origin
 - [CODED] Revised high-detail Flutter GPU shader for water/caustics/foam with pixel-scale detail and stable no-land invariant. [CODED] Web quality tiers Balanced/High/Ultra persisted in schema2; Kotlin ignores optional quality tier.
 - [TEST GATE] Analyze, test, Web and APK source builds, no Play signing changes.
 - [USER VISUAL GATE OPEN] Actual 4K rendering/FPS, subjective near-photographic quality and performance on user's browser and Android device not certified. See BEACH_4K_ART_DIRECTION.md.
+
+## v0.4.1 — first Android physical feedback: P0 repair
+
+- **ACTUAL USER FAIL v0.4**: Android native `CoastalBeachRenderer` used a bitmap at max **360px** stretched to the screen. Previous Web shader and Ultra setting did not apply to Android; image visibly sgranata, pale and almost static.
+- **CODED PR**: EGL14/GLES20 ocean renderer for native WallpaperService, per-device framebuffer-size pixel shading (not a 4K photographic source), animated caustics/feathered foam, respect native `renderQuality`, direct 360px CPU fallback if GPU unavailable and visible renderer diagnostic.
+- **CODED PR**: opt-in Android document picker to select a user-produced Home screenshot *for in-memory editor overlay*; no additional permission and no screenshot persistence. This is guided **manual** icon/widget/dock calibration, NOT launcher auto detection.
+- **REQUIRED DEVICE QA BEFORE MERGE**: verify GPU status, actual FPS/grain/wave, screenshot mapping across navigation/dock and icon clusters; record exact APK + device/launcher. Do not say "4K photorealism achieved" until proven. Keep auto-icon detection scoped to separate policy/consent research gate.

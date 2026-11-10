@@ -29,7 +29,7 @@ Requires Flutter **3.41.4**, Android SDK, and **JDK 17**. Run `bash BOOTSTRAP_LI
 
 The bootstrap produces `generated_app/build/app/outputs/flutter-apk/app-debug.apk`. GitHub Actions also publishes internal optimized per-ABI release-mode APK artifacts: **these are not Store-signed** and must never be represented as ready for Google Play. CI Web deploy is on successful `main`.
 
-No accounts, external API, analytics, advertising, camera, launcher-scraping, screenshot capture or app-name collection.
+No accounts, external API, analytics, advertising, camera, launcher-scraping or app-name collection. Android can optionally display a screenshot selected by the user for temporary local Home-layout calibration; the app does not capture, upload or persist that image.
 
 ## Intellectual property and provenance
 
@@ -66,3 +66,13 @@ The Web editor now exposes the **actual renderer state**: GPU active, loading or
 ## Beach v0.4.0 — Ultra ocean rendering (Web-first)
 
 New self-authored original photographic *art-direction* reference is distilled into a tiny offline color atlas; it is **not** a native 4K asset. GPU shading adds multi-scale surface current, foam and fine lighting at the browser framebuffer resolution. Rendering modes Balanced/High/Ultra are stored in profile JSON without schema migration; Android native wallpaper does not yet support 4K. Full technical details and acceptance gates: [docs/BEACH_4K_ART_DIRECTION.md](docs/BEACH_4K_ART_DIRECTION.md). No GPL or third-party source copied.
+
+## v0.4.1 native Android repair (experimental, user acceptance REQUIRED)
+
+The user installed v0.4 and reported **FAIL** on the device: visibly coarse/smeared native ocean, near-static motion, and sand not following Home icons except the manually selected dock. The 360px-wide Canvas raster in `CoastalBeachRenderer.kt` was the actual Android implementation; the v0.4 Web-only 4K shader was never used by `WallpaperService`. Source audit and user evidence are recorded in [docs/ANDROID_VISUAL_FAILURE.md](docs/ANDROID_VISUAL_FAILURE.md).
+
+The new `GpuOceanRenderer.kt` creates an EGL14/GLES20 context directly on the wallpaper surface and shades at the surface's framebuffer resolution with stronger moving caustics, ocean color and feathered contact foam. Android still has **no embedded photographic 4K source**, and GPU availability depends on the device; when initialization fails the old CPU/360px fallback remains available, with its status exposed in the app. Source compilation is not physical FPS/appearance certification.
+
+Because a generic WallpaperService has **no launcher icon-position API**, automatic icon detection is NOT delivered. Instead the Android app offers **one-time screenshot-assisted manual calibration**: take a Home screenshot yourself, pick it with Android's document picker (no media permission), tap icon/folder positions on the overlay and mark widget zones. The screenshot remains in memory in this editing session and is never saved or transmitted by the app. This is a pragmatic alternative, **not automatic detection**, and launcher coordinates/insets require on-device checking.
+
+No new AccessibilityService, overlay, media-projection or network permissions. APK from the PR must be **user-tested before merge or any assertion of correctness**.

@@ -1,6 +1,6 @@
-# Android physical QA & release gate — not executed
+# Android physical QA & release gate — v0.4 initial user failure, retest pending
 
-Use this matrix **only when the user resumes device testing**. Record for each test: date, exact source commit, APK SHA-256, package+versionCode, Android version, manufacturer/model, launcher, battery saver state, result PASS/FAIL and screenshot/log where appropriate (never collect installed-app identities unnecessarily).
+User **resumed device testing** on v0.4 and reported a visually unacceptable sea (CPU ~360px raster visibly pixelated, near-static wave) and missing actual launcher alignment. Exact device model, installed APK SHA and OS/launcher not recorded, so this is a **reported failure, not a complete signed QA run**. The v0.4.1 experimental PR targets only a subset; do not mark it PASS until the user re-tests. Use this matrix for the follow-up. Record for each test: date, exact source commit, APK SHA-256, package+versionCode, Android version, manufacturer/model, launcher, battery saver state, result PASS/FAIL and screenshot/log where appropriate (never collect installed-app identities unnecessarily).
 
 | ID | Scenario | Acceptance |
 |---|---|---|
@@ -34,3 +34,12 @@ Use this matrix **only when the user resumes device testing**. Record for each t
 | A28 | Play Internal Testing signed AAB | Store install + update-in-place succeeds |
 
 Do not mark these PASS from GitHub Actions alone. Store release, donor certification, and commercial reliability depend on these facts.
+
+## User issue report — v0.4 first Android install (10 November 2026)
+
+- **A04 / A05 / A06 / A25: USER-REPORTED FAIL.** Beach rendered poorly (grain, heavy white outline), limited visible motion; sand appears only for manually configured 3-dock preset. Underlying code did not detect the actual Home icon/window grid.
+- Device model, operating system, launcher and exact APK SHA: **not yet supplied**, therefore no false detailed hardware certification.
+- v0.4.1 experimental acceptance: native renderer status reads `gpu_native` after reopening app, ocean surface detailed/moving and the coast softly feathered. Status `cpu_360px_fallback` means GPU initialization failed; record device/Android information and keep quality gate open.
+- Screenshot-assisted calibration: user supplies their own Home screenshot using system picker; taps icon/folder positions and widget rectangles; checks current dock separately; only then can shoreline follow marked positions. Screenshot never automatically read, saved or transmitted; test portrait crop/navigation bars.
+- **Auto-detection** of launcher icons is **not implemented**. Generic `WallpaperService` provides no icon coordinates. AccessibilityService would require separate opt-in and Google Play disclosure/consent; do not silently add it.
+- Web GPU and Android EGL2 are distinct implementations; no pixel-equivalence guaranteed. Native 4K target is framebuffer shading, not a real 4K photographic texture.
