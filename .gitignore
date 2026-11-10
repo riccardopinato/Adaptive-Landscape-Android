@@ -1,0 +1,14 @@
+# Reproducible Flutter scaffold generated from source overlay
+generated_app/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+/build/
+**/.gradle/
+**/build/
+*.apk
+*.aab
+*.jks
+*.keystore
+*.log
+.DS_Store
