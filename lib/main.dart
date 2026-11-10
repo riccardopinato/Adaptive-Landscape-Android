@@ -383,6 +383,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
           child: AnimatedBuilder(animation: _animation, builder: (context, _) => Stack(children: [
             Positioned.fill(child: CustomPaint(painter: ScenePainter(
               scene: _config.scene, field: IconField.fromConfig(_config),
+              night: _config.night, palette: _config.palette,
               phase: _config.reduceMotion ? 0 : _animation.value * math.pi * 2 * _config.motion,
             ))),
             if (_mode == 'grid') ...List.generate(_config.cellCount, (i) {
