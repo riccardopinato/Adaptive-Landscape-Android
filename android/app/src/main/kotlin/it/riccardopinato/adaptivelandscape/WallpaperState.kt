@@ -69,11 +69,12 @@ internal data class WallpaperState(
                         val zones = buildList {
                             if (zoneArray != null) for (i in 0 until minOf(zoneArray.length(), 80)) {
                                 val z = zoneArray.optJSONObject(i) ?: continue
+                                val width = number(z, "width", 0.12, 0.03, 1.0)
+                                val height = number(z, "height", 0.07, 0.03, 1.0)
                                 add(LandscapeZone(
-                                    number(z, "x", 0.5, 0.0, 1.0),
-                                    number(z, "y", 0.5, 0.0, 1.0),
-                                    number(z, "width", 0.12, 0.03, 1.0),
-                                    number(z, "height", 0.07, 0.03, 1.0),
+                                    number(z, "x", 0.5, width / 2.0, 1.0 - width / 2.0),
+                                    number(z, "y", 0.5, height / 2.0, 1.0 - height / 2.0),
+                                    width, height,
                                 ))
                             }
                         }

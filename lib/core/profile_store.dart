@@ -27,7 +27,10 @@ class ProfileStore {
   }
 
   Future<void> writeProfiles(List<NamedLayout> profiles, String activeId) async {
-    if (profiles.isEmpty || profiles.length > 16 || !profiles.any((p) => p.id == activeId)) {
+    if (profiles.isEmpty || profiles.length > 16 || !profiles.any((p) => p.id == activeId) ||
+        profiles.any((p) => p.id.isEmpty || p.id.length > 64 ||
+            p.name.trim().isEmpty || p.name.trim().length > 48) ||
+        profiles.map((p) => p.id).toSet().length != profiles.length) {
       throw ArgumentError('Invalid profile collection');
     }
     final prefs = await SharedPreferences.getInstance();

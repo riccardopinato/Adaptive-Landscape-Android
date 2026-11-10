@@ -18,11 +18,13 @@ class LayoutZone {
       final v = m[key];
       return v is num && v.isFinite ? v.toDouble() : fallback;
     }
+    final width = n('width', 0.12).clamp(0.03, 1.0);
+    final height = n('height', 0.07).clamp(0.03, 1.0);
     return LayoutZone(
-      x: n('x', 0.5).clamp(0.0, 1.0),
-      y: n('y', 0.5).clamp(0.0, 1.0),
-      width: n('width', 0.12).clamp(0.03, 1.0),
-      height: n('height', 0.07).clamp(0.03, 1.0),
+      x: n('x', 0.5).clamp(width / 2, 1 - width / 2),
+      y: n('y', 0.5).clamp(height / 2, 1 - height / 2),
+      width: width,
+      height: height,
       kind: m['kind'] == 'widget' ? 'widget' : m['kind'] == 'dock' ? 'dock' : 'icon',
     );
   }
@@ -36,8 +38,8 @@ class LayoutZone {
       );
   LayoutZone resize(double dw, double dh) => LayoutZone(
         x: x, y: y,
-        width: (width + dw).clamp(0.03, 1.0),
-        height: (height + dh).clamp(0.03, 1.0),
+        width: (width + dw).clamp(0.03, (2 * (x < 0.5 ? x : 1 - x)).clamp(0.03, 1.0)),
+        height: (height + dh).clamp(0.03, (2 * (y < 0.5 ? y : 1 - y)).clamp(0.03, 1.0)),
         kind: kind,
       );
 }
@@ -114,7 +116,10 @@ class LandscapeConfig {
     final rawZones = m['zones'];
     final occupied = rawCells is List
         ? rawCells.whereType<num>().map((x) => x.toInt()).where((x) => x >= 0 && x < columns * rows).toSet()
-        : <int>{};
+        : rawCells is String
+            ? rawCells.split(',').map(int.tryParse).whereType<int>()
+                .where((x) => x >= 0 && x < columns * rows).toSet()
+            : <int>{};
     final zones = rawZones is List
         ? rawZones.take(80).map(LayoutZone.fromJson).toList(growable: false)
         : <LayoutZone>[];

@@ -35,6 +35,19 @@ void main() {
     expect(LandscapeConfig.decode('{broken').scene, 'meadow');
     expect(LandscapeConfig.decode('null').columns, 5);
   });
+  test('Legacy comma-list is migrated to v2 occupancy', () {
+    final c = LandscapeConfig.fromJson({'scene': 'beach', 'occupied': '0,7,39,999,abc'});
+    expect(c.scene, 'beach');
+    expect(c.occupied, {0, 7, 39});
+  });
+  test('Rectangle edges stay in normalized coordinates after import/resize', () {
+    final z = LayoutZone.fromJson({'x': 0.99, 'y': 0.01, 'width': 0.3, 'height': 0.4});
+    expect(z.x + z.width / 2, lessThanOrEqualTo(1));
+    expect(z.y - z.height / 2, greaterThanOrEqualTo(0));
+    final r = z.resize(0.5, 0.5);
+    expect(r.x + r.width / 2, lessThanOrEqualTo(1));
+    expect(r.y + r.height / 2, lessThanOrEqualTo(1));
+  });
   test('Zones can move and resize within safe geometry', () {
     const z = LayoutZone(x: 0.5, y: 0.5, width: 0.2, height: 0.1);
     final moved = z.move(7, -7);

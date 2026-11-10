@@ -25,6 +25,16 @@ void main() {
     expect((await store.readProfiles()).last.config.scene, 'beach');
     expect(await store.readActiveId(), 'secondary');
   });
+  test('Invalid IDs cannot silently lose the active selection', () async {
+    final store = ProfileStore();
+    final p = [const NamedLayout(id: '', name: 'Home', config: LandscapeConfig())];
+    await expectLater(store.writeProfiles(p, ''), throwsArgumentError);
+    final longId = 'a' * 65;
+    await expectLater(store.writeProfiles([
+      NamedLayout(id: longId, name: 'Home', config: const LandscapeConfig()),
+    ], longId), throwsArgumentError);
+  });
+
   test('Cannot remove every profile', () async {
     expect(() => ProfileStore().writeProfiles([], 'default'), throwsArgumentError);
   });
