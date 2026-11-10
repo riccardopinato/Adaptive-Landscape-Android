@@ -384,7 +384,8 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             Positioned.fill(child: CustomPaint(painter: ScenePainter(
               scene: _config.scene, field: IconField.fromConfig(_config),
               night: _config.night, palette: _config.palette,
-              phase: _config.reduceMotion ? 0 : _animation.value * math.pi * 2 * _config.motion,
+              phase: _config.reduceMotion ? 0 :
+                  ((_animation.value * 240).floor() / 240) * math.pi * 2 * _config.motion,
             ))),
             if (_mode == 'grid') ...List.generate(_config.cellCount, (i) {
               final (x, y) = _config.cellCenter(i);

@@ -9,7 +9,7 @@ Status vocabulary: **CODED** = committed feature; **CI VERIFIED** = analyze/test
 |---|---|---|
 | 1. Foundation | Schema 2 normalized contract, local profiles, CI Flutter/Gradle, JDK17, tests, provenance and reproducible scaffold | CODED; verify CI exact PR head, source scaffold remains generated, not committed binaries |
 | 2. Icon & widget calibration | Configurable 3–8 × 3–12 grid, movable/resizeable excluded zones, multi-profile selection, JSON export/import, legacy reader | CODED; physical launcher coordinate/fingerprint matching unverified |
-| 3. Premium scenes | Original vector Beach/Meadow extended with night palettes, stars, animated clouds/waves/flowers; obstacle-influence in Dart/Android; battery saver & reduced-motion loops | CODED; physical visual comparison, FPS, thermal/battery and graphic quality acceptance unverified |
+| 3. Premium scenes | Meadow retained; Beach v0.3 replaced with independent top-down sand + ocean rendering, dynamically forming coast around icon/widget regions, moving tides/foam, granular wet-sand/shallow-water gradients, no sky or clouds. Dart and Kotlin separate renderers; battery saver & reduced motion kept | CODED; physical visual comparison, FPS, thermal/battery and graphic quality acceptance unverified |
 | 4. UX & persistence | Responsive editor, six ARB locales, profile CRUD, clipboard import/export, no account/network, privacy notes | CODED; accessibility/locale manual screen QA unverified |
 | 5. Release engineering | CI Android debug + optimized internal APKs and Web Pages, privacy/provenance gates, device QA plan, Play signing checklist | CI pipeline configuration; dedicated release keystore, physical QA, AAB signing and Play testing **not done** |
 
@@ -30,3 +30,7 @@ Status vocabulary: **CODED** = committed feature; **CI VERIFIED** = analyze/test
 3. Physical matrix `docs/QA_MATRIX.md` PASS with device/Android/launcher, reproducible evidence and APK SHA.
 4. Google Play Internal Testing install/update `versionCode` monotonic, AAB signed with stable private release key, Play Console declarations and policies verified.
 5. Commercial release only after battery, legal/art/license and accessibility acceptance. Proposed one-time price €1.99 pilot / €2.99 after differentiation; no ads/subscriptions.
+
+## Visual correction — 10 Nov 2026 (Web-first)
+
+Beach v0.2 sky/sun/cloud scene rejected as inconsistent with the intended original. See [BEACH_VISUAL_REFERENCE.md](BEACH_VISUAL_REFERENCE.md). V0.3 Beach is overhead sand-and-water only. Web user acceptance remains pending after deploy. Native performance and consistency require later physical Android QA; do not claim a pixel-exact Deskland port.

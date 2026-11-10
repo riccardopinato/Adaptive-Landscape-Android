@@ -24,6 +24,7 @@ class AdaptiveWallpaperService : WallpaperService() {
         private val prefs = getSharedPreferences("adaptive_landscape", Context.MODE_PRIVATE)
         private val handler = Handler(Looper.getMainLooper())
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val coastalBeach = CoastalBeachRenderer()
         private var visible = false
         private var settings = WallpaperState()
         private var offset = 0.5f
@@ -43,11 +44,14 @@ class AdaptiveWallpaperService : WallpaperService() {
 
         private fun frameDelay(): Long {
             val power = getSystemService(Context.POWER_SERVICE) as PowerManager
-            return if (power.isPowerSaveMode) 125L else 50L // 8fps / 20fps
+            // The procedural raster is capped at 12fps to limit battery drain.
+            if (settings.scene == "beach") return if (power.isPowerSaveMode) 167L else 83L
+            return if (power.isPowerSaveMode) 125L else 50L
         }
 
         private fun reload() {
             settings = WallpaperState.fromPrefs(prefs)
+            coastalBeach.invalidate()
         }
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
@@ -79,6 +83,7 @@ class AdaptiveWallpaperService : WallpaperService() {
             visible = false
             handler.removeCallbacks(frame)
             prefs.unregisterOnSharedPreferenceChangeListener(this)
+            coastalBeach.dispose()
             super.onDestroy()
         }
 
@@ -108,6 +113,10 @@ class AdaptiveWallpaperService : WallpaperService() {
             if (w <= 0f || h <= 0f) return
             val t = if (settings.staticScene) 0.0 else
                 ((System.currentTimeMillis() - startTime) % 12000L) / 12000.0 * 2 * PI * settings.motion
+            if (settings.scene == "beach") {
+                coastalBeach.draw(c, settings, t)
+                return
+            }
             val night = settings.night
             val beach = settings.scene == "beach"
             val sunset = settings.palette == "sunset"

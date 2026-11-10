@@ -12,7 +12,7 @@ Original **Flutter + native Android Live Wallpaper** project. This is a reproduc
 
 ## Available features (source implementation, not yet device-certified)
 
-- Meadow and Beach original vector scenes, manual night variant, original/sunset/mint palettes.
+- Meadow vector scene and **Beach v0.3 overhead procedural sand/water coastline**, no sky, sun, clouds, horizon or decorative Beach objects. Manual night variants and Original/Sunset/Mint palettes.
 - Flutter responsive live preview, motion control, reduced motion, Android wallpaper picker.
 - Variable Home icon grid (3–8 columns, 3–12 rows), tap-to-mark selected cells.
 - Drag/move/resize local widget exclusion zones. Occupancy influences cloud/hill/wave position and suppresses small objects.
@@ -40,3 +40,9 @@ Factory baseline: `riccardopinato/App-Factory-Core@d4ed1185d36d419228fba6b57a979
 ## Evidence principles
 
 CI compilation and Web confirmation do not establish OEM battery, launcher layout, crash-free wallpaper lifecycle, install/update behavior or Play readiness. The Android physical test is deliberately deferred until the user resumes it. Track every physical result by exact APK SHA and device.
+
+## Beach visual correction — v0.3.0
+
+The user confirmed the Web v0.2 base but specified that Beach should be an aerial shoreline with sand forming around icon/zone occupancy and animated translucent blue/turquoise water. The previous sky/nuvole/sole composition was incorrect for Beach. Source-specific technical and license notes: [docs/BEACH_VISUAL_REFERENCE.md](docs/BEACH_VISUAL_REFERENCE.md).
+
+The original procedural shoreline model is independently authored in Dart and Kotlin. It uses compact mesh shading on Web and cached low-resolution raster shading in Android. Neither implementation copies Deskland shaders or licensed artworks. The **new Web visual needs user acceptance**; Android runtime/frame rate and visual parity remain untested.

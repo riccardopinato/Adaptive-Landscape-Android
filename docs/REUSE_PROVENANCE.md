@@ -22,3 +22,7 @@
 - Provenance: `golden/governance/GOLDEN_PROVENANCE_REUSE_LEDGER_v1_DRAFT.txt`.
 - Donor admission: `golden/governance/GOLDEN_SINGLE_DONOR_CAPABILITY_ADMISSION_v1.txt`, E1 only.
 - Release reality: `golden/release/GOLDEN_RELEASE_REALITY_PHYSICAL_VALIDATION_v1_DRAFT.txt`, physical gate pending.
+
+## Beach v0.3 graphics provenance
+
+User-directed correction: Beach has only top-down sand, moving sea, foam and wet shoreline. Deskland `prototype/flat.html` and `prototype/themes.json` served as product and visual-reference evidence only. Independent source files: `lib/core/beach_coast.dart`, `lib/ui/beach_surface.dart`, `android/.../CoastalBeachRenderer.kt`. **No screenshot, JS/WebGL shader, palm asset, proprietary artwork or GPL source copied**. Source-reconstruction fidelity and real-device visual quality have not been formally verified. The narrower user brief excludes optional kayaks, palms and seabirds included in the upstream free Beach.
