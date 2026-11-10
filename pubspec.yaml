@@ -1,5 +1,5 @@
 name: adaptive_landscape
-version: 0.4.2+9
+version: 0.4.3+10
 description: Original Android adaptive live-wallpaper app with Flutter settings UI.
 publish_to: none
 environment:
@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   intl: ^0.20.2
   shared_preferences: ^2.3.4
+  file_picker: ^12.3.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

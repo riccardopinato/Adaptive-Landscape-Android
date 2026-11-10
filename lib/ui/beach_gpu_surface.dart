@@ -41,7 +41,7 @@ class BeachGpuSurface {
 
   static bool paint(Canvas canvas, Size size, IconField field, double phase,
       {required ui.FragmentProgram? program, String palette = 'original',
-       bool night = false, String renderQuality = 'ultra'}) {
+       bool night = false, String renderQuality = 'ultra', ui.Image? photograph}) {
     if (program == null || size.isEmpty) {
       if (_programUnavailable) _report(BeachRenderStatus.fallback);
       return false;
@@ -76,9 +76,12 @@ class BeachGpuSurface {
       shader.setFloat(4, night ? 1 : 0);
       shader.setFloat(5, BeachMask.isEmpty(field) ? 0 : 1);
       shader.setFloat(6, renderQuality == 'balanced' ? 0 : renderQuality == 'high' ? 1 : 2);
+      shader.setFloat(7, photograph == null ? 0 : 1);
+      shader.setFloat(8, photograph == null ? 1 : photograph.width / photograph.height);
       shader.setImageSampler(0, _mask!, filterQuality: ui.FilterQuality.high);
       _toneAtlas ??= OceanToneAtlas.decode();
       shader.setImageSampler(1, _toneAtlas!, filterQuality: ui.FilterQuality.high);
+      shader.setImageSampler(2, photograph ?? _toneAtlas!, filterQuality: ui.FilterQuality.high);
       canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
       _report(BeachRenderStatus.gpu);
       return true;

@@ -68,5 +68,10 @@
   "oceanPhotoNotSelected": "Noch kein Meeresfoto ausgewählt",
   "oceanPhotoHint": "Wähle ein scharfes Foto des Meeres von oben (JPG/PNG, mindestens 720 px, maximal 12 MB). Eine optimierte Kopie ohne Metadaten bleibt privat auf dem Gerät. Kein Upload und keine Fotoberechtigung.",
   "oceanPhotoAndroidOnly": "Im Webeditor bleibt die prozedurale Vorschau. Prüfe die Fotoqualität auf dem echten Android-Startbildschirm.",
-  "nativePhotoGpuActive": "Android: fotografische Meerestextur auf nativer GPU (Startbildschirm prüfen)"
+  "nativePhotoGpuActive": "Android: fotografische Meerestextur auf nativer GPU (Startbildschirm prüfen)",
+  "webPhotoPreviewTitle": "Fotografische Web-Vorschau",
+  "webPhotoChoose": "Meeresfoto auswählen",
+  "webCompareProcedural": "Mit früherem synthetischen Meer vergleichen",
+  "webCompareExplanation": "Zeigt statt des Fotos das prozedurale Wasser. Ausschalten, um zum Foto zurückzukehren.",
+  "webPhotoPrivacyHint": "Das Web-Bild bleibt nur im Arbeitsspeicher: kein Upload, keine Speicherung oder Profilexport. Dies bestätigt nicht das Android-Live-Wallpaper."
 }

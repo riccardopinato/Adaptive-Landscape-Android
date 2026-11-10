@@ -68,5 +68,10 @@
   "oceanPhotoNotSelected": "Aucune photo de mer sélectionnée",
   "oceanPhotoHint": "Choisissez une photo nette de l'eau vue du dessus (JPG/PNG, 720 px minimum, 12 Mo maximum). Une copie optimisée sans métadonnées reste sur l'appareil. Aucun envoi ni autorisation photo.",
   "oceanPhotoAndroidOnly": "L'éditeur Web affiche encore un aperçu procédural. Vérifiez le rendu photographique sur l'écran d'accueil Android.",
-  "nativePhotoGpuActive": "Android : texture marine photographique sur GPU natif (à vérifier sur l'accueil)"
+  "nativePhotoGpuActive": "Android : texture marine photographique sur GPU natif (à vérifier sur l'accueil)",
+  "webPhotoPreviewTitle": "Aperçu photo sur le Web",
+  "webPhotoChoose": "Choisir une photo de mer",
+  "webCompareProcedural": "Comparer à l'ancien océan synthétique",
+  "webCompareExplanation": "Afficher le rendu procédural au lieu de la photo. Désactiver pour revenir à la photo.",
+  "webPhotoPrivacyHint": "La photo Web reste uniquement en mémoire : aucun envoi ni stockage. Cet aperçu n'est pas une validation du fond d'écran Android."
 }

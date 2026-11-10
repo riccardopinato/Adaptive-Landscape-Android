@@ -68,5 +68,10 @@
   "oceanPhotoNotSelected": "Nessuna foto del mare ancora selezionata",
   "oceanPhotoHint": "Scegli una foto nitida del mare ripreso dall'alto (JPG/PNG, almeno 720 px, massimo 12 MB). L'app conserva una copia ottimizzata senza metadati, solo sul dispositivo. Nessun invio o permesso alle foto.",
   "oceanPhotoAndroidOnly": "L'editor Web mostra ancora l'anteprima procedurale: valuta il mare fotografico sulla Home Android reale.",
-  "nativePhotoGpuActive": "Android: texture marina fotografica sulla GPU nativa (da verificare sulla Home)"
+  "nativePhotoGpuActive": "Android: texture marina fotografica sulla GPU nativa (da verificare sulla Home)",
+  "webPhotoPreviewTitle": "Anteprima fotografica Web",
+  "webPhotoChoose": "Scegli foto del mare",
+  "webCompareProcedural": "Confronta con il mare precedente",
+  "webCompareExplanation": "Mostra il vecchio mare sintetico al posto della foto. Disattiva per tornare alla fotografia.",
+  "webPhotoPrivacyHint": "La foto Web resta solo in memoria: nessun upload, salvataggio o export nei profili. L'anteprima non certifica lo sfondo nativo Android."
 }

@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, fix-android-v041-gpu-wallpaper-and-home-calibration]
+    branches: [main, fix-android-v041-gpu-wallpaper-and-home-calibration, feat/v042-photographic-ocean, feat/v043-web-photo-preview, feat/v044-realism, feat/v045-smart-calibration, feat/v046-perf-qa]
   workflow_dispatch:
 
 permissions:
