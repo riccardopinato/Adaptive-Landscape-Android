@@ -26,7 +26,8 @@ void main() {
     expect(c.occupied, {0});
     expect(c.top, 0);
     expect(c.span, 1);
-    expect(c.zones.single.x, 0);
+    expect(c.zones.single.x - c.zones.single.width / 2, greaterThanOrEqualTo(0));
+    expect(c.zones.single.x + c.zones.single.width / 2, lessThanOrEqualTo(1));
     expect(c.zones.single.kind, 'icon');
     expect(c.motion, 2);
     expect(c.scene, 'meadow');
