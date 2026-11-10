@@ -76,3 +76,15 @@ dart = (root / 'lib/main.dart').read_text(encoding='utf-8')
 assert 'al-import-ocean-photo' in dart and 'al-ocean-photo-status' in dart
 assert '0.4.2+9' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
 print('PASS: v0.4.2 local photo import, metadata stripping, GPU texture and UI contract')
+
+# v0.4.3: photo preview uses local image sampler and is explicitly ephemeral.
+web = (root / 'lib/ui/beach_gpu_surface.dart').read_text(encoding='utf-8')
+frag = (root / 'shaders/beach_ocean.frag').read_text(encoding='utf-8')
+editor = (root / 'lib/main.dart').read_text(encoding='utf-8')
+assert 'uniform sampler2D uPhotograph;' in frag
+assert 'uniform float uUsePhoto;' in frag and 'uPhotoAspect' in frag
+assert 'setImageSampler(2, photograph ?? _toneAtlas!' in web
+assert 'FilePicker.pickFile(type: FileType.image)' in editor
+assert 'al-web-before-after' in editor and '_clearWebOceanPhoto' in editor
+assert 'version: 0.4.3+10' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+print('PASS: v0.4.3 local Web photographic preview and comparison source contract')
