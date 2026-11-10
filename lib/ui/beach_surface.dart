@@ -9,7 +9,9 @@ import '../core/icon_field.dart';
 class BeachSurface {
   BeachSurface._();
 
-  static _Mesh? _cached;
+  // The editor and large preview can animate simultaneously. Keep the two
+  // most recent geometry caches instead of repeatedly rebuilding 31k vertices.
+  static final Map<String, _Mesh> _cache = <String, _Mesh>{};
 
   static void paint(Canvas canvas, Size size, IconField field, double phase, {
     String palette = 'original',
@@ -24,7 +26,12 @@ class BeachSurface {
         '${zone.x.toStringAsFixed(5)},${zone.y.toStringAsFixed(5)},'
         '${zone.width.toStringAsFixed(5)},${zone.height.toStringAsFixed(5)}',
     ].join('|');
-    final mesh = _cached?.key == key ? _cached! : (_cached = _Mesh.build(key, field));
+    final mesh = _cache.putIfAbsent(key, () => _Mesh.build(key, field));
+    // Keep memory bounded while preserving the editor + fullscreen sizes.
+    if (_cache.length > 2) {
+      final oldest = _cache.keys.firstWhere((k) => k != key);
+      _cache.remove(oldest);
+    }
     final coast = BeachCoast(field);
     final colors = Int32List(mesh.positions.length ~/ 2);
 
