@@ -48,7 +48,7 @@ void main() {
   vec2 drift = vec2(0.038 * cos(phase + uv.y * 3.0),
                     0.026 * sin(phase + uv.x * 2.0));
   float n = fbm(uv * vec2(7.7, 10.0) + drift);
-  float causticA = sin(uv.x * 128.0 + uv.y * 41.0 + phase * 1.7 + n * 5.0);
+  float causticA = sin(uv.x * 128.0 + uv.y * 41.0 + phase * 2.0 + n * 5.0);
   float causticB = sin(uv.x * 77.0 - uv.y * 103.0 - phase * 2.0 + n * 4.0);
   float glint = pow(max(0.0, 0.48 * causticA + 0.52 * causticB), 3.0);
   float fine = fbm(uv * vec2(120.0, 220.0) - drift * 1.8);

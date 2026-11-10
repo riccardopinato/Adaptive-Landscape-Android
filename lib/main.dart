@@ -138,7 +138,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       await _store.writeProfiles(profiles, active);
       await _channel.save(WallpaperConfig(
         scene: snapshot.scene,
-        occupied: IconField.encode(snapshot.occupied),
+        occupied: IconField.fromConfig(snapshot).encodeOccupied(),
         configJson: snapshot.encode(),
       ));
     }).catchError((Object error) {
@@ -361,8 +361,9 @@ class _WallpaperEditorState extends State<WallpaperEditor>
           for (final count in [0, 3, 4])
             ChoiceChip(label: Text(count == 0 ? l.noDock : '$count'),
               selected: DockLayout.count(_config.zones) == count,
-              onSelected: (_) => _apply(_config.copyWith(
-                zones: DockLayout.withCount(_config.zones, count))),
+              onSelected: _config.zones.where((z) => z.kind != 'dock').length + count > 80
+                ? null : (_) => _apply(_config.copyWith(
+                  zones: DockLayout.withCount(_config.zones, count))),
               ),
           Text(l.dockHint, style: style.bodySmall),
         ],

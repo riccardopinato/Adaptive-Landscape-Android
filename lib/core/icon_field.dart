@@ -55,6 +55,11 @@ class IconField {
 
   bool obstructed(double x, double y) => influence(x, y) > 0.38;
 
+  /// Dynamic-grid occupancy serialization; unlike legacy encode(), preserves
+  /// all cells in a supported 8×12 layout.
+  String encodeOccupied() =>
+      (occupied.where((x) => x >= 0 && x < gridColumns * gridRows).toList()..sort()).join(',');
+
   static Set<int> decode(String encoded) => encoded
       .split(',').map(int.tryParse).whereType<int>()
       .where((x) => x >= 0 && x < cellCount).toSet();

@@ -49,6 +49,20 @@ void main() {
     expect(zones, [widget]);
   });
 
+  test('Dynamic grid cache key retains selected cells above 40', () {
+    final field = IconField.fromConfig(const LandscapeConfig(
+      columns: 8, rows: 12, occupied: {80, 95}));
+    expect(field.encodeOccupied(), '80,95');
+    expect(field.influence(0.06, 0.82), greaterThanOrEqualTo(0));
+  });
+
+  test('Dock cannot exceed 80-zone migration contract', () {
+    final widgets = List.generate(77, (i) =>
+        const LayoutZone(x: 0.5, y: 0.5, width: 0.1, height: 0.1, kind: 'widget'));
+    expect(() => DockLayout.withCount(widgets, 4), throwsArgumentError);
+    expect(DockLayout.withCount(widgets, 3).length, 80);
+  });
+
   test('Baked texture agrees with normalized influence at centers', () {
     const config = LandscapeConfig(occupied: {0, 7}, zones: [
       LayoutZone(x: 0.7, y: 0.7, width: 0.2, height: 0.12, kind: 'widget')

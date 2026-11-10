@@ -27,7 +27,7 @@ class BeachGpuSurface {
     try {
       final key = [
         field.gridColumns, field.gridRows, field.top, field.span,
-        IconField.encode(field.occupied),
+        field.encodeOccupied(),
         for (final z in field.zones)
           '${z.x.toStringAsFixed(6)}|${z.y.toStringAsFixed(6)}|'
           '${z.width.toStringAsFixed(6)}|${z.height.toStringAsFixed(6)}',

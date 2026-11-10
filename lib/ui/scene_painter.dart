@@ -137,10 +137,11 @@ class ScenePainter extends CustomPainter {
   @override
   bool shouldRepaint(ScenePainter old) =>
     scene != old.scene || palette != old.palette || night != old.night ||
-    phase != old.phase || field.gridColumns != old.field.gridColumns ||
+    phase != old.phase || !identical(beachProgram, old.beachProgram) ||
+    field.gridColumns != old.field.gridColumns ||
     field.gridRows != old.field.gridRows || field.top != old.field.top ||
     field.span != old.field.span ||
     field.zones.length != old.field.zones.length ||
-    IconField.encode(field.occupied) != IconField.encode(old.field.occupied) ||
+    field.encodeOccupied() != old.field.encodeOccupied() ||
     !identical(field.zones, old.field.zones);
 }

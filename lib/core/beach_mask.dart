@@ -81,6 +81,7 @@ class DockLayout {
   static List<LayoutZone> withCount(List<LayoutZone> previous, int count) {
     if (count < 0 || count > 4) throw RangeError.range(count, 0, 4);
     final other = previous.where((zone) => zone.kind != 'dock').toList();
+    if (other.length + count > 80) throw ArgumentError('Too many layout zones');
     final dock = List.generate(count, (i) => LayoutZone(
         x: 0.12 + 0.76 * (i + 0.5) / count,
         y: 0.941,
