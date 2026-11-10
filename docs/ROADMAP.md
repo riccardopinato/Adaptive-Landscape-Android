@@ -84,3 +84,15 @@ Beach v0.2 sky/sun/cloud scene rejected as inconsistent with the intended origin
   head and is **not** a production Play candidate.
 
 Detailed user test contract: [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V042.md).
+
+
+## v0.4.3 — Web photographic preview and image comparison
+
+- [CODED] Local browser image selection; bounds/size safety and downsampling.
+- [CODED] Real photo sampler on Web with cyclic subtle refraction, cover crop.
+- [CODED] Before/after toggle against existing synthetic ocean.
+- [CODED] Six localized strings, zero-sand regression tests, version 0.4.3+10.
+- [PENDING CI] Flutter analyze/test, Web shader build, Android APK.
+- [PENDING USER] Visual/photo realism acceptance on Web.
+- [OUT OF SCOPE] Native photo preview inside Flutter editor; Android photo is
+  stored separately by WallpaperService. Do not imply pixel equivalence.
