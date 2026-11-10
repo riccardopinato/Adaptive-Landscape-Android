@@ -26,7 +26,7 @@ class AdaptiveWallpaperService : WallpaperService() {
         private val handler = Handler(Looper.getMainLooper())
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val coastalBeach = CoastalBeachRenderer()
-        private val gpuOcean = GpuOceanRenderer()
+        private val gpuOcean = GpuOceanRenderer(this@AdaptiveWallpaperService)
         private var backendStatus = ""
         private var visible = false
         private var settings = WallpaperState()
@@ -63,7 +63,9 @@ class AdaptiveWallpaperService : WallpaperService() {
         }
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
-            if (key == "scene" || key == "occupied" || key == "config_v2") {
+            if (key == "scene" || key == "occupied" || key == "config_v2" ||
+                key == OceanPhotoStore.CHANGE_KEY) {
+                if (key == OceanPhotoStore.CHANGE_KEY) gpuOcean.invalidatePhoto()
                 reload()
                 handler.removeCallbacks(frame)
                 if (visible) handler.post(frame)
