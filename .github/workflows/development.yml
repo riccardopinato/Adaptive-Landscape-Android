@@ -27,6 +27,16 @@ jobs:
           flutter-version: '3.41.4'
           channel: stable
           cache: true
+      - name: Select JDK 17 for Android Gradle (avoid runner default Java 25)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "${JAVA_HOME_17_X64:-}"
+          test -x "$JAVA_HOME_17_X64/bin/java"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          flutter config --jdk-dir="$JAVA_HOME_17_X64"
+          "$JAVA_HOME_17_X64/bin/java" -version
       - name: Generate Flutter project, analyze, test and build Android debug APK
         run: bash BOOTSTRAP_LINUX_MAC.sh generated_app
       - name: Build Web-only interactive editor preview
