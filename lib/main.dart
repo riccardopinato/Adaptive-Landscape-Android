@@ -392,6 +392,8 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               beachProgram: _beachProgram, palette: _config.palette,
               renderQuality: _config.renderQuality,
               photograph: _activePreviewPhoto,
+              photoRefraction: _config.photoRefraction,
+              foamIntensity: _config.foamIntensity,
               night: _config.night, phase: _config.reduceMotion ? 0 :
                 ((_animation.value * 240).floor() / 240) * math.pi * 2,
             ))),
@@ -658,6 +660,24 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         ]),
         Text(l.qualityExplain, style: style.bodySmall),
       ],
+      if (_config.scene == 'beach') ...[
+        section(l.waterTuning),
+        Text('${l.refractionIntensity}: ${_config.photoRefraction.toStringAsFixed(2)}'),
+        Slider(
+          key: const Key('al-photo-refraction'),
+          min: 0, max: 1, divisions: 20,
+          value: _config.photoRefraction,
+          onChanged: (v) => _apply(_config.copyWith(photoRefraction: v)),
+        ),
+        Text('${l.foamIntensityLabel}: ${_config.foamIntensity.toStringAsFixed(2)}'),
+        Slider(
+          key: const Key('al-foam-intensity'),
+          min: 0, max: 1, divisions: 20,
+          value: _config.foamIntensity,
+          onChanged: (v) => _apply(_config.copyWith(foamIntensity: v)),
+        ),
+        Text(l.waterTuningHint, style: style.bodySmall),
+      ],
       section(l.appearance),
       Wrap(spacing: 8, children: [
         ChoiceChip(label: Text(l.original), selected: _config.palette == 'original',
@@ -687,7 +707,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         key: const Key('al-native-renderer-status'),
       ),
       const SizedBox(height: 6),
-      const Text('Beach Web + Android v0.4.2', style: TextStyle(fontSize: 11)),
+      const Text('Beach Web + Android v0.4.4', style: TextStyle(fontSize: 11)),
       if (_error != null) SelectableText('${l.failure}: $_error',
         style: TextStyle(color: Theme.of(context).colorScheme.error)),
     ]);
@@ -722,6 +742,8 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               night: _config.night, palette: _config.palette,
               renderQuality: _config.renderQuality,
               photograph: _activePreviewPhoto,
+              photoRefraction: _config.photoRefraction,
+              foamIntensity: _config.foamIntensity,
               phase: _config.reduceMotion ? 0 :
                   ((_animation.value * 240).floor() / 240) * math.pi * 2,
             ))),
