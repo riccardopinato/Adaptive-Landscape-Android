@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.BitmapRegionDecoder
 import android.graphics.Rect
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import java.io.File
 import java.io.FileOutputStream
@@ -25,6 +27,17 @@ internal object OceanPhotoStore {
     fun remove(context: Context): Boolean = !exists(context) || file(context).delete()
 
     fun import(context: Context, uri: Uri) {
+        val orientation = context.contentResolver.openInputStream(uri).use { metadata ->
+            if (metadata == null) ExifInterface.ORIENTATION_NORMAL else {
+                ExifInterface(metadata).getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+            }
+        }
+        val swapped = orientation in setOf(
+            ExifInterface.ORIENTATION_ROTATE_90,
+            ExifInterface.ORIENTATION_ROTATE_270,
+            ExifInterface.ORIENTATION_TRANSPOSE,
+            ExifInterface.ORIENTATION_TRANSVERSE)
         context.contentResolver.openInputStream(uri).use { source ->
             val decoder = BitmapRegionDecoder.newInstance(
                 requireNotNull(source) { "Could not open selected photo" }, false)
@@ -37,7 +50,7 @@ internal object OceanPhotoStore {
                 }
                 // Original photograph remains unmodified outside this app.
                 // Crop a portrait region matching typical launcher wallpaper.
-                val ratio = 9.0 / 19.5
+                val ratio = if (swapped) 19.5 / 9.0 else 9.0 / 19.5
                 val cropWidth: Int
                 val cropHeight: Int
                 if (w.toDouble() / h > ratio) {
@@ -57,10 +70,28 @@ internal object OceanPhotoStore {
                 val bitmap = requireNotNull(decoder.decodeRegion(box, options)) {
                     "Unable to decode the selected ocean photo"
                 }
-                val scale = min(1.0, min(2160.0 / bitmap.width, 3840.0 / bitmap.height))
-                val resized = if (scale < 1) Bitmap.createScaledBitmap(bitmap,
-                    (bitmap.width * scale).roundToInt().coerceAtLeast(1),
-                    (bitmap.height * scale).roundToInt().coerceAtLeast(1), true) else bitmap
+                val transform = Matrix()
+                when (orientation) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> transform.setRotate(90f)
+                    ExifInterface.ORIENTATION_ROTATE_180 -> transform.setRotate(180f)
+                    ExifInterface.ORIENTATION_ROTATE_270 -> transform.setRotate(270f)
+                    ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> transform.setScale(-1f, 1f)
+                    ExifInterface.ORIENTATION_FLIP_VERTICAL -> transform.setScale(1f, -1f)
+                    ExifInterface.ORIENTATION_TRANSPOSE -> {
+                        transform.setRotate(90f)
+                        transform.postScale(-1f, 1f)
+                    }
+                    ExifInterface.ORIENTATION_TRANSVERSE -> {
+                        transform.setRotate(270f)
+                        transform.postScale(-1f, 1f)
+                    }
+                }
+                val upright = if (transform.isIdentity) bitmap else
+                    Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, transform, true)
+                val scale = min(1.0, min(2160.0 / upright.width, 3840.0 / upright.height))
+                val resized = if (scale < 1) Bitmap.createScaledBitmap(upright,
+                    (upright.width * scale).roundToInt().coerceAtLeast(1),
+                    (upright.height * scale).roundToInt().coerceAtLeast(1), true) else upright
                 val temp = File(context.filesDir, "$NAME.tmp")
                 try {
                     FileOutputStream(temp).use {
@@ -75,7 +106,8 @@ internal object OceanPhotoStore {
                         temp.delete()
                     }
                 } finally {
-                    if (resized !== bitmap) resized.recycle()
+                    if (resized !== upright) resized.recycle()
+                    if (upright !== bitmap) upright.recycle()
                     bitmap.recycle()
                     if (temp.exists()) temp.delete()
                 }
