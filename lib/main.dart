@@ -99,10 +99,12 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     if (!WallpaperChannel.supported) return;
     try {
       final value = await _channel.read();
-      if (mounted) setState(() {
-        _nativeRenderer = value.nativeBackend;
-        _oceanPhotoEnabled = value.oceanPhotoEnabled;
-      });
+      if (mounted) {
+        setState(() {
+          _nativeRenderer = value.nativeBackend;
+          _oceanPhotoEnabled = value.oceanPhotoEnabled;
+        });
+      }
     } catch (_) { /* The wallpaper may not have been installed yet. */ }
   }
 
