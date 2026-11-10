@@ -26,7 +26,7 @@ internal object OceanPhotoStore {
     fun exists(context: Context): Boolean = file(context).isFile
     fun remove(context: Context): Boolean = !exists(context) || file(context).delete()
 
-    fun import(context: Context, uri: Uri) {
+    fun saveFromUri(context: Context, uri: Uri) {
         val orientation = context.contentResolver.openInputStream(uri).use { metadata ->
             if (metadata == null) ExifInterface.ORIENTATION_NORMAL else {
                 ExifInterface(metadata).getAttributeInt(

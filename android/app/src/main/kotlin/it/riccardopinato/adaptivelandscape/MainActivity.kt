@@ -34,7 +34,7 @@ class MainActivity : FlutterActivity() {
             val uri = data.data!!
             thread(name = "ocean-photo-import") {
                 try {
-                    OceanPhotoStore.import(this, uri)
+                    OceanPhotoStore.saveFromUri(this, uri)
                     getSharedPreferences("adaptive_landscape", MODE_PRIVATE).edit()
                         .putLong(OceanPhotoStore.CHANGE_KEY, System.currentTimeMillis()).apply()
                     runOnUiThread {
