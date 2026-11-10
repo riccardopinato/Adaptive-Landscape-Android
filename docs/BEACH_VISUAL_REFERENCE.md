@@ -14,10 +14,11 @@
 
 1. The entire canvas is a top-down view. A smooth contour separates shore (positive field) from ocean (negative field).
 2. Normalized `shore = 0.30 + 0.078 sin(5.4 y + 0.3) + 0.031 sin(14.2 y + 0.9) + 0.013 sin(29 y) - x + 0.84 occupancyInfluence(x,y)`. This is an independently designed shoreline formula.
-3. `tide = 0.017 sin(phase+6.8 y) + 0.007 sin(1.65 phase+17 y)`; positive/negative phase shifts flood/recede near the shoreline.
+3. `tide = 0.017 sin(phase+6.8 y) + 0.007 sin(2 phase+17 y)`; positive/negative phase shifts flood/recede near the shoreline.
 4. Colors progress between dry cream sand, pinkish damp sand, nearshore transparency, pale-green shoal, turquoise and deep water, with small procedural grain and moving pale surf.
-5. Geometry is cached for the same editor layout; wave appearance updates with animation phase. No images loaded over the network, no extra UI scene permissions.
-6. Any future change to the coast formula/color stops must update both Dart and Kotlin and their tests; mobile fidelity and battery tests remain deferred.
+5. Shoreline geometry including occupancy field is cached for the same editor layout; only time-dependent appearance updates each frame. All wave/foam terms are 2π-periodic to avoid a jump when the 12-second animation repeats. No images loaded over the network, no extra UI scene permissions.
+6. Android keeps the declared 20fps while visible / 8fps in battery saver schedule. Actual frame time and battery require deferred physical QA.
+7. Any future change to the coast formula/color stops must update both Dart and Kotlin and their tests; mobile fidelity and battery tests remain deferred.
 
 ## Acceptance criteria (Web first)
 

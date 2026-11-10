@@ -18,7 +18,7 @@ class BeachCoast {
   /// Waves advance and retreat along a vertical, irregular coastline.
   static double tide(double y, double phase) =>
       0.017 * math.sin(phase + y * 6.8) +
-      0.007 * math.sin(phase * 1.65 + y * 17.0);
+      0.007 * math.sin(phase * 2.0 + y * 17.0);
 
   /// Sparse deterministic micro-grain, no bitmap/network texture.
   static double grain(int x, int y) {
@@ -46,8 +46,16 @@ class BeachCoast {
   int colorAt(double x, double y, double phase, double speckle, {
     String palette = 'original',
     bool night = false,
+  }) => colorAtCached(
+        coast(x, y), x, y, phase, speckle, palette: palette, night: night,
+      );
+
+  /// Use a cached shoreline value for animation: no repeated Gaussian work.
+  int colorAtCached(double baseCoast, double x, double y, double phase, double speckle, {
+    String palette = 'original',
+    bool night = false,
   }) {
-    final s = coast(x, y) + tide(y, phase);
+    final s = baseCoast + tide(y, phase);
     var high = 1;
     while (high < stops.length - 1 && stops[high].$1 < s) {
       high++;
@@ -62,8 +70,8 @@ class BeachCoast {
     // Water caustics drift with time; wet/dry sand keeps delicate grain.
     final water = s < -0.025;
     final shimmer = water
-        ? (math.sin(y * 84 + x * 32 - phase * 2.2) +
-            math.sin(y * 133 - x * 17 + phase * 1.4)) * 2.5
+        ? (math.sin(y * 84 + x * 32 - phase * 2.0) +
+            math.sin(y * 133 - x * 17 + phase * 1.0)) * 2.5
         : 0.0;
     final noise = speckle * (water ? 6.0 : 3.0);
     r += shimmer + noise;
@@ -73,7 +81,7 @@ class BeachCoast {
     // Intermittent translucent foam at the contact line and nearshore ripples.
     final foam = math.exp(-math.pow(s / 0.012, 2).toDouble()) * 0.77 +
         math.exp(-math.pow((s + 0.068 +
-                    0.012 * math.sin(y * 22 + phase * 1.7)) / 0.008, 2).toDouble()) *
+                    0.012 * math.sin(y * 22 + phase * 2.0)) / 0.008, 2).toDouble()) *
             0.23;
     final f = foam.clamp(0.0, 0.88);
     r += (246 - r) * f;

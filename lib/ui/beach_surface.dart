@@ -24,13 +24,13 @@ class BeachSurface {
         '${zone.x.toStringAsFixed(5)},${zone.y.toStringAsFixed(5)},'
         '${zone.width.toStringAsFixed(5)},${zone.height.toStringAsFixed(5)}',
     ].join('|');
-    final mesh = _cached?.key == key ? _cached! : (_cached = _Mesh.build(key));
+    final mesh = _cached?.key == key ? _cached! : (_cached = _Mesh.build(key, field));
     final coast = BeachCoast(field);
     final colors = Int32List(mesh.positions.length ~/ 2);
 
     for (var index = 0; index < colors.length; index++) {
-      colors[index] = coast.colorAt(
-        mesh.x[index], mesh.y[index], phase, mesh.grain[index],
+      colors[index] = coast.colorAtCached(
+        mesh.coast[index], mesh.x[index], mesh.y[index], phase, mesh.grain[index],
         palette: palette, night: night,
       );
     }
@@ -46,21 +46,24 @@ class BeachSurface {
 }
 
 class _Mesh {
-  const _Mesh(this.key, this.positions, this.x, this.y, this.grain, this.indices);
+  const _Mesh(this.key, this.positions, this.x, this.y, this.coast, this.grain, this.indices);
   final String key;
   final Float32List positions; // normalized positions
   final Float32List x;
   final Float32List y;
+  final Float32List coast;
   final Float32List grain;
   final Uint16List indices;
 
-  static _Mesh build(String key) {
+  static _Mesh build(String key, IconField field) {
     // 73 × 137 = 10,001 vertices; indices fit Uint16, rendered using the GPU.
     const cols = 72, rows = 136;
     final count = (cols + 1) * (rows + 1);
     final positions = Float32List(count * 2);
     final xs = Float32List(count), ys = Float32List(count);
     final grain = Float32List(count);
+    final coastValues = Float32List(count);
+    final coast = BeachCoast(field);
     var i = 0;
     for (var row = 0; row <= rows; row++) {
       for (var col = 0; col <= cols; col++) {
@@ -69,6 +72,7 @@ class _Mesh {
         positions[i * 2 + 1] = y;
         xs[i] = x; ys[i] = y;
         grain[i] = BeachCoast.grain(col, row);
+        coastValues[i] = coast.coast(x, y);
         i++;
       }
     }
@@ -82,7 +86,7 @@ class _Mesh {
         indices[p++] = tr; indices[p++] = br; indices[p++] = bl;
       }
     }
-    return _Mesh(key, positions, xs, ys, grain, indices);
+    return _Mesh(key, positions, xs, ys, coastValues, grain, indices);
   }
 
   Float32List absolutePositions(Size size) {

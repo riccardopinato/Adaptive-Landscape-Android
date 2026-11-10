@@ -129,9 +129,9 @@ internal class CoastalBeachRenderer {
         for (y in 0 until h) {
             val ny = (y + 0.5) / h
             val tide = 0.017 * sin(phase + ny * 6.8) +
-                0.007 * sin(phase * 1.65 + ny * 17.0)
-            val nearWaveOffset = 0.068 + 0.012 * sin(ny * 22 + phase * 1.7)
-            val shimmer = sin(ny * 84 - phase * 2.2) + sin(ny * 133 + phase * 1.4)
+                0.007 * sin(phase * 2.0 + ny * 17.0)
+            val nearWaveOffset = 0.068 + 0.012 * sin(ny * 22 + phase * 2.0)
+            val shimmer = sin(ny * 84 - phase * 2.0) + sin(ny * 133 + phase * 1.0)
             for (x in 0 until w) {
                 val i = y * w + x
                 val s = land[i] + tide

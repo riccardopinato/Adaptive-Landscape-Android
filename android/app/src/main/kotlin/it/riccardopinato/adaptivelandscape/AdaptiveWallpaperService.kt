@@ -44,9 +44,7 @@ class AdaptiveWallpaperService : WallpaperService() {
 
         private fun frameDelay(): Long {
             val power = getSystemService(Context.POWER_SERVICE) as PowerManager
-            // The procedural raster is capped at 12fps to limit battery drain.
-            if (settings.scene == "beach") return if (power.isPowerSaveMode) 167L else 83L
-            return if (power.isPowerSaveMode) 125L else 50L
+            return if (power.isPowerSaveMode) 125L else 50L // 8fps / 20fps while visible
         }
 
         private fun reload() {
