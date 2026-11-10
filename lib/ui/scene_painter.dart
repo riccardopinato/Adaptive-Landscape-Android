@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../core/icon_field.dart';
+import 'beach_surface.dart';
 
 /// Original vector preview; matches the versioned Android Canvas scene model.
 class ScenePainter extends CustomPainter {
@@ -17,6 +18,10 @@ class ScenePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (scene == 'beach') {
+      BeachSurface.paint(canvas, size, field, phase, palette: palette, night: night);
+      return;
+    }
     final w = size.width, h = size.height;
     final beach = scene == 'beach';
     final sunset = palette == 'sunset', mint = palette == 'mint';
