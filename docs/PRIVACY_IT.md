@@ -19,3 +19,21 @@ I profili restano nella memoria locale dell'app. L'utente può eliminare i profi
 ### Materiale da verificare prima dello Store
 
 Dichiarazione Data Safety Google Play, eventuali backup Android automatici della app, eventuali modifiche a dipendenze/analytics/pubblicità future, titolare del trattamento e contatto di privacy. Non presentare questa bozza come informativa definitiva.
+
+
+### v0.4.2 — Foto marina scelta dall'utente
+
+Su Android l'utente può selezionare volontariamente una fotografia del mare
+tramite il selettore file di sistema. Il file viene validato e ricodificato
+come JPEG per rimuovere i metadati, poi conservato esclusivamente nella
+cartella privata `noBackupFilesDir` dell'app, esclusa dal normale backup
+automatico Android. La fotografia non viene caricata su alcun server, non
+viene inserita nell'esportazione dei profili e non richiede permessi di
+accesso generale alla galleria. È condivisa localmente tra i profili
+Spiaggia, sostituibile ed eliminabile mediante il comando «Rimuovi foto».
+La disinstallazione/cancellazione dati rimuove anche la copia privata.
+
+La fotografia **non è** lo screenshot Home usato solo temporaneamente per
+calibrare le icone: quest'ultimo continua a non essere conservato.
+Verificare fisicamente anche il comportamento su backup personalizzati OEM
+prima di pubblicare sullo Store.
