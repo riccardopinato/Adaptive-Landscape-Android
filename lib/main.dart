@@ -315,12 +315,12 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         Row(children: [
           Expanded(child: Text('${l.columns}: ${_config.columns}')),
           Expanded(child: Slider(min: 3, max: 8, divisions: 5, value: _config.columns.toDouble(),
-            label: '${_config.columns}', onChanged: (v) => _apply(_config.copyWith(columns: v.round(), occupied: {}))),
+            label: '${_config.columns}', onChanged: (v) => _apply(_config.copyWith(columns: v.round(), occupied: {})))),
         ]),
         Row(children: [
           Expanded(child: Text('${l.rows}: ${_config.rows}')),
           Expanded(child: Slider(min: 3, max: 12, divisions: 9, value: _config.rows.toDouble(),
-            label: '${_config.rows}', onChanged: (v) => _apply(_config.copyWith(rows: v.round(), occupied: {}))),
+            label: '${_config.rows}', onChanged: (v) => _apply(_config.copyWith(rows: v.round(), occupied: {})))),
         ]),
       ],
       Row(children: [
@@ -440,7 +440,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             Positioned(top: 12, left: 0, right: 0,
               child: IgnorePointer(child: Center(child: Text('9:41',
                 style: TextStyle(fontSize: w * 0.075, color: const Color(0xff204d59),
-                  fontWeight: FontWeight.w300)))),
+                  fontWeight: FontWeight.w300))))),
           ])),
         );
       })),
