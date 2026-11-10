@@ -21,3 +21,14 @@
 - No GPL-3.0 Deskland code/assets copied; review original art/commercial branding.
 - Keep source and package provenance with per-release SHA and artifact hash.
 - Do not add INTERNET/AccessibilityService/MediaProjection/QUERY_ALL_PACKAGES without a new written purpose and privacy review.
+
+## v0.4.2–v0.4.6 physical acceptance gate
+
+Do not equate source build with visual acceptance. Full human test protocol:
+[PHYSICAL_QA_V042_V046.md](PHYSICAL_QA_V042_V046.md).
+A higher versionCode does **not** allow an update if GitHub CI created
+an APK signed with a different ephemeral debug certificate. Export any
+profiles before considering uninstall; do not force data removal.
+Release signing remains outside GitHub until a private key handling process
+is independently approved. Stacked PRs are not approved to merge pending
+real-photo appearance, icon alignment, battery and device evidence.
