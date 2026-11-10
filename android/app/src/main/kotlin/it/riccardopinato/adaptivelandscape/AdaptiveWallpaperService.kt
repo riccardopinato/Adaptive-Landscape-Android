@@ -115,7 +115,7 @@ class AdaptiveWallpaperService : WallpaperService() {
                     12000.0 * 2 * PI * settings.motion
                 if (gpuOcean.render(surfaceHolder.surface,
                         frameSize.width(), frameSize.height(), settings, phase)) {
-                    reportBackend("gpu_native")
+                    reportBackend(if (gpuOcean.photoActive) "gpu_native_photo" else "gpu_native")
                     return
                 }
                 // A driver with no EGL2 support must keep the wallpaper visible.

@@ -23,6 +23,7 @@ import kotlin.math.PI
  */
 internal class GpuOceanRenderer(context: Context) {
     private val oceanPhoto = OceanTexture(context)
+    val photoActive: Boolean get() = oceanPhoto.available
     private var display: EGLDisplay = EGL14.EGL_NO_DISPLAY
     private var context: EGLContext = EGL14.EGL_NO_CONTEXT
     private var window: EGLSurface = EGL14.EGL_NO_SURFACE

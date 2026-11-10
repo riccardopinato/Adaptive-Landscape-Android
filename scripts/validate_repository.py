@@ -71,5 +71,5 @@ assert 'BitmapRegionDecoder' in store and 'ocean_wallpaper_user.jpg' in store
 assert 'GLUtils.texImage2D' in texture and 'ARGB_8888' in texture
 assert 'uniform sampler2D uOcean;' in engine and 'uPhotoActive' in engine
 assert 'pickOceanPhoto' in activity and 'clearOceanPhoto' in activity
-assert 'INTERNET' not in (native.parents[5] / 'AndroidManifest.xml').read_text(encoding='utf-8') if False else True
+assert 'android.permission.INTERNET' not in (root / 'android/app/src/main/AndroidManifest.xml').read_text(encoding='utf-8')
 print('PASS: user-selected, offline native photo texture with no bundled stock image')
