@@ -76,3 +76,23 @@ The new `GpuOceanRenderer.kt` creates an EGL14/GLES20 context directly on the wa
 Because a generic WallpaperService has **no launcher icon-position API**, automatic icon detection is NOT delivered. Instead the Android app offers **one-time screenshot-assisted manual calibration**: take a Home screenshot yourself, pick it with Android's document picker (no media permission), tap icon/folder positions on the overlay and mark widget zones. The screenshot remains in memory in this editing session and is never saved or transmitted by the app. This is a pragmatic alternative, **not automatic detection**, and launcher coordinates/insets require on-device checking.
 
 No new AccessibilityService, overlay, media-projection or network permissions. APK from the PR must be **user-tested before merge or any assertion of correctness**.
+
+
+## Beach v0.4.2 — photographic ocean (Android-only experimental branch)
+
+The **user selects an actual overhead/open-water photograph** via Android's
+system document picker. A bounded, metadata-free JPEG copy lives only in
+app-private no-backup storage. The native GLES2 renderer samples this image
+with very subtle, continuous UV motion, layers the existing occupancy-only
+sand/soft wash, and attenuates the formerly artificial procedural patterns.
+
+**No real photograph is shipped in the app.** The result only becomes
+photographic when the user supplies a suitable photo. The old synthetic GPU
+water remains a fallback, and Web preview still shows Web procedural water.
+The editor states these differences explicitly. A saved photo is shared
+across Beach layouts on this device and is not part of exported JSON profiles.
+Image import is optional, no Internet or broad media permission is requested.
+
+This change is stacked on the unmerged v0.4.1 PR. It is **not certified**:
+mobile appearance, EGL upload, animation quality and battery require physical
+testing. See [docs/BEACH_PHOTOGRAPHIC_V042.md](docs/BEACH_PHOTOGRAPHIC_V042.md).
