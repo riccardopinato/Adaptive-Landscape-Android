@@ -60,5 +60,13 @@
   "screenshotCalibrationHint": "Erstelle einen Screenshot des Startbildschirms, wähle ihn aus und markiere die Symbole und Ordner in der Vorschau. Widgets über Zonen markieren. Das Bild wird weder gespeichert noch übertragen. Positionen hängen vom Launcher ab.",
   "nativeGpuActive": "Android: OpenGL in Bildschirmauflösung (am Startbildschirm prüfen)",
   "nativeGpuFallback": "Android: OpenGL nicht verfügbar; unscharfe Canvas-Notdarstellung aktiv.",
-  "nativeGpuUnknown": "Android: Rendererstatus unbekannt. Hintergrund festlegen und App erneut öffnen."
+  "nativeGpuUnknown": "Android: Rendererstatus unbekannt. Hintergrund festlegen und App erneut öffnen.",
+  "oceanPhotoTitle": "Fotografisches Meer (Android)",
+  "importOceanPhoto": "Meeresfoto auswählen",
+  "clearOceanPhoto": "Foto entfernen",
+  "oceanPhotoSelected": "Foto privat auf diesem Gerät gespeichert",
+  "oceanPhotoNotSelected": "Noch kein Meeresfoto ausgewählt",
+  "oceanPhotoHint": "Wähle ein scharfes Foto des Meeres von oben (JPG/PNG, mindestens 720 px, maximal 12 MB). Eine optimierte Kopie ohne Metadaten bleibt privat auf dem Gerät. Kein Upload und keine Fotoberechtigung.",
+  "oceanPhotoAndroidOnly": "Im Webeditor bleibt die prozedurale Vorschau. Prüfe die Fotoqualität auf dem echten Android-Startbildschirm.",
+  "nativePhotoGpuActive": "Android: fotografische Meerestextur auf nativer GPU (Startbildschirm prüfen)"
 }
