@@ -66,5 +66,6 @@
   "clearOceanPhoto": "Quitar foto del mar",
   "oceanPhotoReady": "Foto del mar guardada localmente. Abre de nuevo el fondo para comprobar.",
   "oceanPhotoMissing": "No hay foto seleccionada: se muestra el mar procedural.",
-  "oceanPhotoHint": "Elige una foto real del mar desde arriba, preferiblemente 4K y sin costa ni horizonte. La app guarda solo una copia privada local. La refracción suave le da movimiento."
+  "oceanPhotoHint": "Elige una foto real del mar desde arriba, preferiblemente 4K y sin costa ni horizonte. La app guarda solo una copia privada local. La refracción suave le da movimiento.",
+  "nativePhotoGpuActive": "Android: OpenGL con foto real del mar activa"
 }

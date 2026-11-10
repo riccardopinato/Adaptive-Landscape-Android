@@ -66,5 +66,6 @@
   "clearOceanPhoto": "Rimuovi foto del mare",
   "oceanPhotoReady": "Foto marina locale attiva. Riapri lo sfondo per verificarla.",
   "oceanPhotoMissing": "Nessuna fotografia selezionata: viene usato il mare procedurale.",
-  "oceanPhotoHint": "Scegli una foto reale del mare dall'alto, possibilmente 4K, senza spiagge né orizzonte. L'app ritaglia e salva soltanto una copia privata sul telefono; non la carica online. La foto rimane statica nella sua struttura, con leggera rifrazione animata."
+  "oceanPhotoHint": "Scegli una foto reale del mare dall'alto, possibilmente 4K, senza spiagge né orizzonte. L'app ritaglia e salva soltanto una copia privata sul telefono; non la carica online. La foto rimane statica nella sua struttura, con leggera rifrazione animata.",
+  "nativePhotoGpuActive": "Android: OpenGL con fotografia marina attiva"
 }

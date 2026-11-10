@@ -572,6 +572,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       const SizedBox(height: 10),
       Text(WallpaperChannel.supported ? l.wallpaperHint : l.unsupported, style: style.bodySmall),
       if (WallpaperChannel.supported) Text(
+        _nativeRenderer == 'gpu_native_photo' ? l.nativePhotoGpuActive :
         _nativeRenderer == 'gpu_native' ? l.nativeGpuActive :
         _nativeRenderer == 'cpu_360px_fallback' ? l.nativeGpuFallback :
         l.nativeGpuUnknown, style: style.bodySmall,

@@ -66,5 +66,6 @@
   "clearOceanPhoto": "Remove ocean photo",
   "oceanPhotoReady": "Local ocean photograph enabled. Reopen the wallpaper to verify it.",
   "oceanPhotoMissing": "No photograph selected: procedural ocean is in use.",
-  "oceanPhotoHint": "Choose a real high-resolution overhead ocean photo, preferably 4K, without beach or horizon. The app crops and stores a private copy on your phone only; no uploads. Subtle refraction animates it."
+  "oceanPhotoHint": "Choose a real high-resolution overhead ocean photo, preferably 4K, without beach or horizon. The app crops and stores a private copy on your phone only; no uploads. Subtle refraction animates it.",
+  "nativePhotoGpuActive": "Android: OpenGL with real ocean photo active"
 }

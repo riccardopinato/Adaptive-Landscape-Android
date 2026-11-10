@@ -66,5 +66,6 @@
   "clearOceanPhoto": "Meeresfoto entfernen",
   "oceanPhotoReady": "Lokales Meeresfoto gespeichert. Hintergrund erneut öffnen und prüfen.",
   "oceanPhotoMissing": "Kein Foto gewählt: prozedurales Meer wird verwendet.",
-  "oceanPhotoHint": "Wähle ein echtes hochauflösendes Meeresfoto von oben, möglichst 4K, ohne Strand oder Horizont. Die App speichert nur eine private lokale Kopie. Sanfte Brechung animiert das Bild."
+  "oceanPhotoHint": "Wähle ein echtes hochauflösendes Meeresfoto von oben, möglichst 4K, ohne Strand oder Horizont. Die App speichert nur eine private lokale Kopie. Sanfte Brechung animiert das Bild.",
+  "nativePhotoGpuActive": "Android: OpenGL mit echtem Meeresfoto aktiv"
 }

@@ -66,5 +66,6 @@
   "clearOceanPhoto": "Supprimer la photo",
   "oceanPhotoReady": "Photo de mer enregistrée localement. Rouvrez le fond pour vérifier.",
   "oceanPhotoMissing": "Aucune photo choisie : rendu de mer procédural.",
-  "oceanPhotoHint": "Choisissez une photo réelle de mer vue du dessus, idéalement en 4K, sans plage ni horizon. L'app conserve une copie privée sur le téléphone uniquement. Une légère réfraction l'anime."
+  "oceanPhotoHint": "Choisissez une photo réelle de mer vue du dessus, idéalement en 4K, sans plage ni horizon. L'app conserve une copie privée sur le téléphone uniquement. Une légère réfraction l'anime.",
+  "nativePhotoGpuActive": "Android : OpenGL avec photo de mer active"
 }
