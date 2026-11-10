@@ -65,3 +65,22 @@ Beach v0.2 sky/sun/cloud scene rejected as inconsistent with the intended origin
 - **CODED PR**: EGL14/GLES20 ocean renderer for native WallpaperService, per-device framebuffer-size pixel shading (not a 4K photographic source), animated caustics/feathered foam, respect native `renderQuality`, direct 360px CPU fallback if GPU unavailable and visible renderer diagnostic.
 - **CODED PR**: opt-in Android document picker to select a user-produced Home screenshot *for in-memory editor overlay*; no additional permission and no screenshot persistence. This is guided **manual** icon/widget/dock calibration, NOT launcher auto detection.
 - **REQUIRED DEVICE QA BEFORE MERGE**: verify GPU status, actual FPS/grain/wave, screenshot mapping across navigation/dock and icon clusters; record exact APK + device/launcher. Do not say "4K photorealism achieved" until proven. Keep auto-icon detection scoped to separate policy/consent research gate.
+
+
+## Beach v0.4.2 — photographic image source, separate stacked PR
+
+- [CODED] Native offline user-selected JPG/PNG photograph, bounded processing,
+  EXIF stripping, app-private no-backup persistence and removal.
+- [CODED] EGL/GLES2 blends real photo, subtle looped refraction and existing
+  manual-occupancy sand mask. Photo upload on file change/context recreation.
+- [CODED] Localized UI in six languages and distinct native backend indicator;
+  Web preview is explicitly not a photographic Android preview.
+- [CODED] version 0.4.2+9; follows v0.4.1+8 without data migration.
+- [PENDING CI] GitHub Actions Flutter analyze/test/Web/Android builds against
+  the stacked PR source SHA; failing build blocks merge.
+- [PENDING PHYSICAL] Real-photo source, visual realism, shore/launcher
+  calibration, seamless motion, lifecycle, battery, thermal and install/update.
+- [DO NOT MERGE] PR #13 remains unmerged; this branch targets its exact
+  head and is **not** a production Play candidate.
+
+Detailed user test contract: [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V042.md).

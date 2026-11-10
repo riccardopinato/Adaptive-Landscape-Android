@@ -43,3 +43,20 @@ Do not mark these PASS from GitHub Actions alone. Store release, donor certifica
 - Screenshot-assisted calibration: user supplies their own Home screenshot using system picker; taps icon/folder positions and widget rectangles; checks current dock separately; only then can shoreline follow marked positions. Screenshot never automatically read, saved or transmitted; test portrait crop/navigation bars.
 - **Auto-detection** of launcher icons is **not implemented**. Generic `WallpaperService` provides no icon coordinates. AccessibilityService would require separate opt-in and Google Play disclosure/consent; do not silently add it.
 - Web GPU and Android EGL2 are distinct implementations; no pixel-equivalence guaranteed. Native 4K target is framebuffer shading, not a real 4K photographic texture.
+
+
+## v0.4.2 photographic native Android gate (NOT RUN)
+
+| ID | Scenario | Required evidence |
+|---|---|---|
+| P29 | Import overhead open-water photo | JPG/PNG accepted; status only changes after valid persisted import |
+| P30 | Replace photo, cancel picker, import corrupt/oversize | Previous valid photo preserved; cancellation no-op; errors visible |
+| P31 | Restart/force stop/reboot & no-backup file | Image preserved after lifecycle; absent in Android auto-backup |
+| P32 | Renderer source | `gpu_photo_native` on actual rendered Home; no false photo claim on CPU/GPU fallback |
+| P33 | Ocean-only / marked icons | No sand with empty layout; manual regions trigger soft coast |
+| P34 | Motion & perceptual QA | 12-second loop, subtle waves/no visible procedural tiling |
+| P35 | 30-minute test | FPS, frame time, memory, battery and temperature on hardware |
+| P36 | 0.4.1 -> 0.4.2 in-place upgrade | Same app id and signature, higher versionCode, profiles preserved |
+
+Web photo rendering and automatic launcher icon detection are **not part of
+v0.4.2**. See [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V042.md).

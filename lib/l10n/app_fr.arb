@@ -60,5 +60,13 @@
   "screenshotCalibrationHint": "Prenez une capture d'écran d'accueil, choisissez-la ici puis marquez les icônes et dossiers. Pour les widgets, utilisez Zones. La capture est temporaire et n'est ni stockée ni envoyée. Les positions dépendent du lanceur.",
   "nativeGpuActive": "Android : rendu OpenGL à la résolution de l'écran (à vérifier)",
   "nativeGpuFallback": "Android : OpenGL indisponible ; rendu Canvas de secours de faible qualité.",
-  "nativeGpuUnknown": "Android : statut du rendu indisponible. Installez le fond puis rouvrez l'application."
+  "nativeGpuUnknown": "Android : statut du rendu indisponible. Installez le fond puis rouvrez l'application.",
+  "oceanPhotoTitle": "Océan photographique (Android)",
+  "importOceanPhoto": "Choisir une photo de mer",
+  "clearOceanPhoto": "Supprimer la photo",
+  "oceanPhotoSelected": "Photo stockée en privé sur cet appareil",
+  "oceanPhotoNotSelected": "Aucune photo de mer sélectionnée",
+  "oceanPhotoHint": "Choisissez une photo nette de l'eau vue du dessus (JPG/PNG, 720 px minimum, 12 Mo maximum). Une copie optimisée sans métadonnées reste sur l'appareil. Aucun envoi ni autorisation photo.",
+  "oceanPhotoAndroidOnly": "L'éditeur Web affiche encore un aperçu procédural. Vérifiez le rendu photographique sur l'écran d'accueil Android.",
+  "nativePhotoGpuActive": "Android : texture marine photographique sur GPU natif (à vérifier sur l'accueil)"
 }

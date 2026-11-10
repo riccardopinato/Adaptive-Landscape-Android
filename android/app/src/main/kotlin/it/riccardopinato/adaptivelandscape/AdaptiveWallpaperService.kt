@@ -63,7 +63,9 @@ class AdaptiveWallpaperService : WallpaperService() {
         }
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
-            if (key == "scene" || key == "occupied" || key == "config_v2") {
+            if (key == "ocean_photo_generation_v1") gpuOcean.invalidatePhotograph()
+            if (key == "scene" || key == "occupied" || key == "config_v2" ||
+                key == "ocean_photo_generation_v1") {
                 reload()
                 handler.removeCallbacks(frame)
                 if (visible) handler.post(frame)
@@ -111,9 +113,9 @@ class AdaptiveWallpaperService : WallpaperService() {
                 val phase = if (settings.staticScene) 0.0 else
                     (SystemClock.uptimeMillis() - startTime).coerceAtLeast(0L) /
                     12000.0 * 2 * PI * settings.motion
-                if (gpuOcean.render(surfaceHolder.surface,
+                if (gpuOcean.render(this@AdaptiveWallpaperService, surfaceHolder.surface,
                         frameSize.width(), frameSize.height(), settings, phase)) {
-                    reportBackend("gpu_native")
+                    reportBackend(if (gpuOcean.photographActive) "gpu_photo_native" else "gpu_native")
                     return
                 }
                 // A driver with no EGL2 support must keep the wallpaper visible.

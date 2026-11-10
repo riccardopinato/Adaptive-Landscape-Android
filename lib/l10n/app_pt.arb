@@ -60,5 +60,13 @@
   "screenshotCalibrationHint": "Faz uma captura do ecrã inicial, seleciona-a e marca ícones e pastas na prévia. Para widgets usa Zonas. A imagem é temporária, não é guardada nem enviada. As posições dependem do launcher.",
   "nativeGpuActive": "Android: OpenGL à resolução do ecrã (verificar no ecrã inicial)",
   "nativeGpuFallback": "Android: OpenGL indisponível; renderização Canvas de baixa qualidade.",
-  "nativeGpuUnknown": "Android: estado do motor indisponível. Aplica o papel de parede e reabre a app."
+  "nativeGpuUnknown": "Android: estado do motor indisponível. Aplica o papel de parede e reabre a app.",
+  "oceanPhotoTitle": "Oceano fotográfico (Android)",
+  "importOceanPhoto": "Escolher foto do mar",
+  "clearOceanPhoto": "Remover foto",
+  "oceanPhotoSelected": "Foto guardada de forma privada neste dispositivo",
+  "oceanPhotoNotSelected": "Ainda não foi selecionada uma foto do mar",
+  "oceanPhotoHint": "Escolha uma foto nítida do mar visto de cima (JPG/PNG, pelo menos 720 px, até 12 MB). Uma cópia otimizada sem metadados fica apenas no dispositivo. Sem envio nem permissão para fotos.",
+  "oceanPhotoAndroidOnly": "O editor Web continua a mostrar a pré-visualização procedural. Avalie a qualidade fotográfica no ecrã inicial Android.",
+  "nativePhotoGpuActive": "Android: textura fotográfica do oceano na GPU nativa (verificar no ecrã inicial)"
 }

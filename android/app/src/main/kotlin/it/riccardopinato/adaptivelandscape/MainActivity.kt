@@ -14,13 +14,34 @@ import org.json.JSONObject
 class MainActivity : FlutterActivity() {
     companion object {
         private const val SCREENSHOT_PICKER = 9127
+        private const val OCEAN_PHOTO_PICKER = 9128
         private const val MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024
     }
 
     private var screenshotResult: MethodChannel.Result? = null
+    private var oceanPhotoResult: MethodChannel.Result? = null
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == OCEAN_PHOTO_PICKER) {
+            val callback = oceanPhotoResult ?: return
+            oceanPhotoResult = null
+            if (resultCode != Activity.RESULT_OK || data?.data == null) {
+                callback.success(false)
+                return
+            }
+            val uri = data.data!!
+            // Decode/resize and disk I/O must never block the Android UI thread.
+            Thread {
+                val operation = runCatching { OceanPhotoStore.importPhoto(applicationContext, uri) }
+                runOnUiThread {
+                    operation.onSuccess { callback.success(true) }
+                        .onFailure { error -> callback.error("OCEAN_PHOTO_REJECTED",
+                            error.message ?: "Unable to import ocean photograph", null) }
+                }
+            }.start()
+            return
+        }
         if (requestCode != SCREENSHOT_PICKER) return
         val callback = screenshotResult ?: return
         screenshotResult = null
@@ -58,6 +79,7 @@ class MainActivity : FlutterActivity() {
                         "occupied" to prefs.getString("occupied", ""),
                         "config" to prefs.getString("config_v2", null),
                         "backend" to prefs.getString("render_backend_v1", "not_started"),
+                        "oceanPhoto" to OceanPhotoStore.exists(this),
                     ))
                     "save" -> {
                         val scene = call.argument<String>("scene")
@@ -84,7 +106,7 @@ class MainActivity : FlutterActivity() {
                         else result.error("SAVE_FAILED", "Could not save wallpaper settings.", null)
                     }
                     "pickHomeScreenshot" -> {
-                        if (screenshotResult != null) {
+                        if (screenshotResult != null || oceanPhotoResult != null) {
                             result.error("IMAGE_BUSY", "An image selection is already in progress.", null)
                             return@setMethodCallHandler
                         }
@@ -100,6 +122,33 @@ class MainActivity : FlutterActivity() {
                         } catch (_: Exception) {
                             screenshotResult = null
                             result.error("IMAGE_PICKER_UNAVAILABLE", "Could not open screenshot picker.", null)
+                        }
+                    }
+                    "pickOceanPhoto" -> {
+                        if (oceanPhotoResult != null || screenshotResult != null) {
+                            result.error("IMAGE_BUSY", "Another image selection is active", null)
+                            return@setMethodCallHandler
+                        }
+                        oceanPhotoResult = result
+                        try {
+                            startActivityForResult(
+                                Intent(Intent.ACTION_OPEN_DOCUMENT)
+                                    .addCategory(Intent.CATEGORY_OPENABLE)
+                                    .setType("image/*")
+                                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+                                OCEAN_PHOTO_PICKER
+                            )
+                        } catch (_: Exception) {
+                            oceanPhotoResult = null
+                            result.error("IMAGE_PICKER_UNAVAILABLE", "Cannot open photo picker", null)
+                        }
+                    }
+                    "clearOceanPhoto" -> {
+                        try {
+                            OceanPhotoStore.clear(this)
+                            result.success(null)
+                        } catch (error: Exception) {
+                            result.error("OCEAN_PHOTO_REMOVE_FAILED", error.message, null)
                         }
                     }
                     "openPicker" -> {

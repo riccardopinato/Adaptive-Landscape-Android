@@ -60,6 +60,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   String? _error;
   Uint8List? _homeScreenshot;
   String? _nativeRenderer;
+  bool _oceanPhotoEnabled = false;
 
   // The reset is explicit and applies to the selected profile only.
   void _showOnlyOcean() => _apply(_config.copyWith(
@@ -98,8 +99,35 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     if (!WallpaperChannel.supported) return;
     try {
       final value = await _channel.read();
-      if (mounted) setState(() => _nativeRenderer = value.nativeBackend);
+      if (mounted) {
+        setState(() {
+          _nativeRenderer = value.nativeBackend;
+          _oceanPhotoEnabled = value.oceanPhotoEnabled;
+        });
+      }
     } catch (_) { /* The wallpaper may not have been installed yet. */ }
+  }
+
+  Future<void> _pickOceanPhoto() async {
+    if (!WallpaperChannel.supported) return;
+    try {
+      final imported = await _channel.pickOceanPhoto();
+      if (imported) {
+        await _refreshNativeRenderer();
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    }
+  }
+
+  Future<void> _clearOceanPhoto() async {
+    if (!WallpaperChannel.supported) return;
+    try {
+      await _channel.clearOceanPhoto();
+      await _refreshNativeRenderer();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    }
   }
 
   Future<void> _pickScreenshot() async {
@@ -410,6 +438,29 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             style: style.bodySmall,
           ),
         ),
+      if (_config.scene == 'beach' && WallpaperChannel.supported) ...[
+        section(l.oceanPhotoTitle),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          OutlinedButton.icon(
+            key: const Key('al-import-ocean-photo'),
+            onPressed: _pickOceanPhoto,
+            icon: const Icon(Icons.add_photo_alternate_outlined),
+            label: Text(l.importOceanPhoto),
+          ),
+          if (_oceanPhotoEnabled) TextButton.icon(
+            key: const Key('al-clear-ocean-photo'),
+            onPressed: _clearOceanPhoto,
+            icon: const Icon(Icons.delete_outline),
+            label: Text(l.clearOceanPhoto),
+          ),
+        ]),
+        const SizedBox(height: 5),
+        Text(_oceanPhotoEnabled ? l.oceanPhotoSelected : l.oceanPhotoNotSelected,
+          key: const Key('al-ocean-photo-status'), style: style.bodySmall),
+        Text(l.oceanPhotoHint, style: style.bodySmall),
+        const SizedBox(height: 5),
+        Text(l.oceanPhotoAndroidOnly, style: style.bodySmall),
+      ],
       section(l.selectIcons),
       Text(l.selectIconsHint, style: style.bodySmall),
       if (WallpaperChannel.supported) ...[
@@ -526,13 +577,14 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       const SizedBox(height: 10),
       Text(WallpaperChannel.supported ? l.wallpaperHint : l.unsupported, style: style.bodySmall),
       if (WallpaperChannel.supported) Text(
+        _nativeRenderer == 'gpu_photo_native' ? l.nativePhotoGpuActive :
         _nativeRenderer == 'gpu_native' ? l.nativeGpuActive :
         _nativeRenderer == 'cpu_360px_fallback' ? l.nativeGpuFallback :
         l.nativeGpuUnknown, style: style.bodySmall,
         key: const Key('al-native-renderer-status'),
       ),
       const SizedBox(height: 6),
-      const Text('Beach Web + Android v0.4.1', style: TextStyle(fontSize: 11)),
+      const Text('Beach Web + Android v0.4.2', style: TextStyle(fontSize: 11)),
       if (_error != null) SelectableText('${l.failure}: $_error',
         style: TextStyle(color: Theme.of(context).colorScheme.error)),
     ]);

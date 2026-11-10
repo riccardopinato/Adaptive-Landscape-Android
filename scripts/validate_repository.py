@@ -60,3 +60,19 @@ assert 'ACTION_OPEN_DOCUMENT' in activity and 'pickHomeScreenshot' in activity
 assert 'AccessibilityService' not in (root / 'android/app/src/main/AndroidManifest.xml').read_text(encoding='utf-8')
 assert 'SYSTEM_ALERT_WINDOW' not in (root / 'android/app/src/main/AndroidManifest.xml').read_text(encoding='utf-8')
 print('PASS: native EGL framebuffer renderer, privacy-safe manual screenshot calibration contract')
+
+# v0.4.2: offline photographic source and controlled native renderer switching.
+photo = (base / 'OceanPhotoStore.kt').read_text(encoding='utf-8')
+assert 'MAX_INPUT_BYTES' in photo and 'MAX_DECODED_PIXELS' in photo
+assert 'inJustDecodeBounds' in photo and 'FileOutputStream(candidate)' in photo
+assert 'ACTION_OPEN_DOCUMENT' in activity and 'pickOceanPhoto' in activity
+assert 'clearOceanPhoto' in activity and 'OceanPhotoStore.exists' in activity
+assert 'ocean_photo_generation_v1' in engine and 'gpu_photo_native' in engine
+assert 'uniform sampler2D uOceanPhoto;' in gpu and 'GLUtils.texImage2D' in gpu
+assert 'photographActive' in gpu and 'photoDrift' in gpu
+channel = (root / 'lib/platform/wallpaper_channel.dart').read_text(encoding='utf-8')
+assert 'pickOceanPhoto' in channel and 'clearOceanPhoto' in channel
+dart = (root / 'lib/main.dart').read_text(encoding='utf-8')
+assert 'al-import-ocean-photo' in dart and 'al-ocean-photo-status' in dart
+assert '0.4.2+9' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+print('PASS: v0.4.2 local photo import, metadata stripping, GPU texture and UI contract')

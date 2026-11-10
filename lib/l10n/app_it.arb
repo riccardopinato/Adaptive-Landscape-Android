@@ -60,5 +60,13 @@
   "screenshotCalibrationHint": "Fai uno screenshot della Home, selezionalo qui e tocca nell'anteprima le posizioni di app e cartelle. Per i widget usa «Zone». La foto è temporanea e non viene inviata né salvata dall'app. La posizione reale può variare secondo il launcher.",
   "nativeGpuActive": "Android: rendering OpenGL a risoluzione dello schermo (da verificare sulla Home)",
   "nativeGpuFallback": "Android: OpenGL non disponibile; è attiva la vecchia resa sgranata di emergenza.",
-  "nativeGpuUnknown": "Android: stato del wallpaper non ancora disponibile. Installa il wallpaper e riapri l'app."
+  "nativeGpuUnknown": "Android: stato del wallpaper non ancora disponibile. Installa il wallpaper e riapri l'app.",
+  "oceanPhotoTitle": "Mare fotografico (Android)",
+  "importOceanPhoto": "Scegli foto del mare",
+  "clearOceanPhoto": "Rimuovi foto",
+  "oceanPhotoSelected": "Foto salvata in privato su questo dispositivo",
+  "oceanPhotoNotSelected": "Nessuna foto del mare ancora selezionata",
+  "oceanPhotoHint": "Scegli una foto nitida del mare ripreso dall'alto (JPG/PNG, almeno 720 px, massimo 12 MB). L'app conserva una copia ottimizzata senza metadati, solo sul dispositivo. Nessun invio o permesso alle foto.",
+  "oceanPhotoAndroidOnly": "L'editor Web mostra ancora l'anteprima procedurale: valuta il mare fotografico sulla Home Android reale.",
+  "nativePhotoGpuActive": "Android: texture marina fotografica sulla GPU nativa (da verificare sulla Home)"
 }

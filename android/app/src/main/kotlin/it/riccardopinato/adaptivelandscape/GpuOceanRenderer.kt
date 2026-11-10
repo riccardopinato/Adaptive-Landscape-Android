@@ -1,5 +1,8 @@
 package it.riccardopinato.adaptivelandscape
 
+import android.content.Context
+import android.graphics.BitmapFactory
+import android.opengl.GLUtils
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.EGLContext
@@ -29,6 +32,11 @@ internal class GpuOceanRenderer {
     private var surfaceHeight = 0
     private var shaderProgram = 0
     private var maskTexture = 0
+    private var photoTexture = 0
+    private var photoFingerprint = Long.MIN_VALUE
+    var photographActive = false
+        private set
+    private var photographAspect = 1f
     private var currentConfig: WallpaperState? = null
     private var disabledForSurface = false
     private val quad: FloatBuffer = ByteBuffer.allocateDirect(8 * 4)
@@ -56,6 +64,9 @@ internal class GpuOceanRenderer {
         uniform float uQuality;
         uniform float uHasLand;
         uniform sampler2D uMask;
+        uniform sampler2D uOceanPhoto;
+        uniform float uHasPhoto;
+        uniform vec2 uPhotoScale;
 
         float hash(vec2 p) {
             p = fract(p * vec2(123.34, 456.21));
@@ -115,8 +126,21 @@ internal class GpuOceanRenderer {
             vec3 aqua = vec3(0.026, 0.660, 0.715);
             vec3 lagoon = vec3(0.276, 0.820, 0.754);
             vec3 water = mix(deep, aqua, 0.30 + 0.50 * slow);
-            water = mix(water, lagoon, wet * 0.66);
-            water += (medium - 0.48) * vec3(0.065, 0.082, 0.076);
+            // A genuine user-selected photograph supplies the optical structure.
+            // Only a very small cyclic displacement is used: no synthetic waves
+            // or harsh caustics should paint over real photographic detail.
+            vec2 photoDrift = vec2(
+                0.0022 * sin(uv.y * 19.0 + t) +
+                0.0011 * sin(uv.x * 37.0 - t * 2.0),
+                0.0017 * sin(uv.x * 23.0 - t) +
+                0.0009 * sin(uv.y * 32.0 + t * 2.0)
+            );
+            vec2 coverUv = (uv + photoDrift - 0.5) * uPhotoScale + 0.5;
+            vec3 photograph = texture2D(uOceanPhoto,
+                clamp(coverUv, vec2(0.001), vec2(0.999))).rgb;
+            water = mix(water, photograph, uHasPhoto);
+            water = mix(water, lagoon, wet * (0.66 - 0.55 * uHasPhoto));
+            water += (medium - 0.48) * vec3(0.065, 0.082, 0.076) * (1.0 - 0.90 * uHasPhoto);
 
             // Deliberately visible, fluid caustics; no nearest-neighbor pixels.
             float scaleX = min(200.0, uResolution.x * 0.25);
@@ -128,18 +152,18 @@ internal class GpuOceanRenderer {
             float b = sin(waves.y * 0.83 - waves.x * 0.55 -
                           t + slow * 5.3);
             float crest = pow(max(0.0, 1.0 - abs(a * 0.6 + b * 0.4)), 10.0);
-            float light = (0.040 + wet * 0.082) * crest;
+            float light = (0.040 + wet * 0.082) * crest * (1.0 - 0.87 * uHasPhoto);
             water += light * vec3(0.75, 0.99, 0.91);
             if (uQuality > 0.5) {
-                water += (detail - 0.45) * vec3(0.033, 0.051, 0.047);
+                water += (detail - 0.45) * vec3(0.033, 0.051, 0.047) * (1.0 - 0.9 * uHasPhoto);
             }
             if (uQuality > 1.5) {
                 float micro = noise(uvWater * vec2(
                     min(350.0, uResolution.x * 0.33),
                     min(520.0, uResolution.y * 0.33)) + drift);
                 float sparkle = pow(max(0.0, a * 0.6 + b * 0.4), 15.0);
-                water += sparkle * vec3(0.048, 0.073, 0.070);
-                water += (micro - 0.5) * vec3(0.016, 0.026, 0.022);
+                water += sparkle * vec3(0.048, 0.073, 0.070) * (1.0 - 0.9 * uHasPhoto);
+                water += (micro - 0.5) * vec3(0.016, 0.026, 0.022) * (1.0 - 0.95 * uHasPhoto);
             }
 
             float grain = noise(uv * vec2(240.0, 385.0));
@@ -237,6 +261,17 @@ internal class GpuOceanRenderer {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+            GLES20.glGenTextures(1, texture, 0)
+            photoTexture = texture[0]
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE1)
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, photoTexture)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+            photoFingerprint = Long.MIN_VALUE
+            photographActive = false
+            photographAspect = 1f
             currentConfig = null
             hostSurface = surface
             surfaceWidth = w
@@ -251,6 +286,10 @@ internal class GpuOceanRenderer {
 
     fun invalidateLayout() {
         currentConfig = null
+    }
+
+    fun invalidatePhotograph() {
+        photoFingerprint = Long.MIN_VALUE
     }
 
     private fun uploadMask(state: WallpaperState) {
@@ -280,7 +319,49 @@ internal class GpuOceanRenderer {
         currentConfig = state
     }
 
-    fun render(surface: Surface, width: Int, height: Int,
+    private fun uploadPhotograph(context: Context) {
+        val imageFile = OceanPhotoStore.file(context)
+        val fingerprint = if (imageFile.isFile)
+            imageFile.lastModified() xor (imageFile.length() shl 1) else -1L
+        if (fingerprint == photoFingerprint) return
+        photoFingerprint = fingerprint
+        photographActive = false
+        photographAspect = 1f
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE1)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, photoTexture)
+        // Valid fallback sampler prevents undefined behavior when photo is absent.
+        val blank = ByteBuffer.allocateDirect(4)
+            .put(byteArrayOf(12, 93, 121, -1)).apply { position(0) }
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
+            1, 1, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, blank)
+        if (!imageFile.isFile) return
+        try {
+            val maxTexture = IntArray(1)
+            GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, maxTexture, 0)
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(imageFile.absolutePath, bounds)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return
+            val limit = minOf(2560, maxTexture[0])
+            if (limit < 256) return
+            var sample = 1
+            while (maxOf(bounds.outWidth, bounds.outHeight) / sample > limit) sample *= 2
+            val bitmap = BitmapFactory.decodeFile(imageFile.absolutePath,
+                BitmapFactory.Options().apply { inSampleSize = sample }) ?: return
+            try {
+                GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
+                photographActive = GLES20.glGetError() == GLES20.GL_NO_ERROR
+                if (photographActive) {
+                    photographAspect = bitmap.width.toFloat() / bitmap.height.toFloat()
+                }
+            } finally {
+                bitmap.recycle()
+            }
+        } catch (_: Exception) {
+            photographActive = false // Keep procedural GPU fallback available.
+        }
+    }
+
+    fun render(appContext: Context, surface: Surface, width: Int, height: Int,
                state: WallpaperState, phase: Double): Boolean {
         if (width < 2 || height < 2 || !surface.isValid) return false
         if (!prepare(surface, width, height)) return false
@@ -288,6 +369,7 @@ internal class GpuOceanRenderer {
             if (!EGL14.eglMakeCurrent(display, window, window, context))
                 throw IllegalStateException("EGL context lost")
             uploadMask(state)
+            uploadPhotograph(appContext)
             GLES20.glViewport(0, 0, width, height)
             GLES20.glUseProgram(shaderProgram)
             fun f(name: String, value: Float) {
@@ -297,6 +379,11 @@ internal class GpuOceanRenderer {
                 width.toFloat(), height.toFloat())
             f("uPhase", (phase % (2 * PI)).toFloat())
             f("uNight", if (state.night) 1f else 0f)
+            f("uHasPhoto", if (photographActive) 1f else 0f)
+            val screenAspect = width.toFloat() / height.toFloat()
+            GLES20.glUniform2f(GLES20.glGetUniformLocation(shaderProgram, "uPhotoScale"),
+                minOf(1f, screenAspect / photographAspect),
+                minOf(1f, photographAspect / screenAspect))
             f("uHasLand", if (state.occupied.isEmpty() && state.zones.isEmpty()) 0f else 1f)
             f("uPalette", when (state.palette) { "sunset" -> 1f; "mint" -> 2f; else -> 0f })
             f("uQuality", when (state.renderQuality) {
@@ -305,6 +392,9 @@ internal class GpuOceanRenderer {
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, maskTexture)
             GLES20.glUniform1i(GLES20.glGetUniformLocation(shaderProgram, "uMask"), 0)
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE1)
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, photoTexture)
+            GLES20.glUniform1i(GLES20.glGetUniformLocation(shaderProgram, "uOceanPhoto"), 1)
             val position = GLES20.glGetAttribLocation(shaderProgram, "aPosition")
             if (position < 0) throw IllegalStateException("Missing position attribute")
             quad.position(0)
@@ -338,6 +428,10 @@ internal class GpuOceanRenderer {
                 GLES20.glDeleteTextures(1, intArrayOf(maskTexture), 0)
                 maskTexture = 0
             }
+            if (photoTexture != 0) {
+                GLES20.glDeleteTextures(1, intArrayOf(photoTexture), 0)
+                photoTexture = 0
+            }
             if (shaderProgram != 0) {
                 GLES20.glDeleteProgram(shaderProgram)
                 shaderProgram = 0
@@ -357,5 +451,8 @@ internal class GpuOceanRenderer {
         surfaceWidth = 0
         surfaceHeight = 0
         currentConfig = null
+        photoFingerprint = Long.MIN_VALUE
+        photographActive = false
+        photographAspect = 1f
     }
 }
