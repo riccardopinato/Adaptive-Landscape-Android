@@ -30,7 +30,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'analyze failed' }
   flutter test
   if ($LASTEXITCODE -ne 0) { throw 'tests failed' }
-  flutter build apk --debug
+  flutter build apk --debug --dart-define=BUILD_SOURCE_SHA=manual-windows
   if ($LASTEXITCODE -ne 0) { throw 'debug APK build failed' }
   Write-Host 'Debug APK: build/app/outputs/flutter-apk/app-debug.apk'
 } finally { Pop-Location }
