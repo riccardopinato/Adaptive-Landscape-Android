@@ -112,8 +112,10 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       final changed = await _channel.pickOceanPhoto();
       if (!mounted || !changed) return;
       await _refreshNativeRenderer();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.oceanPhotoReady)));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.oceanPhotoReady)));
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     }
@@ -122,7 +124,9 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   Future<void> _clearOceanPhoto() async {
     try {
       await _channel.clearOceanPhoto();
-      if (mounted) await _refreshNativeRenderer();
+      if (mounted) {
+        await _refreshNativeRenderer();
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     }
