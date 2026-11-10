@@ -1,5 +1,6 @@
 package it.riccardopinato.adaptivelandscape
 
+import android.content.Context
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.EGLContext
@@ -20,7 +21,8 @@ import kotlin.math.PI
  * GPU and EGL resources live on the WallpaperService engine thread.
  * A Canvas fallback remains if GLES2/EGL is not usable on a device.
  */
-internal class GpuOceanRenderer {
+internal class GpuOceanRenderer(context: Context) {
+    private val oceanPhoto = OceanTexture(context)
     private var display: EGLDisplay = EGL14.EGL_NO_DISPLAY
     private var context: EGLContext = EGL14.EGL_NO_CONTEXT
     private var window: EGLSurface = EGL14.EGL_NO_SURFACE
@@ -56,6 +58,8 @@ internal class GpuOceanRenderer {
         uniform float uQuality;
         uniform float uHasLand;
         uniform sampler2D uMask;
+        uniform sampler2D uOcean;
+        uniform float uPhotoActive;
 
         float hash(vec2 p) {
             p = fract(p * vec2(123.34, 456.21));
@@ -117,6 +121,17 @@ internal class GpuOceanRenderer {
             vec3 water = mix(deep, aqua, 0.30 + 0.50 * slow);
             water = mix(water, lagoon, wet * 0.66);
             water += (medium - 0.48) * vec3(0.065, 0.082, 0.076);
+            // Photo-first color/detail: live GL refraction deforms the image.
+            // No photo present? Keep the procedural fallback.
+            if (uPhotoActive > 0.5) {
+                vec2 refraction = vec2(
+                    0.005 * sin(2.0*t + uv.y*17.0 + slow*3.0),
+                    0.004 * cos(t + uv.x*14.0 + medium*3.5));
+                vec3 captured = texture2D(uOcean,
+                    clamp(uv + refraction, vec2(0.001), vec2(0.999))).rgb;
+                water = mix(water, captured, 0.95);
+                water = mix(water, lagoon, wet * 0.13);
+            }
 
             // Deliberately visible, fluid caustics; no nearest-neighbor pixels.
             float scaleX = min(200.0, uResolution.x * 0.25);
@@ -128,18 +143,18 @@ internal class GpuOceanRenderer {
             float b = sin(waves.y * 0.83 - waves.x * 0.55 -
                           t + slow * 5.3);
             float crest = pow(max(0.0, 1.0 - abs(a * 0.6 + b * 0.4)), 10.0);
-            float light = (0.040 + wet * 0.082) * crest;
+            float light = (0.040 + wet * 0.082) * crest * mix(1.0, 0.20, uPhotoActive);
             water += light * vec3(0.75, 0.99, 0.91);
             if (uQuality > 0.5) {
-                water += (detail - 0.45) * vec3(0.033, 0.051, 0.047);
+                water += (detail - 0.45) * vec3(0.033, 0.051, 0.047) * (1.0 - 0.92 * uPhotoActive);
             }
             if (uQuality > 1.5) {
                 float micro = noise(uvWater * vec2(
                     min(350.0, uResolution.x * 0.33),
                     min(520.0, uResolution.y * 0.33)) + drift);
                 float sparkle = pow(max(0.0, a * 0.6 + b * 0.4), 15.0);
-                water += sparkle * vec3(0.048, 0.073, 0.070);
-                water += (micro - 0.5) * vec3(0.016, 0.026, 0.022);
+                water += sparkle * vec3(0.048, 0.073, 0.070) * (1.0 - 0.9 * uPhotoActive);
+                water += (micro - 0.5) * vec3(0.016, 0.026, 0.022) * (1.0 - 0.94 * uPhotoActive);
             }
 
             float grain = noise(uv * vec2(240.0, 385.0));
@@ -157,7 +172,7 @@ internal class GpuOceanRenderer {
             float foam = uHasLand * clamp(
                 edge * (0.31 + 0.23 * detail) +
                 back * 0.19 * medium, 0.0, 0.58);
-            color = mix(color, vec3(0.959, 0.972, 0.941), foam);
+            color = mix(color, vec3(0.959, 0.972, 0.941), foam * mix(1.0, 0.45, uPhotoActive));
 
             if (uPalette > 1.5) color *= vec3(0.96, 1.02, 1.00);
             else if (uPalette > 0.5) color *= vec3(1.06, 0.96, 0.91);
@@ -237,6 +252,7 @@ internal class GpuOceanRenderer {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+            oceanPhoto.upload()
             currentConfig = null
             hostSurface = surface
             surfaceWidth = w
@@ -252,6 +268,8 @@ internal class GpuOceanRenderer {
     fun invalidateLayout() {
         currentConfig = null
     }
+
+    fun invalidatePhoto() = resetSurface()
 
     private fun uploadMask(state: WallpaperState) {
         if (state == currentConfig) return
@@ -305,6 +323,9 @@ internal class GpuOceanRenderer {
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, maskTexture)
             GLES20.glUniform1i(GLES20.glGetUniformLocation(shaderProgram, "uMask"), 0)
+            oceanPhoto.bindOrFallback(maskTexture)
+            GLES20.glUniform1i(GLES20.glGetUniformLocation(shaderProgram, "uOcean"), 1)
+            f("uPhotoActive", if (oceanPhoto.available) 1f else 0f)
             val position = GLES20.glGetAttribLocation(shaderProgram, "aPosition")
             if (position < 0) throw IllegalStateException("Missing position attribute")
             quad.position(0)
@@ -338,6 +359,7 @@ internal class GpuOceanRenderer {
                 GLES20.glDeleteTextures(1, intArrayOf(maskTexture), 0)
                 maskTexture = 0
             }
+            oceanPhoto.release()
             if (shaderProgram != 0) {
                 GLES20.glDeleteProgram(shaderProgram)
                 shaderProgram = 0
