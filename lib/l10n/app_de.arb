@@ -41,5 +41,13 @@
   "noDock": "Keine",
   "dockHint": "3–4 feste Apps manuell markieren; leeres Dock = nur Meer.",
   "previewGuides": "Bearbeitungshilfen anzeigen",
-  "emptySeaHint": "Keine Apps oder Widgets: Die Vorschau zeigt nur Meer."
+  "emptySeaHint": "Keine Apps oder Widgets: Die Vorschau zeigt nur Meer.",
+  "onlyOcean": "Nur Meer · Layout leeren",
+  "onlyOceanNote": "Entfernt Icons, Ordner, Widgets und Dock nur aus dem aktuellen Profil. Andere Profile bleiben erhalten.",
+  "gpuActive": "Meer: GPU-Renderer aktiv",
+  "gpuFallback": "Meer: reduzierte Qualität (GPU-Shader nicht verfügbar)",
+  "gpuLoading": "Meer: Renderer lädt…",
+  "fullscreenPreview": "Große Vorschau",
+  "closePreview": "Vorschau schließen",
+  "previewPanoramic": "Panorama-Vorschau · Home-Icons im Editor kalibrieren"
 }

@@ -11,6 +11,9 @@ void main() {
     final store = ProfileStore();
     final profiles = await store.readProfiles();
     expect(profiles.single.name, 'Home');
+    expect(profiles.single.config.scene, 'beach');
+    expect(profiles.single.config.occupied, isEmpty);
+    expect(profiles.single.config.zones, isEmpty);
     expect(await store.readActiveId(), 'default');
   });
 

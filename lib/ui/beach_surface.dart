@@ -19,7 +19,7 @@ class BeachSurface {
     final key = [
       size.width.toStringAsFixed(1), size.height.toStringAsFixed(1),
       field.gridColumns, field.gridRows, field.top, field.span,
-      IconField.encode(field.occupied),
+      field.encodeOccupied(),
       for (final zone in field.zones)
         '${zone.x.toStringAsFixed(5)},${zone.y.toStringAsFixed(5)},'
         '${zone.width.toStringAsFixed(5)},${zone.height.toStringAsFixed(5)}',
@@ -56,8 +56,9 @@ class _Mesh {
   final Uint16List indices;
 
   static _Mesh build(String key, IconField field) {
-    // 73 × 137 = 10,001 vertices; indices fit Uint16, rendered using the GPU.
-    const cols = 72, rows = 136;
+    // Fallback only: finer geometry avoids obvious triangulation if GPU shaders fail.
+    // 129×241=31,089 vertices, safely below Uint16's 65,535 limit.
+    const cols = 128, rows = 240;
     final count = (cols + 1) * (rows + 1);
     final positions = Float32List(count * 2);
     final xs = Float32List(count), ys = Float32List(count);

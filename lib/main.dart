@@ -12,6 +12,7 @@ import 'core/profile_store.dart';
 import 'l10n/app_localizations.dart';
 import 'platform/wallpaper_channel.dart';
 import 'ui/scene_painter.dart';
+import 'ui/beach_gpu_surface.dart';
 
 void main() => runApp(const AdaptiveLandscapeApp());
 
@@ -48,15 +49,20 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   final ProfileStore _store = ProfileStore();
   final WallpaperChannel _channel = WallpaperChannel();
   late final AnimationController _animation;
-  LandscapeConfig _config = const LandscapeConfig();
-  List<NamedLayout> _profiles = [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig())];
+  LandscapeConfig _config = const LandscapeConfig(scene: 'beach');
+  List<NamedLayout> _profiles = [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig(scene: 'beach'))];
   String _activeId = 'default';
   String _mode = 'grid';
   Future<void> _writeChain = Future<void>.value();
   bool _busy = false;
-  bool _showGuides = true;
+  bool _showGuides = false;
   ui.FragmentProgram? _beachProgram;
   String? _error;
+
+  // The reset is explicit and applies to the selected profile only.
+  void _showOnlyOcean() => _apply(_config.copyWith(
+    scene: 'beach', occupied: <int>{}, zones: <LayoutZone>[],
+  ));
 
   @override
   void initState() {
@@ -72,7 +78,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       final program = await ui.FragmentProgram.fromAsset('shaders/beach_ocean.frag');
       if (mounted) setState(() => _beachProgram = program);
     } catch (_) {
-      // Keep the portable Canvas mesh fallback on unsupported browsers.
+      BeachGpuSurface.markUnavailable();
     }
   }
 
@@ -244,6 +250,37 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     }
   }
 
+  Future<void> _openLargePreview() async {
+    // Uses the full browser viewport rather than the small phone mockup.
+    // Visual layout here is panoramic; use the editor for phone icon geometry.
+    await showDialog<void>(context: context, builder: (dialogContext) =>
+      Dialog.fullscreen(child: Scaffold(
+        backgroundColor: Colors.black,
+        body: AnimatedBuilder(animation: _animation, builder: (context, _) =>
+          Stack(children: [
+            Positioned.fill(child: CustomPaint(painter: ScenePainter(
+              scene: _config.scene, field: IconField.fromConfig(_config),
+              beachProgram: _beachProgram, palette: _config.palette,
+              night: _config.night, phase: _config.reduceMotion ? 0 :
+                ((_animation.value * 240).floor() / 240) * math.pi * 2,
+            ))),
+            Positioned(right: 12, top: 12, child: SafeArea(child:
+              IconButton.filled(
+                tooltip: AppLocalizations.of(context)!.closePreview,
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(dialogContext),
+              ))),
+            Positioned(left: 16, bottom: 18, child: SafeArea(child:
+              IgnorePointer(child: Text(
+                AppLocalizations.of(context)!.previewPanoramic,
+                style: const TextStyle(color: Colors.white,
+                  shadows: [Shadow(blurRadius: 6, color: Colors.black54)]),
+              )))),
+          ])),
+      )),
+    );
+  }
+
   Future<void> _openPicker() async {
     setState(() => _busy = true);
     try {
@@ -317,6 +354,35 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         selected: {_config.scene},
         onSelectionChanged: (v) => _apply(_config.copyWith(scene: v.single)),
       ),
+      if (_config.scene == 'beach') ...[
+        const SizedBox(height: 12),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          FilledButton.tonalIcon(
+            key: const Key('al-only-ocean'),
+            onPressed: _showOnlyOcean,
+            icon: const Icon(Icons.water),
+            label: Text(l.onlyOcean),
+          ),
+          OutlinedButton.icon(
+            key: const Key('al-large-ocean-preview'),
+            onPressed: _openLargePreview,
+            icon: const Icon(Icons.fullscreen),
+            label: Text(l.fullscreenPreview),
+          ),
+        ]),
+        const SizedBox(height: 6),
+        Text(l.onlyOceanNote, style: style.bodySmall),
+        ValueListenableBuilder<BeachRenderStatus>(
+          valueListenable: BeachGpuSurface.status,
+          builder: (context, value, _) => Text(
+            value == BeachRenderStatus.gpu ? l.gpuActive :
+              value == BeachRenderStatus.fallback ? l.gpuFallback :
+                l.gpuLoading,
+            key: const Key('al-renderer-status'),
+            style: style.bodySmall,
+          ),
+        ),
+      ],
       section(l.selectIcons),
       Text(l.selectIconsHint, style: style.bodySmall),
       const SizedBox(height: 8),
@@ -371,9 +437,16 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       SwitchListTile(contentPadding: EdgeInsets.zero,
         title: Text(l.previewGuides),
         value: _showGuides, onChanged: (v) => setState(() => _showGuides = v)),
-      if (_config.scene == 'beach' &&
-          _config.occupied.isEmpty && _config.zones.isEmpty)
-        Text(l.emptySeaHint, style: style.bodySmall),
+      if (_config.scene == 'beach')
+        Text(
+          _config.occupied.isEmpty && _config.zones.isEmpty
+            ? l.emptySeaHint
+            : '${l.occupiedCount}: ${_config.occupied.length}; '
+              '${l.widgetZone}: ${_config.zones.where((z) => z.kind != 'dock').length}; '
+              '${l.dock}: ${DockLayout.count(_config.zones)}',
+          key: const Key('al-ocean-layout-status'),
+          style: style.bodySmall,
+        ),
       section(l.appearance),
       Wrap(spacing: 8, children: [
         ChoiceChip(label: Text(l.original), selected: _config.palette == 'original',
@@ -395,6 +468,8 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         icon: const Icon(Icons.wallpaper), label: Text(l.install)),
       const SizedBox(height: 10),
       Text(WallpaperChannel.supported ? l.wallpaperHint : l.unsupported, style: style.bodySmall),
+      const SizedBox(height: 6),
+      const Text('Beach Web v0.3.3', style: TextStyle(fontSize: 11)),
       if (_error != null) SelectableText('${l.failure}: $_error',
         style: TextStyle(color: Theme.of(context).colorScheme.error)),
     ]);

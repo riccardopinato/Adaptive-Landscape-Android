@@ -41,5 +41,13 @@
   "noDock": "Nenhum",
   "dockHint": "Marque manualmente 3–4 apps fixos; dock vazio = apenas mar.",
   "previewGuides": "Mostrar guias de edição",
-  "emptySeaHint": "Sem apps ou widgets: toda a prévia é mar."
+  "emptySeaHint": "Sem apps ou widgets: toda a prévia é mar.",
+  "onlyOcean": "Só mar · limpar layout",
+  "onlyOceanNote": "Limpa ícones, pastas, widgets e dock apenas do perfil atual. Os outros perfis são mantidos.",
+  "gpuActive": "Mar: GPU ativo",
+  "gpuFallback": "Mar: qualidade reduzida (shader GPU indisponível)",
+  "gpuLoading": "Mar: carregando renderização…",
+  "fullscreenPreview": "Prévia ampliada",
+  "closePreview": "Fechar prévia",
+  "previewPanoramic": "Prévia panorâmica · calibre ícones no editor"
 }
