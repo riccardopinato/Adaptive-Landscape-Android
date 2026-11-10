@@ -1,54 +1,42 @@
-# Adaptive Landscape — Android MVP v0.1.0 (source repository)
+# Adaptive Landscape Android
 
-Original Flutter control app + Android `WallpaperService` rendering engine. Inspired by the *product concept* of BLEZZ0102/Deskland, **not a copy of its GPL code or assets**. Deskland GPL-3.0 does not extend to independently implemented original code.
+Original **Flutter + native Android Live Wallpaper** project. This is a reproducible **source overlay**: GitHub Actions bootstraps a full Flutter/Gradle project, runs Dart tests and Android build, and publishes a Flutter Web editor preview.
 
-## What exists in this kit
-- Flutter editor UI, 2 first-party vector landscapes, basic animation, 5×8 manual icon-position calibration.
-- Android native `WallpaperService` drawing wallpaper independently of a Flutter UI activity (20fps only while visible; 8fps in battery saver).
-- Native MethodChannel settings bridge and Android live wallpaper picker.
-- Six-locale ARB foundation (EN/IT/ES/FR/DE/PT), pure Dart field tests, no sign-in, API, ads, subscriptions or user data upload.
-- No third-party Deskland graphics, WebView2, Windows host, or original JS implementation.
+- Web demo: https://riccardopinato.github.io/Adaptive-Landscape-Android/
+- APK build artifacts: https://github.com/riccardopinato/Adaptive-Landscape-Android/actions/workflows/development.yml
+- Roadmap and evidence: [docs/ROADMAP.md](docs/ROADMAP.md)
+- Android release safety: [docs/RELEASE_PLAY_CHECKLIST.md](docs/RELEASE_PLAY_CHECKLIST.md)
+- Physical QA matrix: [docs/QA_MATRIX.md](docs/QA_MATRIX.md)
+- Privacy (IT): [docs/PRIVACY_IT.md](docs/PRIVACY_IT.md)
+- Normalized scene contract: [docs/SCENE_CONTRACT.md](docs/SCENE_CONTRACT.md)
 
-## Required to run
-This repository holds a **deterministic source overlay** (the native Flutter/Gradle scaffold is created by the bootstrap script and by GitHub Actions), not a compiled APK. `flutter`/Android SDK are not installed in the author's execution environment, so compile/runtime verification is **NOT VERIFIED**. On a computer with Android SDK, JDK and Flutter 3.41.4 (as selected by GitHub Actions; verify your local toolchain):
+## Available features (source implementation, not yet device-certified)
 
-1. Extract this kit preserving the directory tree.
-2. On Windows: `powershell -ExecutionPolicy Bypass -File .\BOOTSTRAP_WINDOWS.ps1`.
-3. On Linux/macOS: `bash BOOTSTRAP_LINUX_MAC.sh`.
-4. The generated project is `generated_app`. It refuses to overwrite an existing destination.
-5. Debug APK path once build passes: `generated_app/build/app/outputs/flutter-apk/app-debug.apk`.
-6. Install via `flutter install` in generated app or `adb install -r ...`.
-7. Open Adaptive Landscape; select Meadow/Beach; tap approximate occupied cells; tap **Set live wallpaper**; choose Home.
+- Meadow and Beach original vector scenes, manual night variant, original/sunset/mint palettes.
+- Flutter responsive live preview, motion control, reduced motion, Android wallpaper picker.
+- Variable Home icon grid (3–8 columns, 3–12 rows), tap-to-mark selected cells.
+- Drag/move/resize local widget exclusion zones. Occupancy influences cloud/hill/wave position and suppresses small objects.
+- Multiple on-device/browser profiles, import/export single profile as JSON (clipboard + paste).
+- Schema-2 settings bridge from Flutter to Kotlin; Android `WallpaperService` reads the same normalized geometry.
+- Local-only persistence with `shared_preferences` plus Android preferences; 6 locales (EN/IT/ES/FR/DE/PT).
+- Android 20fps max while visible, 8fps in power saver, no frame loop for reduced-motion/static scene, no animation while invisible.
 
-`flutter create` supplies the Flutter/Gradle/SDK wrapper and device integration files appropriate to that installed toolchain. This source pack deliberately avoids committing guessed Gradle wrapper binaries or a fake signed APK. For repository CI, add a development workflow to the dedicated app repository after creation and lock dependency versions.
+**Important limitations:** A generic Android wallpaper cannot read positions of launcher icons or move real icons. The user calibrates manually. Both engines are independent implementations of the same contract; device-specific fidelity is not certified. Web preview is not an Android live wallpaper.
 
-## Limitations / non-claims
-- Does NOT discover the real Android launcher icon positions. Manually calibrated geometry is approximate, especially on third-party launchers, tablets, landscape orientation, widgets and multiple Home pages.
-- Android wallpaper service cannot move real icons; it only changes the picture behind them.
-- Native graphics are an original *two-scene MVP*, not a pixel-perfect port of Deskland's Beach and Meadow (different rendering stack/assets).
-- Preview may differ from real native renderer in details. Physical device tests required.
-- No production store signing, internal Play test, generated artifact, physical QA or donor E3 certification.
+## Source build
 
-## Privacy / permissions
-- No AccessibilityService, MediaProjection, READ_* permissions, overlay or Internet permission.
-- Only `BIND_WALLPAPER` on a service, used by Android's wallpaper framework.
-- The local icon occupancy grid stores **positions only**, not app names or real screenshots.
+Requires Flutter **3.41.4**, Android SDK, and **JDK 17**. Run `bash BOOTSTRAP_LINUX_MAC.sh generated_app` (Linux/macOS) or `powershell -ExecutionPolicy Bypass -File .\BOOTSTRAP_WINDOWS.ps1` on Windows. Both refuse to overwrite a prior generated project.
 
-## Licensing
-- Code in this kit is a fresh implementation. No open-source license is automatically granted by this draft; choose a license/publication policy explicitly when creating the dedicated repository.
-- Upstream Deskland is GPL-3.0. Neither the Deskland code nor its artwork is incorporated.
-- Do not use 'Deskland' as commercial name/branding.
+The bootstrap produces `generated_app/build/app/outputs/flutter-apk/app-debug.apk`. GitHub Actions also publishes internal optimized per-ABI release-mode APK artifacts: **these are not Store-signed** and must never be represented as ready for Google Play. CI Web deploy is on successful `main`.
 
-## Factory baseline
-- `riccardopinato/App-Factory-Core@d4ed1185d36d419228fba6b57a979cde308bd321`
-- `CURRENT.yaml` master v27, Golden Index v29, registry v2.
-- Reused **procedures/contracts**, not third-party code: App Bootstrap (draft), Golden Localization (copy-ready), Theme M3 (copy-ready), Android Native Reliability (draft), CI/Release (copy-ready), OSS Reuse (draft), Single Donor Admission (copy-ready), Provenance Ledger (draft), Release Reality (draft).
-- See `docs/REUSE_PROVENANCE.md`, `docs/ROADMAP.md`.
+No accounts, external API, analytics, advertising, camera, launcher-scraping, screenshot capture or app-name collection.
 
-## Repository CI and testing links
+## Intellectual property and provenance
 
-- [GitHub Actions — Android debug APK artifact](https://github.com/riccardopinato/Adaptive-Landscape-Android/actions/workflows/development.yml): select a successful run, then the `adaptive-landscape-android-debug` artifact.
-- [Web preview — expected GitHub Pages location](https://riccardopinato.github.io/Adaptive-Landscape-Android/): available **only after the Pages job succeeds**. The Web preview shows controls and animation but CANNOT set an Android wallpaper.
-- `main` includes a reproducible bootstrap; `generated_app/` is intentionally ignored and created by CI.
+Deskland `BLEZZ0102/Deskland@9818b577402ff476e1b59da07970c56472713126` (GPL-3.0) is a **concept/UX reference only**. Its code, art, assets and logo were not imported. This repository's original code and branding must be reviewed for a separate commercialization license policy before sale. No Golden/Donor certification is implied by a passing consumer app CI.
 
-Read [test instructions](docs/RELEASE_TESTING.md) before assigning any device/Play certification.
+Factory baseline: `riccardopinato/App-Factory-Core@d4ed1185d36d419228fba6b57a979cde308bd321` (Master v27, Golden Index v29, registry v2).
+
+## Evidence principles
+
+CI compilation and Web confirmation do not establish OEM battery, launcher layout, crash-free wallpaper lifecycle, install/update behavior or Play readiness. The Android physical test is deliberately deferred until the user resumes it. Track every physical result by exact APK SHA and device.
