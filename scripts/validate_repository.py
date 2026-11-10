@@ -47,3 +47,29 @@ assert 'uniform sampler2D uToneAtlas;' in shader_source
 assert 'uniform float uQuality;' in shader_source
 assert 'renderQuality' in (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
 print('PASS: Web 4K art-direction atlas and runtime-effect uniforms')
+
+# Native v0.4.1 P0: native wallpaper must try framebuffer GPU rendering.
+base = root / 'android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape'
+engine = (base / 'AdaptiveWallpaperService.kt').read_text(encoding='utf-8')
+gpu = (base / 'GpuOceanRenderer.kt').read_text(encoding='utf-8')
+activity = (base / 'MainActivity.kt').read_text(encoding='utf-8')
+assert 'gpuOcean.render(' in engine and 'EGL14.eglSwapBuffers' in gpu
+assert 'gl_FragCoord' in gpu and 'uResolution' in gpu
+assert 'render_backend_v1' in engine and 'renderQuality' in (base / 'WallpaperState.kt').read_text(encoding='utf-8')
+assert 'ACTION_OPEN_DOCUMENT' in activity and 'pickHomeScreenshot' in activity
+assert 'AccessibilityService' not in (root / 'android/app/src/main/AndroidManifest.xml').read_text(encoding='utf-8')
+assert 'SYSTEM_ALERT_WINDOW' not in (root / 'android/app/src/main/AndroidManifest.xml').read_text(encoding='utf-8')
+print('PASS: native EGL framebuffer renderer, privacy-safe manual screenshot calibration contract')
+
+# v0.4.2: optional high-resolution local water photograph, no new permissions.
+native = root / 'android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape'
+store = (native / 'OceanPhotoStore.kt').read_text(encoding='utf-8')
+texture = (native / 'OceanTexture.kt').read_text(encoding='utf-8')
+engine = (native / 'GpuOceanRenderer.kt').read_text(encoding='utf-8')
+activity = (native / 'MainActivity.kt').read_text(encoding='utf-8')
+assert 'BitmapRegionDecoder' in store and 'ocean_wallpaper_user.jpg' in store
+assert 'GLUtils.texImage2D' in texture and 'ARGB_8888' in texture
+assert 'uniform sampler2D uOcean;' in engine and 'uPhotoActive' in engine
+assert 'pickOceanPhoto' in activity and 'clearOceanPhoto' in activity
+assert 'android.permission.INTERNET' not in (root / 'android/app/src/main/AndroidManifest.xml').read_text(encoding='utf-8')
+print('PASS: user-selected, offline native photo texture with no bundled stock image')

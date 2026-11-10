@@ -54,5 +54,18 @@
   "qualityBalanced": "Ausgewogen",
   "qualityHigh": "Hoch",
   "qualityUltra": "Ultra · 4K",
-  "qualityExplain": "Ultra erhöht GPU-Details. Tatsächliches 4K hängt von Bildschirm, Browser und Leistung ab."
+  "qualityExplain": "Ultra erhöht GPU-Details. Tatsächliches 4K hängt von Bildschirm, Browser und Leistung ab.",
+  "loadHomeScreenshot": "Startbildschirm-Foto zur Kalibrierung",
+  "hideHomeScreenshot": "Screenshot ausblenden",
+  "screenshotCalibrationHint": "Erstelle einen Screenshot des Startbildschirms, wähle ihn aus und markiere die Symbole und Ordner in der Vorschau. Widgets über Zonen markieren. Das Bild wird weder gespeichert noch übertragen. Positionen hängen vom Launcher ab.",
+  "nativeGpuActive": "Android: OpenGL in Bildschirmauflösung (am Startbildschirm prüfen)",
+  "nativeGpuFallback": "Android: OpenGL nicht verfügbar; unscharfe Canvas-Notdarstellung aktiv.",
+  "nativeGpuUnknown": "Android: Rendererstatus unbekannt. Hintergrund festlegen und App erneut öffnen.",
+  "oceanPhotoTitle": "Fotografisches Meer · Android",
+  "selectOceanPhoto": "Meeresfoto auswählen",
+  "clearOceanPhoto": "Meeresfoto entfernen",
+  "oceanPhotoReady": "Lokales Meeresfoto gespeichert. Hintergrund erneut öffnen und prüfen.",
+  "oceanPhotoMissing": "Kein Foto gewählt: prozedurales Meer wird verwendet.",
+  "oceanPhotoHint": "Wähle ein echtes hochauflösendes Meeresfoto von oben, möglichst 4K, ohne Strand oder Horizont. Die App speichert nur eine private lokale Kopie. Sanfte Brechung animiert das Bild.",
+  "nativePhotoGpuActive": "Android: OpenGL mit echtem Meeresfoto aktiv"
 }

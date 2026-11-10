@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class WallpaperConfig {
-  const WallpaperConfig({this.scene = 'meadow', this.occupied = '', this.configJson});
+  const WallpaperConfig({this.scene = 'meadow', this.occupied = '', this.configJson, this.nativeBackend, this.hasOceanPhoto = false});
   final String scene;
   final String occupied;
   final String? configJson;
+  final String? nativeBackend;
+  final bool hasOceanPhoto;
 }
 
 class WallpaperChannel {
@@ -19,6 +21,8 @@ class WallpaperChannel {
       scene: data?['scene'] == 'beach' ? 'beach' : 'meadow',
       occupied: (data?['occupied'] ?? '').toString(),
       configJson: data?['config'] is String ? data!['config'] as String : null,
+      nativeBackend: data?['backend'] is String ? data!['backend'] as String : null,
+      hasOceanPhoto: data?['hasOceanPhoto'] == true,
     );
   }
 
@@ -29,6 +33,24 @@ class WallpaperChannel {
       'occupied': config.occupied,
       if (config.configJson != null) 'config': config.configJson,
     });
+  }
+
+  /// A one-time user-selected local screenshot; never uploaded or persisted.
+  Future<Uint8List?> pickHomeScreenshot() async {
+    if (!supported) return null;
+    return _channel.invokeMethod<Uint8List>('pickHomeScreenshot');
+  }
+
+  /// User explicitly chooses an ocean photograph in system Documents UI.
+  /// Stored app-private to be used by the wallpaper (never uploaded).
+  Future<bool> pickOceanPhoto() async {
+    if (!supported) return false;
+    return (await _channel.invokeMethod<bool>('pickOceanPhoto')) == true;
+  }
+
+  Future<void> clearOceanPhoto() async {
+    if (!supported) return;
+    await _channel.invokeMethod<void>('clearOceanPhoto');
   }
 
   Future<void> openLiveWallpaperPicker() async {

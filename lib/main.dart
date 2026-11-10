@@ -58,6 +58,9 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   bool _showGuides = false;
   ui.FragmentProgram? _beachProgram;
   String? _error;
+  Uint8List? _homeScreenshot;
+  String? _nativeRenderer;
+  bool _hasOceanPhoto = false;
 
   // The reset is explicit and applies to the selected profile only.
   void _showOnlyOcean() => _apply(_config.copyWith(
@@ -86,8 +89,62 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _updateTicker();
+      _refreshNativeRenderer();
     } else {
       _animation.stop();
+    }
+  }
+
+  Future<void> _refreshNativeRenderer() async {
+    if (!WallpaperChannel.supported) return;
+    try {
+      final value = await _channel.read();
+      if (mounted) {
+        setState(() {
+        _nativeRenderer = value.nativeBackend;
+        _hasOceanPhoto = value.hasOceanPhoto;
+        });
+      }
+    } catch (_) { /* The wallpaper may not have been installed yet. */ }
+  }
+
+  Future<void> _pickOceanPhoto() async {
+    if (!WallpaperChannel.supported) return;
+    try {
+      final changed = await _channel.pickOceanPhoto();
+      if (!mounted || !changed) return;
+      await _refreshNativeRenderer();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.oceanPhotoReady)));
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    }
+  }
+
+  Future<void> _clearOceanPhoto() async {
+    try {
+      await _channel.clearOceanPhoto();
+      if (mounted) {
+        await _refreshNativeRenderer();
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    }
+  }
+
+  Future<void> _pickScreenshot() async {
+    if (!WallpaperChannel.supported) return;
+    try {
+      final bytes = await _channel.pickHomeScreenshot();
+      if (!mounted || bytes == null) return;
+      setState(() {
+        _homeScreenshot = bytes;
+        _showGuides = true;
+      });
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
     }
   }
 
@@ -111,6 +168,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         _profiles = profiles; _activeId = active; _config = config;
       });
       _updateTicker();
+      await _refreshNativeRenderer();
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     }
@@ -386,6 +444,21 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         ),
       section(l.selectIcons),
       Text(l.selectIconsHint, style: style.bodySmall),
+      if (WallpaperChannel.supported) ...[
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          key: const Key('al-load-home-screenshot'),
+          onPressed: _pickScreenshot,
+          icon: const Icon(Icons.photo_library_outlined),
+          label: Text(l.loadHomeScreenshot),
+        ),
+        if (_homeScreenshot != null) TextButton.icon(
+          onPressed: () => setState(() => _homeScreenshot = null),
+          icon: const Icon(Icons.hide_image_outlined),
+          label: Text(l.hideHomeScreenshot),
+        ),
+        Text(l.screenshotCalibrationHint, style: style.bodySmall),
+      ],
       const SizedBox(height: 8),
       SegmentedButton<String>(
         segments: [
@@ -463,6 +536,26 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         ]),
         Text(l.qualityExplain, style: style.bodySmall),
       ],
+      if (WallpaperChannel.supported && _config.scene == 'beach') ...[
+        section(l.oceanPhotoTitle),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          FilledButton.tonalIcon(
+            key: const Key('al-select-ocean-photo'),
+            onPressed: _pickOceanPhoto,
+            icon: const Icon(Icons.photo_library_outlined),
+            label: Text(l.selectOceanPhoto),
+          ),
+          if (_hasOceanPhoto) OutlinedButton.icon(
+            key: const Key('al-clear-ocean-photo'),
+            onPressed: _clearOceanPhoto,
+            icon: const Icon(Icons.delete_outline),
+            label: Text(l.clearOceanPhoto),
+          ),
+        ]),
+        Text(_hasOceanPhoto ? l.oceanPhotoReady : l.oceanPhotoMissing,
+          key: const Key('al-ocean-photo-status'), style: style.bodySmall),
+        Text(l.oceanPhotoHint, style: style.bodySmall),
+      ],
       section(l.appearance),
       Wrap(spacing: 8, children: [
         ChoiceChip(label: Text(l.original), selected: _config.palette == 'original',
@@ -484,8 +577,15 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         icon: const Icon(Icons.wallpaper), label: Text(l.install)),
       const SizedBox(height: 10),
       Text(WallpaperChannel.supported ? l.wallpaperHint : l.unsupported, style: style.bodySmall),
+      if (WallpaperChannel.supported) Text(
+        _nativeRenderer == 'gpu_native_photo' ? l.nativePhotoGpuActive :
+        _nativeRenderer == 'gpu_native' ? l.nativeGpuActive :
+        _nativeRenderer == 'cpu_360px_fallback' ? l.nativeGpuFallback :
+        l.nativeGpuUnknown, style: style.bodySmall,
+        key: const Key('al-native-renderer-status'),
+      ),
       const SizedBox(height: 6),
-      const Text('Beach Web v0.4.0', style: TextStyle(fontSize: 11)),
+      const Text('Beach Web + Android v0.4.2', style: TextStyle(fontSize: 11)),
       if (_error != null) SelectableText('${l.failure}: $_error',
         style: TextStyle(color: Theme.of(context).colorScheme.error)),
     ]);
@@ -522,6 +622,11 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               phase: _config.reduceMotion ? 0 :
                   ((_animation.value * 240).floor() / 240) * math.pi * 2,
             ))),
+            if (_homeScreenshot != null) Positioned.fill(
+              child: IgnorePointer(child: Opacity(opacity: 0.72,
+                child: Image.memory(_homeScreenshot!, fit: BoxFit.fill,
+                  gaplessPlayback: true))),
+            ),
             if (_showGuides && _mode == 'grid') ...List.generate(_config.cellCount, (i) {
               final (x, y) = _config.cellCenter(i);
               final selected = _config.occupied.contains(i);

@@ -54,5 +54,18 @@
   "qualityBalanced": "Bilanciata",
   "qualityHigh": "Alta",
   "qualityUltra": "Ultra · 4K",
-  "qualityExplain": "Ultra aumenta i dettagli generati dalla GPU. Il 4K effettivo dipende da risoluzione dello schermo, browser e prestazioni."
+  "qualityExplain": "Ultra aumenta i dettagli generati dalla GPU. Il 4K effettivo dipende da risoluzione dello schermo, browser e prestazioni.",
+  "loadHomeScreenshot": "Usa screenshot della Home per calibrare",
+  "hideHomeScreenshot": "Nascondi screenshot",
+  "screenshotCalibrationHint": "Fai uno screenshot della Home, selezionalo qui e tocca nell'anteprima le posizioni di app e cartelle. Per i widget usa «Zone». La foto è temporanea e non viene inviata né salvata dall'app. La posizione reale può variare secondo il launcher.",
+  "nativeGpuActive": "Android: rendering OpenGL a risoluzione dello schermo (da verificare sulla Home)",
+  "nativeGpuFallback": "Android: OpenGL non disponibile; è attiva la vecchia resa sgranata di emergenza.",
+  "nativeGpuUnknown": "Android: stato del wallpaper non ancora disponibile. Installa il wallpaper e riapri l'app.",
+  "oceanPhotoTitle": "Mare fotografico · Android",
+  "selectOceanPhoto": "Scegli una foto del mare",
+  "clearOceanPhoto": "Rimuovi foto del mare",
+  "oceanPhotoReady": "Foto marina locale attiva. Riapri lo sfondo per verificarla.",
+  "oceanPhotoMissing": "Nessuna fotografia selezionata: viene usato il mare procedurale.",
+  "oceanPhotoHint": "Scegli una foto reale del mare dall'alto, possibilmente 4K, senza spiagge né orizzonte. L'app ritaglia e salva soltanto una copia privata sul telefono; non la carica online. La foto rimane statica nella sua struttura, con leggera rifrazione animata.",
+  "nativePhotoGpuActive": "Android: OpenGL con fotografia marina attiva"
 }

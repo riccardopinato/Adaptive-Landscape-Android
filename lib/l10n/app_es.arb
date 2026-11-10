@@ -54,5 +54,18 @@
   "qualityBalanced": "Equilibrada",
   "qualityHigh": "Alta",
   "qualityUltra": "Ultra · 4K",
-  "qualityExplain": "Ultra aumenta los detalles de la GPU. El 4K real depende de la pantalla, el navegador y el rendimiento."
+  "qualityExplain": "Ultra aumenta los detalles de la GPU. El 4K real depende de la pantalla, el navegador y el rendimiento.",
+  "loadHomeScreenshot": "Calibrar con captura de la pantalla de inicio",
+  "hideHomeScreenshot": "Ocultar captura",
+  "screenshotCalibrationHint": "Haz una captura de la pantalla de inicio, elígela aquí y marca las posiciones de iconos y carpetas. Usa Zonas para widgets. La captura es temporal; no se guarda ni se envía. Las posiciones dependen del launcher.",
+  "nativeGpuActive": "Android: OpenGL a resolución de pantalla (verificar en inicio)",
+  "nativeGpuFallback": "Android: OpenGL no disponible, modo Canvas de baja calidad.",
+  "nativeGpuUnknown": "Android: estado del renderizador no disponible. Configura el fondo y abre la app otra vez.",
+  "oceanPhotoTitle": "Mar fotográfico · Android",
+  "selectOceanPhoto": "Elegir foto del mar",
+  "clearOceanPhoto": "Quitar foto del mar",
+  "oceanPhotoReady": "Foto del mar guardada localmente. Abre de nuevo el fondo para comprobar.",
+  "oceanPhotoMissing": "No hay foto seleccionada: se muestra el mar procedural.",
+  "oceanPhotoHint": "Elige una foto real del mar desde arriba, preferiblemente 4K y sin costa ni horizonte. La app guarda solo una copia privada local. La refracción suave le da movimiento.",
+  "nativePhotoGpuActive": "Android: OpenGL con foto real del mar activa"
 }
