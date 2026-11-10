@@ -92,7 +92,7 @@ assert 'uniform float uUsePhoto;' in frag and 'uPhotoAspect' in frag
 assert 'setImageSampler(2, photograph ?? _toneAtlas!' in web
 assert 'FilePicker.pickFile(type: FileType.image)' in editor
 assert 'al-web-before-after' in editor and '_clearWebOceanPhoto' in editor
-assert 'version: 0.4.3+10' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert int(parts[0].split('.')[2]) >= 3 and int(parts[1]) >= 10
 print('PASS: v0.4.3 local Web photographic preview and comparison source contract')
 
 # v0.4.4: optical tuning is optional in schema2 and bound on native/Web.
