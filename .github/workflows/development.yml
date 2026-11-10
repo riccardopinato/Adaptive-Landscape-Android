@@ -23,6 +23,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Repository source privacy + localization contract
         run: python3 scripts/validate_repository.py
+
+      - name: Shell QA capture script static syntax (no physical device)
+        run: bash -n scripts/physical_qa_capture.sh
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
