@@ -52,10 +52,12 @@ class BeachMask {
 
     for (final index in field.occupied) {
       if (index < 0 || index >= field.gridColumns * field.gridRows) continue;
-      final cx = ((index % field.gridColumns) + 0.5) / field.gridColumns;
+      final cx = field.gridInset + ((index % field.gridColumns) + 0.5) *
+        (1 - 2 * field.gridInset) / field.gridColumns;
       final cy = field.top + ((index ~/ field.gridColumns) + 0.5) * field.span / field.gridRows;
       stamp(cx: cx, cy: cy,
-          rx: 0.58 / field.gridColumns, ry: 0.58 * field.span / field.gridRows);
+          rx: 0.58 * (1 - 2 * field.gridInset) / field.gridColumns,
+          ry: 0.58 * field.span / field.gridRows);
     }
     for (final zone in field.zones) {
       stamp(cx: zone.x, cy: zone.y, rx: zone.width * 0.38,
