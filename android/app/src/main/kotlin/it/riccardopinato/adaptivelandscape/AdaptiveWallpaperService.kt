@@ -68,10 +68,15 @@ class AdaptiveWallpaperService : WallpaperService() {
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
             if (key == "scene" || key == "occupied" || key == "config_v2" ||
                 key == OceanPhotoStore.CHANGE_KEY) {
-                if (key == OceanPhotoStore.CHANGE_KEY) gpuOcean.invalidatePhoto()
-                reload()
-                handler.removeCallbacks(frame)
-                if (visible) handler.post(frame)
+                // The photo import updates SharedPreferences from a worker.
+                // EGL and wallpaper Engine resources must be touched only on
+                // the main/engine thread, never from the importer callback.
+                handler.post {
+                    if (key == OceanPhotoStore.CHANGE_KEY) gpuOcean.invalidatePhoto()
+                    reload()
+                    handler.removeCallbacks(frame)
+                    if (visible) handler.post(frame)
+                }
             }
         }
 

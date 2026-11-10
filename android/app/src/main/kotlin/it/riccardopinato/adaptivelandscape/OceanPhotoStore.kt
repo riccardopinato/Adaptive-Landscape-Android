@@ -63,9 +63,18 @@ internal object OceanPhotoStore {
                 val left = (w - cropWidth) / 2
                 val top = (h - cropHeight) / 2
                 val box = Rect(left, top, left + cropWidth, top + cropHeight)
+                val targetW = if (swapped) 3840 else 2160
+                val targetH = if (swapped) 2160 else 3840
+                var sample = 1
+                while (cropWidth / sample > targetW * 1.25 ||
+                       cropHeight / sample > targetH * 1.25) {
+                    sample *= 2
+                }
                 val options = BitmapFactory.Options().apply {
-                    inPreferredConfig = Bitmap.Config.RGB_565
-                    inSampleSize = if (cropWidth > 3200 || cropHeight > 5700) 2 else 1
+                    // RGB_565 was quantizing the photographic colors before
+                    // JPEG export; retain 8-bit/channel to avoid banding.
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                    inSampleSize = sample
                 }
                 val bitmap = requireNotNull(decoder.decodeRegion(box, options)) {
                     "Unable to decode the selected ocean photo"
