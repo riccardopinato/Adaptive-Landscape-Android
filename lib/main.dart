@@ -110,7 +110,9 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     if (!WallpaperChannel.supported) return;
     try {
       final imported = await _channel.pickOceanPhoto();
-      if (imported) await _refreshNativeRenderer();
+      if (imported) {
+        await _refreshNativeRenderer();
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     }
