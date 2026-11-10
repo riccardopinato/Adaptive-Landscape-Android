@@ -73,5 +73,9 @@
   "webPhotoChoose": "Escolher foto do mar",
   "webCompareProcedural": "Comparar com o mar sintético anterior",
   "webCompareExplanation": "Mostra a água procedural anterior em vez da fotografia. Desative para voltar à foto.",
-  "webPhotoPrivacyHint": "A imagem Web fica apenas na memória: sem envio, armazenamento ou exportação. A pré-visualização não certifica o wallpaper Android."
+  "webPhotoPrivacyHint": "A imagem Web fica apenas na memória: sem envio, armazenamento ou exportação. A pré-visualização não certifica o wallpaper Android.",
+  "waterTuning": "Controlos de realismo da água",
+  "refractionIntensity": "Refração da fotografia",
+  "foamIntensityLabel": "Espuma da costa",
+  "waterTuningHint": "Ajuste com moderação: os detalhes fotográficos devem predominar. A velocidade das ondas é independente da refração."
 }

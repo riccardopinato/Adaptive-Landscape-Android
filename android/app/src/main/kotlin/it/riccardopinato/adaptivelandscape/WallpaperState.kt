@@ -22,6 +22,8 @@ internal data class WallpaperState(
     val motion: Float = 1.0f,
     val reduceMotion: Boolean = false,
     val renderQuality: String = "ultra",
+    val photoRefraction: Float = 0.55f,
+    val foamIntensity: Float = 0.45f,
 ) {
     val staticScene: Boolean get() = reduceMotion || motion <= 0f
 
@@ -92,6 +94,8 @@ internal data class WallpaperState(
                             renderQuality = json.optString("renderQuality", "ultra").let {
                                 if (it == "balanced" || it == "high") it else "ultra"
                             },
+                            photoRefraction = number(json, "photoRefraction", 0.55, 0.0, 1.0),
+                            foamIntensity = number(json, "foamIntensity", 0.45, 0.0, 1.0),
                         )
                     }
                 } catch (_: Exception) {

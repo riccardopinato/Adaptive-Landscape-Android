@@ -11,6 +11,7 @@ class ScenePainter extends CustomPainter {
     required this.scene, required this.field, this.phase = 0,
     this.palette = 'original', this.night = false, this.beachProgram,
     this.renderQuality = 'ultra', this.photograph,
+    this.photoRefraction = 0.55, this.foamIntensity = 0.45,
   });
 
   final String scene;
@@ -21,13 +22,16 @@ class ScenePainter extends CustomPainter {
   final ui.FragmentProgram? beachProgram;
   final String renderQuality;
   final ui.Image? photograph;
+  final double photoRefraction;
+  final double foamIntensity;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (scene == 'beach') {
       if (!BeachGpuSurface.paint(canvas, size, field, phase,
           program: beachProgram, palette: palette, night: night,
-          renderQuality: renderQuality, photograph: photograph)) {
+          renderQuality: renderQuality, photograph: photograph,
+          photoRefraction: photoRefraction, foamIntensity: foamIntensity)) {
         BeachSurface.paint(canvas, size, field, phase, palette: palette, night: night);
       }
       return;
@@ -143,6 +147,7 @@ class ScenePainter extends CustomPainter {
     scene != old.scene || palette != old.palette || night != old.night ||
     renderQuality != old.renderQuality ||
     !identical(photograph, old.photograph) ||
+    photoRefraction != old.photoRefraction || foamIntensity != old.foamIntensity ||
     phase != old.phase || !identical(beachProgram, old.beachProgram) ||
     field.gridColumns != old.field.gridColumns ||
     field.gridRows != old.field.gridRows || field.top != old.field.top ||

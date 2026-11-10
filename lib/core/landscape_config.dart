@@ -58,6 +58,8 @@ class LandscapeConfig {
     this.motion = 1.0,
     this.reduceMotion = false,
     this.renderQuality = 'ultra',
+    this.photoRefraction = 0.55,
+    this.foamIntensity = 0.45,
   });
 
   static const int schemaVersion = 2;
@@ -74,6 +76,10 @@ class LandscapeConfig {
   final bool reduceMotion;
   /// Web GPU shading tier; Android native wallpaper ignores this optional key.
   final String renderQuality;
+  /// Scalar amplitude of periodic photo distortion, 0..1 (schema2 optional).
+  final double photoRefraction;
+  /// Softness/quantity of foam near manually marked regions, 0..1.
+  final double foamIntensity;
 
   int get cellCount => columns * rows;
   (double, double) cellCenter(int index) {
@@ -88,6 +94,7 @@ class LandscapeConfig {
         'zones': zones.map((x) => x.toJson()).toList(),
         'palette': palette, 'night': night, 'motion': motion,
         'reduceMotion': reduceMotion, 'renderQuality': renderQuality,
+        'photoRefraction': photoRefraction, 'foamIntensity': foamIntensity,
       };
 
   String encode() => jsonEncode(toJson());
@@ -136,6 +143,8 @@ class LandscapeConfig {
       reduceMotion: m['reduceMotion'] == true,
       renderQuality: m['renderQuality'] == 'balanced' ? 'balanced' :
           m['renderQuality'] == 'high' ? 'high' : 'ultra',
+      photoRefraction: d('photoRefraction', 0.55, 0.0, 1.0),
+      foamIntensity: d('foamIntensity', 0.45, 0.0, 1.0),
     );
   }
 
@@ -144,6 +153,7 @@ class LandscapeConfig {
     Set<int>? occupied, List<LayoutZone>? zones, String? palette,
     bool? night, double? motion, bool? reduceMotion,
     String? renderQuality,
+    double? photoRefraction, double? foamIntensity,
   }) => LandscapeConfig(
         scene: scene ?? this.scene,
         columns: columns ?? this.columns, rows: rows ?? this.rows,
@@ -152,6 +162,8 @@ class LandscapeConfig {
         palette: palette ?? this.palette, night: night ?? this.night,
         motion: motion ?? this.motion, reduceMotion: reduceMotion ?? this.reduceMotion,
         renderQuality: renderQuality ?? this.renderQuality,
+        photoRefraction: photoRefraction ?? this.photoRefraction,
+        foamIntensity: foamIntensity ?? this.foamIntensity,
       );
 }
 

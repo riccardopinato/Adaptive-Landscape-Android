@@ -73,5 +73,9 @@
   "webPhotoChoose": "Meeresfoto auswählen",
   "webCompareProcedural": "Mit früherem synthetischen Meer vergleichen",
   "webCompareExplanation": "Zeigt statt des Fotos das prozedurale Wasser. Ausschalten, um zum Foto zurückzukehren.",
-  "webPhotoPrivacyHint": "Das Web-Bild bleibt nur im Arbeitsspeicher: kein Upload, keine Speicherung oder Profilexport. Dies bestätigt nicht das Android-Live-Wallpaper."
+  "webPhotoPrivacyHint": "Das Web-Bild bleibt nur im Arbeitsspeicher: kein Upload, keine Speicherung oder Profilexport. Dies bestätigt nicht das Android-Live-Wallpaper.",
+  "waterTuning": "Einstellungen für realistisches Wasser",
+  "refractionIntensity": "Lichtbrechung des Fotos",
+  "foamIntensityLabel": "Schaum am Ufer",
+  "waterTuningHint": "Dezent einstellen: fotografische Details sollen dominieren. Die Wellengeschwindigkeit ist unabhängig von der Lichtbrechung."
 }

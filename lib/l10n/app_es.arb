@@ -73,5 +73,9 @@
   "webPhotoChoose": "Elegir foto del mar",
   "webCompareProcedural": "Comparar con el mar sintético anterior",
   "webCompareExplanation": "Muestra el agua procedural anterior en lugar de la foto. Desactiva para volver a la foto.",
-  "webPhotoPrivacyHint": "La imagen Web solo está en memoria: no se carga, guarda ni exporta. La vista previa no valida el fondo de Android."
+  "webPhotoPrivacyHint": "La imagen Web solo está en memoria: no se carga, guarda ni exporta. La vista previa no valida el fondo de Android.",
+  "waterTuning": "Ajustes de realismo del agua",
+  "refractionIntensity": "Refracción de la foto",
+  "foamIntensityLabel": "Espuma de la costa",
+  "waterTuningHint": "Ajusta con moderación: debe predominar el detalle fotográfico. La velocidad de las olas es independiente de la refracción."
 }

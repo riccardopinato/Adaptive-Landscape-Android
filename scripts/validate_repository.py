@@ -92,5 +92,15 @@ assert 'uniform float uUsePhoto;' in frag and 'uPhotoAspect' in frag
 assert 'setImageSampler(2, photograph ?? _toneAtlas!' in web
 assert 'FilePicker.pickFile(type: FileType.image)' in editor
 assert 'al-web-before-after' in editor and '_clearWebOceanPhoto' in editor
-assert 'version: 0.4.3+10' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert int(parts[0].split('.')[2]) >= 3 and int(parts[1]) >= 10
 print('PASS: v0.4.3 local Web photographic preview and comparison source contract')
+
+# v0.4.4: optical tuning is optional in schema2 and bound on native/Web.
+cfg = (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
+native_state = (base / 'WallpaperState.kt').read_text(encoding='utf-8')
+assert "'photoRefraction': photoRefraction" in cfg and "'foamIntensity': foamIntensity" in cfg
+assert 'photoRefraction = number(json' in native_state and 'foamIntensity = number(json' in native_state
+assert 'uRefraction' in frag and 'uFoamIntensity' in frag
+assert 'uRefraction' in gpu and 'uFoamIntensity' in gpu
+assert 'al-photo-refraction' in editor and 'al-foam-intensity' in editor
+print('PASS: v0.4.4 schema2 optional optics controls and photorealistic foam source gates')
