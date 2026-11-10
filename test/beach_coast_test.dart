@@ -4,6 +4,19 @@ import 'package:adaptive_landscape/core/beach_coast.dart';
 import 'package:adaptive_landscape/core/icon_field.dart';
 
 void main() {
+  test('Empty beach is ocean at all animation phases and sample pixels', () {
+    final coast = BeachCoast(const IconField(occupied: {}));
+    for (var phase = 0; phase <= 16; phase++) {
+      for (var iy = 0; iy <= 16; iy++) {
+        for (var ix = 0; ix <= 16; ix++) {
+          final x = ix / 16, y = iy / 16;
+          final s = coast.coast(x, y) +
+              BeachCoast.tide(y, phase * math.pi / 8);
+          expect(s, lessThan(-0.29));
+        }
+      }
+    }
+  });
   test('Empty Beach is entirely ocean at every tested coordinate', () {
     final beach = BeachCoast(const IconField(occupied: {}));
     for (var x = 0; x <= 10; x++) {

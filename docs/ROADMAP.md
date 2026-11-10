@@ -43,3 +43,11 @@ Beach v0.2 sky/sun/cloud scene rejected as inconsistent with the intended origin
 - [CODED] Kotlin formula aligned to occupancy-only (NOT 4K); Android actual quality and battery not certified.
 - [PENDING USER WEB ACCEPTANCE] 4K/high-DPI visual sharpness and aesthetic realism; browser GPU capability varies.
 - [PENDING PHYSICAL] Android 4K quality/performance require dedicated native rendering strategy and battery measurement; don't mark done.
+
+## v0.3.3 — failed visual acceptance repair
+
+- Fix initial Web scene: new profile opens Beach with no selected icons/zone/dock and hidden guides, while existing saved profiles are preserved.
+- Add explicit current-profile-only Ocean reset (with descriptive text); visual indicator shows no occupancy vs icon/widget/dock counts.
+- Make GPU vs fallback renderer state visible, rather than falsely claiming a pixel-shaded sea when unavailable. Improve fallback mesh density.
+- Improve independently authored multi-scale water surface/foam/sand color shader and add panoramic full-screen preview to inspect on high-DPI browser.
+- Add widget and phase-grid regression tests. **Acceptance remains pending until user has actually inspected the deployed Web**. Mobile APK physical QA unchanged/deferred.

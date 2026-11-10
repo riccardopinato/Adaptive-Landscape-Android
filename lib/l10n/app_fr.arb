@@ -41,5 +41,13 @@
   "noDock": "Aucune",
   "dockHint": "Réglez manuellement 3–4 icônes fixes; dock vide = mer seule.",
   "previewGuides": "Afficher les repères d'édition",
-  "emptySeaHint": "Sans apps ni widgets, tout l'aperçu est la mer."
+  "emptySeaHint": "Sans apps ni widgets, tout l'aperçu est la mer.",
+  "onlyOcean": "Mer seule · effacer disposition",
+  "onlyOceanNote": "Efface icônes, dossiers, widgets et dock du profil actif uniquement. Les autres profils restent enregistrés.",
+  "gpuActive": "Mer : GPU actif",
+  "gpuFallback": "Mer : qualité réduite (shader GPU indisponible)",
+  "gpuLoading": "Mer : chargement du rendu…",
+  "fullscreenPreview": "Grand aperçu",
+  "closePreview": "Fermer l'aperçu",
+  "previewPanoramic": "Aperçu panoramique · réglez les icônes dans l'éditeur"
 }

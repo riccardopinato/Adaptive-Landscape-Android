@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../core/beach_mask.dart';
 import '../core/icon_field.dart';
 
+enum BeachRenderStatus { loading, gpu, fallback }
+
 /// Full-framebuffer procedural ocean shader; 512×1024 texture stores only
 /// static occupancy. Every sea pixel is shaded by the GPU at actual output DPR.
 /// On unsupported renderers, BeachSurface supplies a conservative fallback.
@@ -13,6 +15,21 @@ class BeachGpuSurface {
   static ui.Image? _mask;
   static ui.FragmentShader? _shader;
   static ui.FragmentProgram? _program;
+  static final ValueNotifier<BeachRenderStatus> status =
+      ValueNotifier(BeachRenderStatus.loading);
+  static bool _programUnavailable = false;
+
+  static void _report(BeachRenderStatus next) {
+    if (status.value == next) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (status.value != next) status.value = next;
+    });
+  }
+
+  static void markUnavailable() {
+    _programUnavailable = true;
+    _report(BeachRenderStatus.fallback);
+  }
 
   static void invalidate() {
     _key = null;
@@ -23,7 +40,10 @@ class BeachGpuSurface {
   static bool paint(Canvas canvas, Size size, IconField field, double phase,
       {required ui.FragmentProgram? program, String palette = 'original',
        bool night = false}) {
-    if (program == null || size.isEmpty) return false;
+    if (program == null || size.isEmpty) {
+      if (_programUnavailable) _report(BeachRenderStatus.fallback);
+      return false;
+    }
     try {
       final key = [
         field.gridColumns, field.gridRows, field.top, field.span,
@@ -55,9 +75,11 @@ class BeachGpuSurface {
       shader.setFloat(5, BeachMask.isEmpty(field) ? 0 : 1);
       shader.setImageSampler(0, _mask!, filterQuality: ui.FilterQuality.high);
       canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
+      _report(BeachRenderStatus.gpu);
       return true;
     } catch (_) {
-      // Unsupported GPU shader backend: preserve a functional original scene.
+      // Expose the fallback state instead of silently claiming 4K graphics.
+      _report(BeachRenderStatus.fallback);
       return false;
     }
   }

@@ -10,14 +10,14 @@ class ProfileStore {
   Future<List<NamedLayout>> readProfiles() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_profilesKey);
-    if (raw == null) return [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig())];
+    if (raw == null) return [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig(scene: 'beach'))];
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is! List) return [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig())];
+      if (decoded is! List) return [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig(scene: 'beach'))];
       final result = decoded.take(16).map(NamedLayout.fromJson).toList();
-      return result.isEmpty ? [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig())] : result;
+      return result.isEmpty ? [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig(scene: 'beach'))] : result;
     } catch (_) {
-      return [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig())];
+      return [const NamedLayout(id: 'default', name: 'Home', config: LandscapeConfig(scene: 'beach'))];
     }
   }
 

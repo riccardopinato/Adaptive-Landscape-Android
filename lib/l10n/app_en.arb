@@ -41,5 +41,13 @@
   "noDock": "None",
   "dockHint": "Set the 3–4 fixed apps manually; empty dock means all sea.",
   "previewGuides": "Show editing guides",
-  "emptySeaHint": "No apps or widgets selected: the whole preview is sea."
+  "emptySeaHint": "No apps or widgets selected: the whole preview is sea.",
+  "onlyOcean": "Ocean only · clear layout",
+  "onlyOceanNote": "Clears icons, folders, widgets and dock in the current profile only. Other profiles remain saved.",
+  "gpuActive": "Ocean: GPU renderer active",
+  "gpuFallback": "Ocean: reduced quality (GPU shader unavailable in this browser)",
+  "gpuLoading": "Ocean: loading renderer…",
+  "fullscreenPreview": "Large preview",
+  "closePreview": "Close preview",
+  "previewPanoramic": "Panoramic preview · calibrate Home icons in the editor"
 }

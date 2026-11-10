@@ -9,7 +9,9 @@ import '../core/icon_field.dart';
 class BeachSurface {
   BeachSurface._();
 
-  static _Mesh? _cached;
+  // The editor and large preview can animate simultaneously. Keep the two
+  // most recent geometry caches instead of repeatedly rebuilding 31k vertices.
+  static final Map<String, _Mesh> _cache = <String, _Mesh>{};
 
   static void paint(Canvas canvas, Size size, IconField field, double phase, {
     String palette = 'original',
@@ -19,12 +21,17 @@ class BeachSurface {
     final key = [
       size.width.toStringAsFixed(1), size.height.toStringAsFixed(1),
       field.gridColumns, field.gridRows, field.top, field.span,
-      IconField.encode(field.occupied),
+      field.encodeOccupied(),
       for (final zone in field.zones)
         '${zone.x.toStringAsFixed(5)},${zone.y.toStringAsFixed(5)},'
         '${zone.width.toStringAsFixed(5)},${zone.height.toStringAsFixed(5)}',
     ].join('|');
-    final mesh = _cached?.key == key ? _cached! : (_cached = _Mesh.build(key, field));
+    final mesh = _cache.putIfAbsent(key, () => _Mesh.build(key, field));
+    // Keep memory bounded while preserving the editor + fullscreen sizes.
+    if (_cache.length > 2) {
+      final oldest = _cache.keys.firstWhere((k) => k != key);
+      _cache.remove(oldest);
+    }
     final coast = BeachCoast(field);
     final colors = Int32List(mesh.positions.length ~/ 2);
 
@@ -56,8 +63,9 @@ class _Mesh {
   final Uint16List indices;
 
   static _Mesh build(String key, IconField field) {
-    // 73 × 137 = 10,001 vertices; indices fit Uint16, rendered using the GPU.
-    const cols = 72, rows = 136;
+    // Fallback only: finer geometry avoids obvious triangulation if GPU shaders fail.
+    // 129×241=31,089 vertices, safely below Uint16's 65,535 limit.
+    const cols = 128, rows = 240;
     final count = (cols + 1) * (rows + 1);
     final positions = Float32List(count * 2);
     final xs = Float32List(count), ys = Float32List(count);
