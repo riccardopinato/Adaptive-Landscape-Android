@@ -60,5 +60,11 @@
   "screenshotCalibrationHint": "Faz uma captura do ecrã inicial, seleciona-a e marca ícones e pastas na prévia. Para widgets usa Zonas. A imagem é temporária, não é guardada nem enviada. As posições dependem do launcher.",
   "nativeGpuActive": "Android: OpenGL à resolução do ecrã (verificar no ecrã inicial)",
   "nativeGpuFallback": "Android: OpenGL indisponível; renderização Canvas de baixa qualidade.",
-  "nativeGpuUnknown": "Android: estado do motor indisponível. Aplica o papel de parede e reabre a app."
+  "nativeGpuUnknown": "Android: estado do motor indisponível. Aplica o papel de parede e reabre a app.",
+  "oceanPhotoTitle": "Mar fotográfico · Android",
+  "selectOceanPhoto": "Escolher foto do mar",
+  "clearOceanPhoto": "Remover foto do mar",
+  "oceanPhotoReady": "Foto do mar guardada localmente. Reabre o papel de parede para verificar.",
+  "oceanPhotoMissing": "Nenhuma foto escolhida: mar procedural em uso.",
+  "oceanPhotoHint": "Seleciona uma foto real do mar vista de cima, de preferência em 4K e sem praia nem horizonte. A app guarda apenas uma cópia privada no telefone. Uma ligeira refração anima a imagem."
 }

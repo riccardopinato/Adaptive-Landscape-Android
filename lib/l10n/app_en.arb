@@ -60,5 +60,11 @@
   "screenshotCalibrationHint": "Take a screenshot of your Home screen, select it here, then tap icon and folder positions in the preview. Use Zones for widgets. The image is temporary and never stored or uploaded. Exact positions depend on the launcher.",
   "nativeGpuActive": "Android: screen-resolution OpenGL rendering (verify on Home)",
   "nativeGpuFallback": "Android: OpenGL unavailable; low-quality emergency Canvas fallback is active.",
-  "nativeGpuUnknown": "Android: wallpaper renderer status unavailable. Install the wallpaper and reopen the app."
+  "nativeGpuUnknown": "Android: wallpaper renderer status unavailable. Install the wallpaper and reopen the app.",
+  "oceanPhotoTitle": "Photographic sea · Android",
+  "selectOceanPhoto": "Choose ocean photograph",
+  "clearOceanPhoto": "Remove ocean photo",
+  "oceanPhotoReady": "Local ocean photograph enabled. Reopen the wallpaper to verify it.",
+  "oceanPhotoMissing": "No photograph selected: procedural ocean is in use.",
+  "oceanPhotoHint": "Choose a real high-resolution overhead ocean photo, preferably 4K, without beach or horizon. The app crops and stores a private copy on your phone only; no uploads. Subtle refraction animates it."
 }
