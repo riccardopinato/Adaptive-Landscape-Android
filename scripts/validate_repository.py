@@ -114,7 +114,7 @@ assert 'gridInset' in cfg and 'gridInset' in native_state
 assert 'field.gridInset' in mask and 'gridInset' in field
 assert 'InteractiveViewer(' in editor and 'al-precision-calibration' in editor
 assert 'al-calibrate-top' in editor and 'al-calibrate-side' in editor
-assert '0.4.5+12' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert int(parts[0].split('.')[2]) >= 5 and int(parts[1]) >= 12
 print('PASS: v0.4.5 normalized Home insets and manual zoom calibration')
 
 # v0.4.6: native photo path skips procedural shading, quality controls image memory and pacing.
