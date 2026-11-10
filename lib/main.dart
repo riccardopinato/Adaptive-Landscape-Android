@@ -11,6 +11,7 @@ import 'core/beach_mask.dart';
 import 'core/animation_timing.dart';
 import 'core/landscape_config.dart';
 import 'core/profile_store.dart';
+import 'core/qa_snapshot.dart';
 import 'l10n/app_localizations.dart';
 import 'platform/wallpaper_channel.dart';
 import 'ui/scene_painter.dart';
@@ -467,6 +468,32 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     );
   }
 
+  Future<void> _copyQaSnapshot() async {
+    try {
+      final native = await _channel.read();
+      const sourceSha = String.fromEnvironment(
+          'BUILD_SOURCE_SHA', defaultValue: 'unavailable');
+      final record = buildQaSnapshot(
+        config: _config,
+        renderer: WallpaperChannel.supported
+            ? native.nativeBackend ?? 'not started'
+            : BeachGpuSurface.status.value.name,
+        photoStored: WallpaperChannel.supported
+            ? native.oceanPhotoEnabled
+            : _webPhotograph != null,
+        runtime: WallpaperChannel.supported ? 'android' : 'web',
+        sourceSha: sourceSha,
+      );
+      await Clipboard.setData(ClipboardData(text: record));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.qaSnapshotCopied)));
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    }
+  }
+
   Future<void> _openPicker() async {
     setState(() => _busy = true);
     try {
@@ -790,6 +817,14 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         l.nativeGpuUnknown, style: style.bodySmall,
         key: const Key('al-native-renderer-status'),
       ),
+      const SizedBox(height: 12),
+      OutlinedButton.icon(
+        key: const Key('al-copy-qa-snapshot'),
+        onPressed: _copyQaSnapshot,
+        icon: const Icon(Icons.content_copy_outlined),
+        label: Text(l.qaSnapshotCopy),
+      ),
+      Text(l.qaSnapshotHint, style: style.bodySmall),
       const SizedBox(height: 6),
       const Text('Beach Web + Android v0.4.6', style: TextStyle(fontSize: 11)),
       if (_error != null) SelectableText('${l.failure}: $_error',
