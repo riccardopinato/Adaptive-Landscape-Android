@@ -47,7 +47,13 @@ class AdaptiveWallpaperService : WallpaperService() {
 
         private fun frameDelay(): Long {
             val power = getSystemService(Context.POWER_SERVICE) as PowerManager
-            return if (power.isPowerSaveMode) 125L else 50L // 8fps / 20fps while visible
+            val target = when (settings.renderQuality) {
+                "balanced" -> 83L  // about 12fps cap
+                "high" -> 63L      // about 16fps cap
+                else -> 50L        // up to 20fps cap
+            }
+            return if (power.isPowerSaveMode) maxOf(125L, target) else target
+            // Delay is a ceiling target, not measured FPS; CPU/GPU time is extra.
         }
 
         private fun reload() {
