@@ -16,6 +16,8 @@ uniform sampler2D uToneAtlas;
 uniform sampler2D uPhotograph;
 uniform float uUsePhoto;
 uniform float uPhotoAspect;
+uniform float uRefraction;
+uniform float uFoamIntensity;
 out vec4 fragColor;
 
 float hash21(vec2 p) {
@@ -143,8 +145,13 @@ void main() {
     float xScale = min(1.0, coverAspect / max(uPhotoAspect, 0.01));
     float yScale = min(1.0, uPhotoAspect / max(coverAspect, 0.01));
     vec2 microWarp = vec2(
-      0.0019 * sin(phase + uv.y * 17.0) + 0.0006 * sin(2.0 * phase - uv.x * 31.0),
-      0.0016 * cos(phase - uv.x * 18.0) + 0.0005 * cos(2.0 * phase + uv.y * 29.0));
+      0.0019 * sin(phase + uv.y * 17.0) +
+        0.0006 * sin(2.0 * phase - uv.x * 31.0) +
+        0.00032 * cos(3.0 * phase + uv.x * 44.0 + uv.y * 21.0),
+      0.0016 * cos(phase - uv.x * 18.0) +
+        0.0005 * cos(2.0 * phase + uv.y * 29.0) +
+        0.00026 * sin(3.0 * phase + uv.y * 53.0 - uv.x * 7.0));
+    microWarp *= uRefraction;
     vec2 sampleUV = clamp((uv + microWarp - 0.5) *
       vec2(xScale, yScale) + 0.5, vec2(0.001), vec2(0.999));
     water = texture(uPhotograph, sampleUV).rgb;
@@ -172,6 +179,8 @@ void main() {
   float foam = uHasLand * min(0.86,
     leading * (0.55 + 0.30 * speckle) +
     receding * 0.34 * speckle);
+  // Real photos already carry their own foam; never paint a hard contour.
+  foam *= uFoamIntensity * mix(1.0, 0.38, uUsePhoto);
   result = mix(result, vec3(0.969, 0.982, 0.953), foam);
 
   if (uPalette > 1.5) {
