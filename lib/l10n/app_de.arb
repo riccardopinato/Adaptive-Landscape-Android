@@ -77,5 +77,10 @@
   "waterTuning": "Einstellungen für realistisches Wasser",
   "refractionIntensity": "Lichtbrechung des Fotos",
   "foamIntensityLabel": "Schaum am Ufer",
-  "waterTuningHint": "Dezent einstellen: fotografische Details sollen dominieren. Die Wellengeschwindigkeit ist unabhängig von der Lichtbrechung."
+  "waterTuningHint": "Dezent einstellen: fotografische Details sollen dominieren. Die Wellengeschwindigkeit ist unabhängig von der Lichtbrechung.",
+  "calibrateZoomTitle": "Präzise Startbildschirm-Kalibrierung · Zoom",
+  "calibrateZoomHint": "Mit zwei Fingern bis 5× zoomen, Screenshot verschieben und Symbolzellen antippen. Widgetzonen lassen sich ziehen. Abstände auf dem echten Launcher prüfen.",
+  "calibrateTop": "Oberer Rasterrand",
+  "calibrateHeight": "Rasterhöhe",
+  "calibrateSide": "Seitliche Rasterränder"
 }
