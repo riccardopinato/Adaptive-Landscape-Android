@@ -19,7 +19,7 @@ internal class OceanTexture(private val context: Context) {
         var bitmap: Bitmap? = null
         try {
             bitmap = BitmapFactory.decodeFile(photo.absolutePath,
-                BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.RGB_565 })
+                BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 })
             val decoded = bitmap ?: return
             val max = IntArray(1)
             GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, max, 0)
