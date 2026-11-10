@@ -82,5 +82,6 @@
   "calibrateZoomHint": "Amplía con dos dedos (hasta 5×), desplázate por la captura y toca las celdas. Las zonas de widgets se pueden arrastrar. Comprueba los márgenes en el launcher real.",
   "calibrateTop": "Margen superior",
   "calibrateHeight": "Altura de la cuadrícula",
-  "calibrateSide": "Márgenes laterales"
+  "calibrateSide": "Márgenes laterales",
+  "nativeFramePacingNote": "Objetivos de fotogramas en Inicio: Equilibrada ~12fps, Alta ~16fps, Ultra hasta 20fps; ahorro de batería ~8fps. Los FPS y el consumo reales se miden en el teléfono."
 }
