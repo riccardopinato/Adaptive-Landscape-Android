@@ -63,6 +63,7 @@ class AdaptiveWallpaperService : WallpaperService() {
         }
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
+            if (key == "ocean_photo_generation_v1") gpuOcean.invalidatePhotograph()
             if (key == "scene" || key == "occupied" || key == "config_v2" ||
                 key == "ocean_photo_generation_v1") {
                 reload()
