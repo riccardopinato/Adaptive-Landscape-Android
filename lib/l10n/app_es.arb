@@ -83,5 +83,8 @@
   "calibrateTop": "Margen superior",
   "calibrateHeight": "Altura de la cuadrícula",
   "calibrateSide": "Márgenes laterales",
-  "nativeFramePacingNote": "Objetivos de fotogramas en Inicio: Equilibrada ~12fps, Alta ~16fps, Ultra hasta 20fps; ahorro de batería ~8fps. Los FPS y el consumo reales se miden en el teléfono."
+  "nativeFramePacingNote": "Objetivos de fotogramas en Inicio: Equilibrada ~12fps, Alta ~16fps, Ultra hasta 20fps; ahorro de batería ~8fps. Los FPS y el consumo reales se miden en el teléfono.",
+  "qaSnapshotCopy": "Copiar resumen de pruebas físicas",
+  "qaSnapshotHint": "Copia solo la configuración y el estado del renderer; sin capturas, identificadores personales ni nombres de aplicaciones.",
+  "qaSnapshotCopied": "Resumen de pruebas copiado"
 }
