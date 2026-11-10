@@ -28,6 +28,9 @@ class AdaptiveWallpaperService : WallpaperService() {
         private val coastalBeach = CoastalBeachRenderer()
         private val gpuOcean = GpuOceanRenderer(this@AdaptiveWallpaperService)
         private var backendStatus = ""
+        // Canvas and EGL must not alternate producers on the same Surface.
+        // Once CPU fallback connects, wait for a genuinely new surface.
+        private var canvasProducerUsed = false
         private var visible = false
         private var settings = WallpaperState()
         private var offset = 0.5f
@@ -78,14 +81,22 @@ class AdaptiveWallpaperService : WallpaperService() {
             if (visible) handler.post(frame)
         }
 
+        override fun onSurfaceCreated(holder: SurfaceHolder) {
+            super.onSurfaceCreated(holder)
+            gpuOcean.resetSurface()
+            canvasProducerUsed = false
+        }
+
         override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
             super.onSurfaceChanged(holder, format, width, height)
-            gpuOcean.resetSurface()
+            // EGL prepare() handles a size change. Do not reset and attempt
+            // EGL after Canvas has already acquired this Surface.
             if (visible) drawFrame()
         }
 
         override fun onSurfaceDestroyed(holder: SurfaceHolder) {
             gpuOcean.resetSurface()
+            canvasProducerUsed = false
             super.onSurfaceDestroyed(holder)
         }
 
@@ -108,24 +119,28 @@ class AdaptiveWallpaperService : WallpaperService() {
 
         private fun drawFrame() {
             if (!surfaceHolder.surface.isValid) return
-            if (settings.scene == "beach") {
-                val frameSize = surfaceHolder.surfaceFrame
-                val phase = if (settings.staticScene) 0.0 else
-                    (SystemClock.uptimeMillis() - startTime).coerceAtLeast(0L) /
-                    12000.0 * 2 * PI * settings.motion
-                if (gpuOcean.render(surfaceHolder.surface,
-                        frameSize.width(), frameSize.height(), settings, phase)) {
-                    reportBackend(if (gpuOcean.photoActive) "gpu_native_photo" else "gpu_native")
-                    return
-                }
-                // A driver with no EGL2 support must keep the wallpaper visible.
-                reportBackend("cpu_360px_fallback")
-            } else {
-                reportBackend("meadow_canvas")
+            val frameSize = surfaceHolder.surfaceFrame
+            val phase = if (settings.staticScene) 0.0 else
+                (SystemClock.uptimeMillis() - startTime).coerceAtLeast(0L) /
+                12000.0 * 2 * PI * settings.motion
+            // Single EGL producer for both Beach and Meadow. This prevents
+            // lockCanvas()/EGL connection conflicts when switching themes.
+            if (!canvasProducerUsed &&
+                gpuOcean.render(surfaceHolder.surface,
+                    frameSize.width(), frameSize.height(), settings, phase)) {
+                reportBackend(when {
+                    settings.scene == "meadow" -> "gpu_meadow"
+                    gpuOcean.photoActive -> "gpu_native_photo"
+                    else -> "gpu_native"
+                })
+                return
             }
+            reportBackend(if (settings.scene == "beach")
+                "cpu_360px_fallback" else "meadow_canvas")
             var canvas: Canvas? = null
             try {
                 canvas = surfaceHolder.lockCanvas() ?: return
+                canvasProducerUsed = true
                 drawLandscape(canvas)
             } catch (_: IllegalArgumentException) {
                 // Launcher may destroy/recreate the wallpaper surface mid-frame.
