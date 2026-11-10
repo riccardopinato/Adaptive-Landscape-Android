@@ -36,5 +36,10 @@
   "reduceMotion": "Riduci movimento",
   "motion": "Intensità animazione",
   "dock": "Dock",
-  "widgetZone": "Widget"
+  "widgetZone": "Widget",
+  "dockIcons": "App fisse in basso (dock)",
+  "noDock": "Nessuna",
+  "dockHint": "Imposta manualmente le 3–4 app fisse: dock vuoto = solo mare.",
+  "previewGuides": "Mostra le guide di modifica",
+  "emptySeaHint": "Nessuna app o widget selezionato: tutta l'anteprima è mare."
 }

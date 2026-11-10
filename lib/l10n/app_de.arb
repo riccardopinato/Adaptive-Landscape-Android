@@ -36,5 +36,10 @@
   "reduceMotion": "Bewegung reduzieren",
   "motion": "Bewegungsintensität",
   "dock": "Dock",
-  "widgetZone": "Widget"
+  "widgetZone": "Widget",
+  "dockIcons": "Feste Apps unten (Dock)",
+  "noDock": "Keine",
+  "dockHint": "3–4 feste Apps manuell markieren; leeres Dock = nur Meer.",
+  "previewGuides": "Bearbeitungshilfen anzeigen",
+  "emptySeaHint": "Keine Apps oder Widgets: Die Vorschau zeigt nur Meer."
 }

@@ -9,10 +9,13 @@ class BeachCoast {
 
   /// Positive -> sand; negative -> water. Icon regions grow dry land.
   double coast(double x, double y) {
-    final baseline = 0.30 + 0.078 * math.sin(y * 5.4 + 0.3) +
-        0.031 * math.sin(y * 14.2 + 0.9) +
-        0.013 * math.sin(y * 29.0);
-    return baseline - x + 0.84 * field.influence(x, y);
+    final strength = field.influence(x, y);
+    // No occupied icons, widgets or dock -> no sand anywhere.
+    // Adjacent icon kernels merge naturally; subtle irregularity scales with
+    // land strength so ocean-only scenes cannot accidentally create beaches.
+    return strength - 0.32 + strength *
+        (0.010 * math.sin(y * 38.0 + 0.8) +
+         0.006 * math.sin(y * 83.0 + x * 31.0));
   }
 
   /// Waves advance and retreat along a vertical, irregular coastline.

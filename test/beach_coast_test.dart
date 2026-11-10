@@ -4,12 +4,14 @@ import 'package:adaptive_landscape/core/beach_coast.dart';
 import 'package:adaptive_landscape/core/icon_field.dart';
 
 void main() {
-  test('Beach is top-down sand on left and deep water on right', () {
+  test('Empty Beach is entirely ocean at every tested coordinate', () {
     final beach = BeachCoast(const IconField(occupied: {}));
-    expect(beach.coast(0.03, 0.4), greaterThan(0.1));
-    expect(beach.coast(0.96, 0.4), lessThan(-0.4));
-    expect(beach.colorAt(0.02, 0.4, 0, 0),
-        isNot(beach.colorAt(0.95, 0.4, 0, 0)));
+    for (var x = 0; x <= 10; x++) {
+      for (var y = 0; y <= 10; y++) {
+        expect(beach.coast(x / 10, y / 10), lessThan(0),
+            reason: 'No permanent sand, even at corners');
+      }
+    }
   });
   test('Icons form new sand around their actual coordinates', () {
     final noIcons = BeachCoast(const IconField(occupied: {}));

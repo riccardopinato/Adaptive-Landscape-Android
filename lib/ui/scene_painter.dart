@@ -2,12 +2,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../core/icon_field.dart';
 import 'beach_surface.dart';
+import 'beach_gpu_surface.dart';
+import 'dart:ui' as ui;
 
 /// Original vector preview; matches the versioned Android Canvas scene model.
 class ScenePainter extends CustomPainter {
   const ScenePainter({
     required this.scene, required this.field, this.phase = 0,
-    this.palette = 'original', this.night = false,
+    this.palette = 'original', this.night = false, this.beachProgram,
   });
 
   final String scene;
@@ -15,11 +17,15 @@ class ScenePainter extends CustomPainter {
   final double phase;
   final String palette;
   final bool night;
+  final ui.FragmentProgram? beachProgram;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (scene == 'beach') {
-      BeachSurface.paint(canvas, size, field, phase, palette: palette, night: night);
+      if (!BeachGpuSurface.paint(canvas, size, field, phase,
+          program: beachProgram, palette: palette, night: night)) {
+        BeachSurface.paint(canvas, size, field, phase, palette: palette, night: night);
+      }
       return;
     }
     final w = size.width, h = size.height;
@@ -131,10 +137,11 @@ class ScenePainter extends CustomPainter {
   @override
   bool shouldRepaint(ScenePainter old) =>
     scene != old.scene || palette != old.palette || night != old.night ||
-    phase != old.phase || field.gridColumns != old.field.gridColumns ||
+    phase != old.phase || !identical(beachProgram, old.beachProgram) ||
+    field.gridColumns != old.field.gridColumns ||
     field.gridRows != old.field.gridRows || field.top != old.field.top ||
     field.span != old.field.span ||
     field.zones.length != old.field.zones.length ||
-    IconField.encode(field.occupied) != IconField.encode(old.field.occupied) ||
+    field.encodeOccupied() != old.field.encodeOccupied() ||
     !identical(field.zones, old.field.zones);
 }

@@ -7,7 +7,7 @@ flutter --version
 flutter create --platforms=android,web --template=app --org it.riccardopinato --project-name adaptive_landscape $Destination
 if ($LASTEXITCODE -ne 0) { throw 'flutter create failed' }
 $source = $PSScriptRoot
-$paths = @('pubspec.yaml', 'l10n.yaml', 'lib', 'test', 'android/app/src/main/AndroidManifest.xml', 'android/app/src/main/res/xml', 'android/app/src/main/res/values/strings.xml', 'android/app/src/main/res/drawable/ic_landscape.xml', 'android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape')
+$paths = @('pubspec.yaml', 'l10n.yaml', 'lib', 'test', 'shaders', 'android/app/src/main/AndroidManifest.xml', 'android/app/src/main/res/xml', 'android/app/src/main/res/values/strings.xml', 'android/app/src/main/res/drawable/ic_landscape.xml', 'android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape')
 foreach ($rel in $paths) {
   $from = Join-Path $source $rel
   $to = Join-Path $Destination $rel

@@ -36,5 +36,10 @@
   "reduceMotion": "Réduire le mouvement",
   "motion": "Intensité du mouvement",
   "dock": "Dock",
-  "widgetZone": "Widget"
+  "widgetZone": "Widget",
+  "dockIcons": "Applications fixes du bas (dock)",
+  "noDock": "Aucune",
+  "dockHint": "Réglez manuellement 3–4 icônes fixes; dock vide = mer seule.",
+  "previewGuides": "Afficher les repères d'édition",
+  "emptySeaHint": "Sans apps ni widgets, tout l'aperçu est la mer."
 }

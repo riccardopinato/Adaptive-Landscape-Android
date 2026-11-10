@@ -31,3 +31,11 @@
 ### Seamless speed controls — v0.3.1
 
 A non-integer speed (for example 0.5×) must not cause the phase to jump when the 12-second base animation period ends. Flutter changes its controller period to `12000 / speed` milliseconds and always sends phase [0,2π]; Android derives phase continuously from monotonic `SystemClock.uptimeMillis()` instead of modulo-wrapping the source time. Static/reduced motion still stops frame scheduling; the declared native 20fps/8fps cadence remains unchanged. This is source/CI verification only, not physical timing certification.
+
+## Product direction change v0.3.2
+
+- **Empty Home = 100% ocean**. Delete all grid selections, widgets and manual dock markers to remove every patch of sand.
+- **Only an occupied region may generate sand**. The positive distance/strength threshold is computed from icon/kernel, widget rectangles, and each separately marked dock app; a cluster becomes contiguous beach.
+- **Bottom launcher dock is not accessible through WallpaperService**. Provide explicit 0, 3, 4 bottom icons; presets saved in schema-2 `zones[]`. 0 means no dock and no sand from it. User can inspect pure output using the 'preview guides' switch.
+- **4K-capable Web rendering**: new GPL-independent `shaders/beach_ocean.frag` performs fragment shading at output DPR; no 73×137 water mesh in the GPU path. A 512×1024 texture encodes only static icon/zone influence (recomputed when layout changes), not surface color. The fallback retains the mesh, so Web shader support must be visually verified.
+- **Do not assert photographic equivalence** or Android 4K: Kotlin raster resolution is battery-limited pending on-device analysis; no physical QA was performed.
