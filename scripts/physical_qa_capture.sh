@@ -25,7 +25,15 @@ REPORT="$OUT/qa_snapshot.txt"
   echo "Battery: $(adb shell dumpsys battery | grep -E '^[[:space:]]*(level|temperature|status):' | tr -d '\r' || true)"
   if [ -n "$APK" ]; then
     if [ ! -f "$APK" ]; then echo "APK not found: $APK" >&2; exit 3; fi
-    echo "APK SHA256: $(sha256sum "$APK" | cut -d ' ' -f 1)"
+    if command -v sha256sum >/dev/null 2>&1; then
+      DIGEST="$(sha256sum "$APK" | cut -d ' ' -f 1)"
+    elif command -v shasum >/dev/null 2>&1; then
+      DIGEST="$(shasum -a 256 "$APK" | cut -d ' ' -f 1)"
+    else
+      echo 'ERROR: sha256sum or shasum required for provenance' >&2
+      exit 4
+    fi
+    echo "APK SHA256: $DIGEST"
     echo "APK filename: $(basename "$APK")"
   else
     echo 'APK SHA256: NOT PROVIDED (required before certifying)'
