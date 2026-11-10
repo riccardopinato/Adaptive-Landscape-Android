@@ -77,5 +77,10 @@
   "waterTuning": "Controlos de realismo da água",
   "refractionIntensity": "Refração da fotografia",
   "foamIntensityLabel": "Espuma da costa",
-  "waterTuningHint": "Ajuste com moderação: os detalhes fotográficos devem predominar. A velocidade das ondas é independente da refração."
+  "waterTuningHint": "Ajuste com moderação: os detalhes fotográficos devem predominar. A velocidade das ondas é independente da refração.",
+  "calibrateZoomTitle": "Calibração precisa do ecrã inicial · zoom",
+  "calibrateZoomHint": "Amplie com dois dedos (até 5×), percorra a captura e toque nas células. As zonas dos widgets podem ser arrastadas. Verifique as margens no launcher real.",
+  "calibrateTop": "Margem superior",
+  "calibrateHeight": "Altura da grelha",
+  "calibrateSide": "Margens laterais"
 }
