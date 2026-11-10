@@ -8,6 +8,7 @@ void main() {
       scene: 'beach', columns: 6, rows: 9, top: 0.1, span: 0.78,
       occupied: {0, 7, 53}, zones: const [LayoutZone(x: 0.5, y: 0.8, width: 0.3, height: 0.12, kind: 'dock')],
       palette: 'sunset', night: true, motion: 0.5, reduceMotion: true,
+      renderQuality: 'high',
     );
     final copy = LandscapeConfig.decode(original.encode());
     expect(copy.toJson(), original.toJson());
@@ -31,6 +32,14 @@ void main() {
     expect(c.zones.single.kind, 'icon');
     expect(c.motion, 2);
     expect(c.scene, 'meadow');
+    expect(c.renderQuality, 'ultra');
+  });
+  test('Web GPU quality tier persists and falls back safely', () {
+    final c = LandscapeConfig.fromJson({'scene':'beach','renderQuality':'balanced'});
+    expect(c.renderQuality, 'balanced');
+    expect(LandscapeConfig.decode(c.encode()).renderQuality, 'balanced');
+    expect(LandscapeConfig.fromJson({'renderQuality':'impossible'}).renderQuality, 'ultra');
+    expect(const LandscapeConfig().renderQuality, 'ultra');
   });
   test('Broken JSON falls back without throwing', () {
     expect(LandscapeConfig.decode('{broken').scene, 'meadow');

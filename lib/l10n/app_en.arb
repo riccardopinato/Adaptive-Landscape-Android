@@ -49,5 +49,10 @@
   "gpuLoading": "Ocean: loading renderer…",
   "fullscreenPreview": "Large preview",
   "closePreview": "Close preview",
-  "previewPanoramic": "Panoramic preview · calibrate Home icons in the editor"
+  "previewPanoramic": "Panoramic preview · calibrate Home icons in the editor",
+  "renderQuality": "Ocean rendering quality",
+  "qualityBalanced": "Balanced",
+  "qualityHigh": "High",
+  "qualityUltra": "Ultra · 4K",
+  "qualityExplain": "Ultra improves GPU-generated detail. Actual 4K depends on display resolution, browser and performance."
 }

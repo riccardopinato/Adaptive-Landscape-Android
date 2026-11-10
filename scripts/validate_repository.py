@@ -39,3 +39,11 @@ for script in ['BOOTSTRAP_LINUX_MAC.sh', 'BOOTSTRAP_WINDOWS.ps1']:
     assert 'shaders' in (root / script).read_text(encoding='utf-8'), f'Missing shader bootstrap in {script}'
 assert 'shaders/beach_ocean.frag' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
 print('PASS: pixel-shaded Beach asset declared and both bootstraps include shader')
+
+# Beach v0.4.0: ensure independent tonal atlas and shader sampler are present.
+assert (root / 'lib/core/ocean_tone_atlas.dart').is_file()
+shader_source = (root / 'shaders/beach_ocean.frag').read_text(encoding='utf-8')
+assert 'uniform sampler2D uToneAtlas;' in shader_source
+assert 'uniform float uQuality;' in shader_source
+assert 'renderQuality' in (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
+print('PASS: Web 4K art-direction atlas and runtime-effect uniforms')

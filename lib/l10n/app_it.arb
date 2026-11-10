@@ -49,5 +49,10 @@
   "gpuLoading": "Mare: caricamento renderer…",
   "fullscreenPreview": "Anteprima grande",
   "closePreview": "Chiudi anteprima",
-  "previewPanoramic": "Anteprima panoramica · il layout Home si calibra nell'editor"
+  "previewPanoramic": "Anteprima panoramica · il layout Home si calibra nell'editor",
+  "renderQuality": "Qualità del mare",
+  "qualityBalanced": "Bilanciata",
+  "qualityHigh": "Alta",
+  "qualityUltra": "Ultra · 4K",
+  "qualityExplain": "Ultra aumenta i dettagli generati dalla GPU. Il 4K effettivo dipende da risoluzione dello schermo, browser e prestazioni."
 }
