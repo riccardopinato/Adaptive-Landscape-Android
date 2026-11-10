@@ -43,10 +43,10 @@ jobs:
         run: bash BOOTSTRAP_LINUX_MAC.sh generated_app
       - name: Build smaller per-ABI internal release-mode APKs (not Play-signed)
         working-directory: generated_app
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --dart-define=BUILD_SOURCE_SHA=${{ github.sha }}
       - name: Build Web-only interactive editor preview
         working-directory: generated_app
-        run: flutter build web --release --base-href /Adaptive-Landscape-Android/
+        run: flutter build web --release --base-href /Adaptive-Landscape-Android/ --dart-define=BUILD_SOURCE_SHA=${{ github.sha }}
       - name: Upload debug APK for physical testing
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
