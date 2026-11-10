@@ -10,7 +10,7 @@ class ScenePainter extends CustomPainter {
   const ScenePainter({
     required this.scene, required this.field, this.phase = 0,
     this.palette = 'original', this.night = false, this.beachProgram,
-    this.renderQuality = 'ultra',
+    this.renderQuality = 'ultra', this.photograph,
   });
 
   final String scene;
@@ -20,13 +20,14 @@ class ScenePainter extends CustomPainter {
   final bool night;
   final ui.FragmentProgram? beachProgram;
   final String renderQuality;
+  final ui.Image? photograph;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (scene == 'beach') {
       if (!BeachGpuSurface.paint(canvas, size, field, phase,
           program: beachProgram, palette: palette, night: night,
-          renderQuality: renderQuality)) {
+          renderQuality: renderQuality, photograph: photograph)) {
         BeachSurface.paint(canvas, size, field, phase, palette: palette, night: night);
       }
       return;
@@ -141,6 +142,7 @@ class ScenePainter extends CustomPainter {
   bool shouldRepaint(ScenePainter old) =>
     scene != old.scene || palette != old.palette || night != old.night ||
     renderQuality != old.renderQuality ||
+    !identical(photograph, old.photograph) ||
     phase != old.phase || !identical(beachProgram, old.beachProgram) ||
     field.gridColumns != old.field.gridColumns ||
     field.gridRows != old.field.gridRows || field.top != old.field.top ||
