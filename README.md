@@ -96,3 +96,17 @@ Image import is optional, no Internet or broad media permission is requested.
 This change is stacked on the unmerged v0.4.1 PR. It is **not certified**:
 mobile appearance, EGL upload, animation quality and battery require physical
 testing. See [docs/BEACH_PHOTOGRAPHIC_V042.md](docs/BEACH_PHOTOGRAPHIC_V042.md).
+
+
+## Beach v0.4.3 — ephemeral Web photographic preview
+
+The Web editor can now open a *local* user-owned water photo (<=12 MiB
+compressed, >=720 pixels/edge, <=45 MP decoded bounds). It downsamples to
+<=2048px for GPU preview and retains image bytes only in browser memory until
+replaced/cleared/page reload. It uses the same occupancy-only beach geometry
+but an independently implemented Flutter RuntimeEffect image-sampling shader.
+A compare switch toggles photo vs previous procedural water without altering
+saved profile data. Web image is not transmitted or exported. The Android
+wallpaper retains its independently selected private photo from v0.4.2.
+
+This is for **subjective Web evaluation**, not physical Android certification.
