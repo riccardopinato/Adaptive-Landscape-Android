@@ -73,5 +73,9 @@
   "webPhotoChoose": "Choisir une photo de mer",
   "webCompareProcedural": "Comparer à l'ancien océan synthétique",
   "webCompareExplanation": "Afficher le rendu procédural au lieu de la photo. Désactiver pour revenir à la photo.",
-  "webPhotoPrivacyHint": "La photo Web reste uniquement en mémoire : aucun envoi ni stockage. Cet aperçu n'est pas une validation du fond d'écran Android."
+  "webPhotoPrivacyHint": "La photo Web reste uniquement en mémoire : aucun envoi ni stockage. Cet aperçu n'est pas une validation du fond d'écran Android.",
+  "waterTuning": "Réglages de réalisme de l'eau",
+  "refractionIntensity": "Réfraction de la photo",
+  "foamIntensityLabel": "Écume du rivage",
+  "waterTuningHint": "Réglez avec modération : les détails photo doivent dominer. La vitesse des vagues est indépendante de la réfraction."
 }
