@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/icon_field.dart';
+import 'core/beach_mask.dart';
 import 'core/animation_timing.dart';
 import 'core/landscape_config.dart';
 import 'core/profile_store.dart';
@@ -52,6 +54,8 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   String _mode = 'grid';
   Future<void> _writeChain = Future<void>.value();
   bool _busy = false;
+  bool _showGuides = true;
+  ui.FragmentProgram? _beachProgram;
   String? _error;
 
   @override
@@ -60,6 +64,16 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     WidgetsBinding.instance.addObserver(this);
     _animation = AnimationController(vsync: this, duration: const Duration(seconds: 12))..repeat();
     _load();
+    _loadBeachProgram();
+  }
+
+  Future<void> _loadBeachProgram() async {
+    try {
+      final program = await ui.FragmentProgram.fromAsset('shaders/beach_ocean.frag');
+      if (mounted) setState(() => _beachProgram = program);
+    } catch (_) {
+      // Keep the portable Canvas mesh fallback on unsupported browsers.
+    }
   }
 
   @override
@@ -333,10 +347,32 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         const Spacer(),
         TextButton.icon(onPressed: () => _apply(_config.copyWith(occupied: {}, zones: [])),
           icon: const Icon(Icons.restart_alt), label: Text(l.reset)),
-        if (_mode == 'zone') TextButton(onPressed: _config.zones.isEmpty ? null : () {
-          _apply(_config.copyWith(zones: [..._config.zones]..removeLast()));
-        }, child: Text(l.removeZone)),
+        if (_mode == 'zone') TextButton(
+          onPressed: _config.zones.any((z) => z.kind != 'dock') ? () {
+            final zones = [..._config.zones];
+            final index = zones.lastIndexWhere((z) => z.kind != 'dock');
+            if (index >= 0) zones.removeAt(index);
+            _apply(_config.copyWith(zones: zones));
+          } : null, child: Text(l.removeZone)),
       ]),
+      section(l.dockIcons),
+      Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final count in [0, 3, 4])
+            ChoiceChip(label: Text(count == 0 ? l.noDock : '${count}'),
+              selected: DockLayout.count(_config.zones) == count,
+              onSelected: (_) => _apply(_config.copyWith(
+                zones: DockLayout.withCount(_config.zones, count))),
+              ),
+          Text(l.dockHint, style: style.bodySmall),
+        ],
+      ),
+      SwitchListTile(contentPadding: EdgeInsets.zero,
+        title: Text(l.previewGuides),
+        value: _showGuides, onChanged: (v) => setState(() => _showGuides = v)),
+      if (_config.scene == 'beach' &&
+          _config.occupied.isEmpty && _config.zones.isEmpty)
+        Text(l.emptySeaHint, style: style.bodySmall),
       section(l.appearance),
       Wrap(spacing: 8, children: [
         ChoiceChip(label: Text(l.original), selected: _config.palette == 'original',
@@ -388,11 +424,12 @@ class _WallpaperEditorState extends State<WallpaperEditor>
           child: AnimatedBuilder(animation: _animation, builder: (context, _) => Stack(children: [
             Positioned.fill(child: CustomPaint(painter: ScenePainter(
               scene: _config.scene, field: IconField.fromConfig(_config),
+              beachProgram: _beachProgram,
               night: _config.night, palette: _config.palette,
               phase: _config.reduceMotion ? 0 :
                   ((_animation.value * 240).floor() / 240) * math.pi * 2,
             ))),
-            if (_mode == 'grid') ...List.generate(_config.cellCount, (i) {
+            if (_showGuides && _mode == 'grid') ...List.generate(_config.cellCount, (i) {
               final (x, y) = _config.cellCenter(i);
               final selected = _config.occupied.contains(i);
               return Positioned(
@@ -408,7 +445,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
                 )),
               );
             }),
-            if (_mode == 'zone') ...List.generate(_config.zones.length, (i) {
+            if (_showGuides && _mode == 'zone') ...List.generate(_config.zones.length, (i) {
               final zone = _config.zones[i];
               return Positioned(
                 left: (zone.x - zone.width / 2) * w,
@@ -443,7 +480,8 @@ class _WallpaperEditorState extends State<WallpaperEditor>
                 ),
               );
             }),
-            Positioned(top: 12, left: 0, right: 0,
+            if (_config.scene != 'beach')
+              Positioned(top: 12, left: 0, right: 0,
               child: IgnorePointer(child: Center(child: Text('9:41',
                 style: TextStyle(fontSize: w * 0.075, color: const Color(0xff204d59),
                   fontWeight: FontWeight.w300))))),

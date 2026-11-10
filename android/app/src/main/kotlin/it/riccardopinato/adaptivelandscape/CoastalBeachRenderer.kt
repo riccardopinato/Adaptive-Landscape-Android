@@ -59,12 +59,15 @@ internal class CoastalBeachRenderer {
         grains = FloatArray(w * h)
         for (y in 0 until h) {
             val ny = (y + 0.5f) / h
-            val shoreline = 0.30 + 0.078 * sin(ny * 5.4 + 0.3) +
-                0.031 * sin(ny * 14.2 + 0.9) + 0.013 * sin(ny * 29.0)
             for (x in 0 until w) {
                 val nx = (x + 0.5f) / w
                 val i = y * w + x
-                land[i] = (shoreline - nx + 0.84 * state.influence(nx, ny)).toFloat()
+                val influence = state.influence(nx, ny).toDouble()
+                // Entirely empty layout = entirely sea. Icon, widget and
+                // optional dock zones alone create merging sand islands.
+                land[i] = (influence - 0.32 + influence *
+                    (0.010 * sin(ny * 38.0 + 0.8) +
+                     0.006 * sin(ny * 83.0 + nx * 31.0))).toFloat()
                 grains[i] = grain(x, y)
             }
         }

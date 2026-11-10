@@ -46,3 +46,11 @@ CI compilation and Web confirmation do not establish OEM battery, launcher layou
 The user confirmed the Web v0.2 base but specified that Beach should be an aerial shoreline with sand forming around icon/zone occupancy and animated translucent blue/turquoise water. The previous sky/nuvole/sole composition was incorrect for Beach. Source-specific technical and license notes: [docs/BEACH_VISUAL_REFERENCE.md](docs/BEACH_VISUAL_REFERENCE.md).
 
 The original procedural shoreline model is independently authored in Dart and Kotlin. It uses compact mesh shading on Web and cached low-resolution raster shading in Android. Neither implementation copies Deskland shaders or licensed artworks. The **new Web visual needs user acceptance**; Android runtime/frame rate and visual parity remain untested.
+
+## Beach v0.3.2 — sea-only when empty, high-density Web GPU renderer
+
+User-approved *direction*, not user-certified pixels: Beach contains **only animated sea** until the user marks app icons, folders, widgets or bottom-dock icons. Each occupied region grows a soft island of sand; adjacent regions join. The **3/4 fixed dock icons are set manually** in the editor; no wallpaper can universally inspect launcher icon positions. With all markers cleared (including dock), the shore threshold is never crossed anywhere.
+
+For Web/high-density displays, `shaders/beach_ocean.frag` computes every output pixel using CanvasKit's GPU fragment shader. A cached 512×1024 **occupancy-only mask** is sampled smoothly; it is **not** a stretched 512px water bitmap. A shader-capable 4K framebuffer therefore gets 4K-shaded water without visible mesh triangles. Actual output resolution depends on window size/DPR and the browser GPU. Unsupported shader backends fall back to the former tessellated mesh (reduced quality), which is flagged as fallback. The Android Kotlin raster currently remains lower resolution to limit battery consumption and needs physical performance QA before raising its quality. No claim of 4K physical Android wallpaper.
+
+Controls: guide overlay toggle for unoccluded ocean preview; 0/3/4 dock icons; all themes preserved. Unit tests cover empty ocean, beach around occupancy, dock presets, and texture vs CPU influence. More info: [docs/BEACH_VISUAL_REFERENCE.md](docs/BEACH_VISUAL_REFERENCE.md).

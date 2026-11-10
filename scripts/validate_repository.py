@@ -31,3 +31,11 @@ native = (root / "android/app/src/main/kotlin/it/riccardopinato/adaptivelandscap
 assert "adaptive_landscape/wallpaper" in native
 assert "config_v2" in native
 print(f"PASS: {len(arbs)} locale files, {len(keys)} keys, no prohibited manifest permissions, Android channel contract")
+
+# v0.3.2: verify ocean shader asset is included in both bootstrap scripts.
+shader = root / 'shaders/beach_ocean.frag'
+assert shader.is_file() and 'FlutterFragCoord' in shader.read_text(encoding='utf-8')
+for script in ['BOOTSTRAP_LINUX_MAC.sh', 'BOOTSTRAP_WINDOWS.ps1']:
+    assert 'shaders' in (root / script).read_text(encoding='utf-8'), f'Missing shader bootstrap in {script}'
+assert 'shaders/beach_ocean.frag' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+print('PASS: pixel-shaded Beach asset declared and both bootstraps include shader')

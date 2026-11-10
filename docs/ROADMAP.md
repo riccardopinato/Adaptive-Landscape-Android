@@ -34,3 +34,12 @@ Status vocabulary: **CODED** = committed feature; **CI VERIFIED** = analyze/test
 ## Visual correction — 10 Nov 2026 (Web-first)
 
 Beach v0.2 sky/sun/cloud scene rejected as inconsistent with the intended original. See [BEACH_VISUAL_REFERENCE.md](BEACH_VISUAL_REFERENCE.md). V0.3 Beach is overhead sand-and-water only. Web user acceptance remains pending after deploy. Native performance and consistency require later physical Android QA; do not claim a pixel-exact Deskland port.
+
+## v0.3.2 — GPU sea / occupancy-only sand, Web-first
+
+- [CODED] Flutter GLSL fragment shader per framebuffer pixel, a cached 512×1024 layout influence mask; fallback to previous mesh on unsupported Web GPU renderers.
+- [CODED] No initial sand baseline: no icons/widgets/dock yields pure ocean; merged sand patches follow icon/folder/widget occupied geometry.
+- [CODED] Manual 3- or 4-icon bottom dock layouts, configurable off; edit guides can be hidden to inspect sea-only output. Profile import/export still schema 2.
+- [CODED] Kotlin formula aligned to occupancy-only (NOT 4K); Android actual quality and battery not certified.
+- [PENDING USER WEB ACCEPTANCE] 4K/high-DPI visual sharpness and aesthetic realism; browser GPU capability varies.
+- [PENDING PHYSICAL] Android 4K quality/performance require dedicated native rendering strategy and battery measurement; don't mark done.

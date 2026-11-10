@@ -16,3 +16,7 @@ This is a **normative data contract**, not a claim of pixel-equivalent physical 
 - Import is schema 2 only; invalid/oversized imported content must be rejected or normalized. No network.
 - Changing grid dimensions intentionally clears marked cells in the editor; zone positions remain. User must recalibrate after grid/layout changes.
 - Unit tests cover boundary, versioned serialization and zones. **On-device** screen dimensions, insets, OEM launcher workspace, render parity and frame timing are not yet validated.
+
+### Beach 0.3.2 shoreline semantics
+
+`shoreBase = clamp(sum(influence kernels),0,1) - 0.32 + influence * (0.010 sin(38y+0.8)+0.006 sin(83y+31x))`. Sea-only default is a strict invariant when all markers are empty; water tides cannot generate sand on an empty beach. The three/four optional dock icons are serialized as `zones[]` with `kind: 'dock'`, at y≈0.941. No silent dock assumption. Web GPU uses an influence-only mask and shades water natively at display framebuffer resolution; Kotlin uses raster and is not 4K certified.

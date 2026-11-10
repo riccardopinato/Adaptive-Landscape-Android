@@ -36,5 +36,10 @@
   "reduceMotion": "Reduce motion",
   "motion": "Motion intensity",
   "dock": "Dock",
-  "widgetZone": "Widget"
+  "widgetZone": "Widget",
+  "dockIcons": "Fixed bottom apps (dock)",
+  "noDock": "None",
+  "dockHint": "Set the 3–4 fixed apps manually; empty dock means all sea.",
+  "previewGuides": "Show editing guides",
+  "emptySeaHint": "No apps or widgets selected: the whole preview is sea."
 }

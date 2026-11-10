@@ -6,7 +6,7 @@ DEST="${1:-$ROOT/generated_app}"
 if [ -e "$DEST" ]; then echo "Refusing to overwrite $DEST" >&2; exit 1; fi
 flutter --version
 flutter create --platforms=android,web --template=app --org it.riccardopinato --project-name adaptive_landscape "$DEST"
-for path in pubspec.yaml l10n.yaml lib test android/app/src/main/AndroidManifest.xml android/app/src/main/res/xml android/app/src/main/res/values/strings.xml android/app/src/main/res/drawable/ic_landscape.xml android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape; do
+for path in pubspec.yaml l10n.yaml lib test shaders android/app/src/main/AndroidManifest.xml android/app/src/main/res/xml android/app/src/main/res/values/strings.xml android/app/src/main/res/drawable/ic_landscape.xml android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape; do
   if [ -d "$ROOT/$path" ]; then
     mkdir -p "$DEST/$path"
     cp -R "$ROOT/$path/." "$DEST/$path/"
