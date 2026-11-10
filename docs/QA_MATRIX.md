@@ -43,3 +43,12 @@ Do not mark these PASS from GitHub Actions alone. Store release, donor certifica
 - Screenshot-assisted calibration: user supplies their own Home screenshot using system picker; taps icon/folder positions and widget rectangles; checks current dock separately; only then can shoreline follow marked positions. Screenshot never automatically read, saved or transmitted; test portrait crop/navigation bars.
 - **Auto-detection** of launcher icons is **not implemented**. Generic `WallpaperService` provides no icon coordinates. AccessibilityService would require separate opt-in and Google Play disclosure/consent; do not silently add it.
 - Web GPU and Android EGL2 are distinct implementations; no pixel-equivalence guaranteed. Native 4K target is framebuffer shading, not a real 4K photographic texture.
+
+## v0.4.1 user retest → v0.4.2 photographic-pilot requirement
+
+- User describes v0.4.1 as showing **slightly more moving water and less grain**, yet still much worse than requested. **Do not pass the visual-fidelity gate**.
+- v0.4.2 requires choosing a high-res real ocean-only photograph in the app; verify private photo is present, surface uses photo, water distortions are subtle and continuous, foam does not create strong cartoon outlines.
+- Important: source photo under e.g. openly licensed terms must permit your actual distribution model; users may choose a personal photo. No third-party default photo bundled. The selected image is not uploaded; it persists app-privately until removed.
+- Test photo selection after app resume and wallpaper re-application; test clear-photo restoring procedural fallback; test low-memory/GLES2 fallback.
+- Test native backend remains `gpu_native` rather than `cpu_360px_fallback`, and preserve all saved schema2 profile records.
+- No claim of automatic launcher icon detection: issue #14 remains open.

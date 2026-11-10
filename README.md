@@ -76,3 +76,11 @@ The new `GpuOceanRenderer.kt` creates an EGL14/GLES20 context directly on the wa
 Because a generic WallpaperService has **no launcher icon-position API**, automatic icon detection is NOT delivered. Instead the Android app offers **one-time screenshot-assisted manual calibration**: take a Home screenshot yourself, pick it with Android's document picker (no media permission), tap icon/folder positions on the overlay and mark widget zones. The screenshot remains in memory in this editing session and is never saved or transmitted by the app. This is a pragmatic alternative, **not automatic detection**, and launcher coordinates/insets require on-device checking.
 
 No new AccessibilityService, overlay, media-projection or network permissions. APK from the PR must be **user-tested before merge or any assertion of correctness**.
+
+## v0.4.2 experimental: photographic ocean, explicit local asset
+
+After physical v0.4.1 user feedback ("some improvement, still far from desired"), procedural-only water is **not visually accepted**. [docs/PHOTO_OCEAN_PILOT.md](docs/PHOTO_OCEAN_PILOT.md) specifies the new non-destructive, device-test-only photo path.
+
+Android's user-facing editor can now **select a REAL overhead sea photograph** (preferably 4K) via the system file picker. The app crops a copy for portrait, stores it app-private on the device and uses it as the dominant OpenGL sea texture; the GPU introduces subtle periodic refraction plus the existing icon-driven coastline. The photograph is **not sent to a server**, downloaded automatically, or bundled with the APK. Source licensing is the user's responsibility. A user-installed photo replaces the synthetic noisy water; with no image, v0.4.1's procedural fallback remains. One-time manual image choice is not automatic Home-icon detection.
+
+**Only source CI acceptance is possible here.** This feature is in an unmerged experimental branch based on PR #13. Without the user selecting a real photograph and reviewing it on a device, it is not "4K achieved" and not a validated commercial release.
