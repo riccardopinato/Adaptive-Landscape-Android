@@ -12,3 +12,7 @@ generated_app/
 *.keystore
 *.log
 .DS_Store
+
+# Human-only physical test artifacts (never commit model, serial or memory snapshots)
+physical_qa_local/
+**/physical_qa_local/
