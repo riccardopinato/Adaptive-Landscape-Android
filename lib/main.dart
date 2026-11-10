@@ -180,6 +180,16 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     WidgetsBinding.instance.addPostFrameCallback((_) => old?.dispose());
   }
 
+  int get _framesPerPreviewCycle => switch (_config.renderQuality) {
+    'balanced' => 144,
+    'high' => 192,
+    _ => 240,
+  };
+
+  double get _previewPhase => _config.reduceMotion ? 0 :
+      ((_animation.value * _framesPerPreviewCycle).floor() /
+          _framesPerPreviewCycle) * math.pi * 2;
+
   ui.Image? get _activePreviewPhoto =>
       kIsWeb && !_webCompareProcedural ? _webPhotograph : null;
 
@@ -394,8 +404,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               photograph: _activePreviewPhoto,
               photoRefraction: _config.photoRefraction,
               foamIntensity: _config.foamIntensity,
-              night: _config.night, phase: _config.reduceMotion ? 0 :
-                ((_animation.value * 240).floor() / 240) * math.pi * 2,
+              night: _config.night, phase: _previewPhase,
             ))),
             Positioned(right: 12, top: 12, child: SafeArea(child:
               IconButton.filled(
@@ -733,6 +742,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             onSelected: (_) => _apply(_config.copyWith(renderQuality: 'ultra'))),
         ]),
         Text(l.qualityExplain, style: style.bodySmall),
+        Text(l.nativeFramePacingNote, style: style.bodySmall),
       ],
       if (_config.scene == 'beach') ...[
         section(l.waterTuning),
@@ -781,7 +791,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         key: const Key('al-native-renderer-status'),
       ),
       const SizedBox(height: 6),
-      const Text('Beach Web + Android v0.4.5', style: TextStyle(fontSize: 11)),
+      const Text('Beach Web + Android v0.4.6', style: TextStyle(fontSize: 11)),
       if (_error != null) SelectableText('${l.failure}: $_error',
         style: TextStyle(color: Theme.of(context).colorScheme.error)),
     ]);
@@ -821,8 +831,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               photograph: _activePreviewPhoto,
               photoRefraction: _config.photoRefraction,
               foamIntensity: _config.foamIntensity,
-              phase: _config.reduceMotion ? 0 :
-                  ((_animation.value * 240).floor() / 240) * math.pi * 2,
+              phase: _previewPhase,
             ))),
             if (_homeScreenshot != null) Positioned.fill(
               child: IgnorePointer(child: Opacity(opacity: 0.72,
