@@ -349,7 +349,7 @@ internal class GpuOceanRenderer {
         }
     }
 
-    fun render(context: Context, surface: Surface, width: Int, height: Int,
+    fun render(appContext: Context, surface: Surface, width: Int, height: Int,
                state: WallpaperState, phase: Double): Boolean {
         if (width < 2 || height < 2 || !surface.isValid) return false
         if (!prepare(surface, width, height)) return false
@@ -357,7 +357,7 @@ internal class GpuOceanRenderer {
             if (!EGL14.eglMakeCurrent(display, window, window, context))
                 throw IllegalStateException("EGL context lost")
             uploadMask(state)
-            uploadPhotograph(context)
+            uploadPhotograph(appContext)
             GLES20.glViewport(0, 0, width, height)
             GLES20.glUseProgram(shaderProgram)
             fun f(name: String, value: Float) {
