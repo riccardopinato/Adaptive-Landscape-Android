@@ -96,3 +96,17 @@ Detailed user test contract: [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V04
 - [PENDING USER] Visual/photo realism acceptance on Web.
 - [OUT OF SCOPE] Native photo preview inside Flutter editor; Android photo is
   stored separately by WallpaperService. Do not imply pixel equivalence.
+
+
+## v0.4.4 — visual realism optimization
+
+- [CODED] Third periodic refraction layer on Web/native (no linear drift).
+- [CODED] Photo-specific reduction of synthetic shoreline foam.
+- [CODED] User sliders for refraction and foam (independent of motion speed).
+- [CODED] Backward-compatible optional schema2 values with clamped defaults.
+- [CODED] Six locales, source checks and profile tests, version 0.4.4+11.
+- [NOT BUNDLED] Authentic default open-water asset. Curated CC0 sources are
+  documented pending binary provenance/size/integration review.
+- [PENDING CI] Flutter/Android tests and APK/web build.
+- [PENDING PHYSICAL] Verify photo actually stays recognizable through motion,
+  no hard coast/foam line, native GPU FPS/heat/battery, OEM parity.
