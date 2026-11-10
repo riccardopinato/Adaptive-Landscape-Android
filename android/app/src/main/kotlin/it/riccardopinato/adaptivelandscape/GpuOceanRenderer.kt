@@ -284,6 +284,10 @@ internal class GpuOceanRenderer {
         currentConfig = null
     }
 
+    fun invalidatePhotograph() {
+        photoFingerprint = Long.MIN_VALUE
+    }
+
     private fun uploadMask(state: WallpaperState) {
         if (state == currentConfig) return
         val empty = state.occupied.isEmpty() && state.zones.isEmpty()
