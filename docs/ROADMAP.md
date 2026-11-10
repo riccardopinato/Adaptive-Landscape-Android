@@ -110,3 +110,17 @@ Detailed user test contract: [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V04
 - [PENDING CI] Flutter/Android tests and APK/web build.
 - [PENDING PHYSICAL] Verify photo actually stays recognizable through motion,
   no hard coast/foam line, native GPU FPS/heat/battery, OEM parity.
+
+
+## v0.4.5 — Smart Home Calibration (manual; no launcher introspection)
+
+- [CODED] Horizontal margin `gridInset` normalized across native + Web.
+- [CODED] Top offset and grid height sliders, screenshot overlay uses
+  cover-fit instead of destructive fill stretching.
+- [CODED] Fullscreen InteractiveViewer pan/pinch 1×–5× for manual positioning.
+- [CODED] Sand mask/cache keys invalidate when margins change.
+- [CODED] Six locales, regression tests, version 0.4.5+12.
+- [PENDING CI] Flutter/Android/Web gates.
+- [PENDING PHYSICAL] Test portrait screenshots with actual navbar/insets,
+  launcher variants, grid/dock/widget alignment, tap and drag gesture priority.
+- [NOT IMPLEMENTED] Automatic detection of installed apps or icon positions.
