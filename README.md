@@ -141,3 +141,24 @@ drag/resizable widget zones and the temporary Home screenshot overlay.
 A generic Android `WallpaperService` **still cannot read launcher icons**.
 Screenshot and icon positions are manually selected; this is not an
 Accessibility-based or background photo reader.
+
+
+## v0.4.6 — native performance and memory (source changes)
+
+When an authentic water photograph is uploaded, the GLES2 shader now
+bypasses expensive procedurally synthesized FBM/caustic layers rather
+than generating those features only to hide them behind the photo.
+Persistent texture upload resolution is tiered by selected quality:
+`balanced` <=1024px, `high` <=1536px, `ultra` <=2560px,
+also limited by actual `GL_MAX_TEXTURE_SIZE`. The quality setting
+participates in the texture change fingerprint, so switching quality
+forces one re-upload but not repeated decoding on every frame.
+
+Native visible wallpaper frame-delay targets: ~12fps Balanced, ~16fps
+High, up to 20fps Ultra; battery saver <=8fps, hidden wallpaper no frame
+loop, motion disabled static. **Not hardware measurements:** actual
+frame time and CPU/GPU power require physical testing. Web preview
+quantizes shader updates to 144/192/240 frames per loop respectively.
+
+No background network, app scanning, screenshot capture or new
+permission added.
