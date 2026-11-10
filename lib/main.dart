@@ -408,9 +408,9 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             label: '${_config.rows}', onChanged: (v) => _apply(_config.copyWith(rows: v.round(), occupied: {})))),
         ]),
       ],
-      Row(children: [
+      Wrap(spacing: 8, runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center, children: [
         Text('${l.occupiedCount}: ${_config.occupied.length}'),
-        const Spacer(),
         TextButton.icon(onPressed: () => _apply(_config.copyWith(occupied: {}, zones: [])),
           icon: const Icon(Icons.restart_alt), label: Text(l.reset)),
         if (_mode == 'zone') TextButton(
