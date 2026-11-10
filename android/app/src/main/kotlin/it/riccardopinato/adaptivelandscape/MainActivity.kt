@@ -30,13 +30,16 @@ class MainActivity : FlutterActivity() {
                 callback.success(false)
                 return
             }
-            try {
-                OceanPhotoStore.importPhoto(this, data.data!!)
-                callback.success(true)
-            } catch (error: Exception) {
-                callback.error("OCEAN_PHOTO_REJECTED",
-                    error.message ?: "Unable to import ocean photograph", null)
-            }
+            val uri = data.data!!
+            // Decode/resize and disk I/O must never block the Android UI thread.
+            Thread {
+                val operation = runCatching { OceanPhotoStore.importPhoto(applicationContext, uri) }
+                runOnUiThread {
+                    operation.onSuccess { callback.success(true) }
+                        .onFailure { error -> callback.error("OCEAN_PHOTO_REJECTED",
+                            error.message ?: "Unable to import ocean photograph", null) }
+                }
+            }.start()
             return
         }
         if (requestCode != SCREENSHOT_PICKER) return
