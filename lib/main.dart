@@ -354,8 +354,9 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         selected: {_config.scene},
         onSelectionChanged: (v) => _apply(_config.copyWith(scene: v.single)),
       ),
-      if (_config.scene == 'beach') ...[
-        const SizedBox(height: 12),
+      // Always available, including older saved Meadow profiles, so users
+      // can explicitly start a pristine ocean without erasing other profiles.
+      const SizedBox(height: 12),
         Wrap(spacing: 8, runSpacing: 8, children: [
           FilledButton.tonalIcon(
             key: const Key('al-only-ocean'),
@@ -372,7 +373,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         ]),
         const SizedBox(height: 6),
         Text(l.onlyOceanNote, style: style.bodySmall),
-        ValueListenableBuilder<BeachRenderStatus>(
+        if (_config.scene == 'beach') ValueListenableBuilder<BeachRenderStatus>(
           valueListenable: BeachGpuSurface.status,
           builder: (context, value, _) => Text(
             value == BeachRenderStatus.gpu ? l.gpuActive :
@@ -382,7 +383,6 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             style: style.bodySmall,
           ),
         ),
-      ],
       section(l.selectIcons),
       Text(l.selectIconsHint, style: style.bodySmall),
       const SizedBox(height: 8),
