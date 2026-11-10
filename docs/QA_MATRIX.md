@@ -83,3 +83,15 @@ v0.4.2**. See [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V042.md).
 | C54 | Top/height slider | Correct row centers with navigation/status bars visible |
 | C55 | Drag widget / dock | Native wallpaper responds only to explicitly marked positions |
 | C56 | Profile switching / restart | Insets+geometry persist per profile without damaging old saved profiles |
+
+
+## v0.4.6 measurable device performance gate (not executed)
+
+| ID | Scenario | Required measurement |
+|---|---|---|
+| PERF61 | Balanced / High / Ultra with a real photo | 1-min frame-time/FPS and texture dimensions on each |
+| PERF62 | Battery saver on / off | Schedule <=8 fps when enabled, measure active GPU draw |
+| PERF63 | Hidden wallpaper / screen off | No recurring animation loop, no wake lock |
+| PERF64 | Replace photo / change quality 10× | No ANR, GPU texture leak, decoder OOM or broken wallpaper |
+| PERF65 | 30-min Home on / unlock / app switching | Battery %, thermal delta, memory peak and crashes |
+| PERF66 | Reboot and process recreation | Photo restored, correct quality, schema2 profiles intact |
