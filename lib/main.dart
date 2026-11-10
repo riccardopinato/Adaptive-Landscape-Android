@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/icon_field.dart';
@@ -61,6 +63,8 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   Uint8List? _homeScreenshot;
   String? _nativeRenderer;
   bool _oceanPhotoEnabled = false;
+  ui.Image? _webPhotograph;
+  bool _webCompareProcedural = false;
 
   // The reset is explicit and applies to the selected profile only.
   void _showOnlyOcean() => _apply(_config.copyWith(
@@ -107,6 +111,77 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       }
     } catch (_) { /* The wallpaper may not have been installed yet. */ }
   }
+
+  Future<void> _pickWebOceanPhoto() async {
+    if (!kIsWeb || _busy) return;
+    setState(() => _busy = true);
+    try {
+      // v12+ file_picker: no bytes are sent to a remote server or stored.
+      final file = await FilePicker.pickFile(type: FileType.image);
+      if (file == null) return;
+      final claimedSize = file.lengthSync() ?? await file.length();
+      if (claimedSize != null && claimedSize > 12 * 1024 * 1024) {
+        throw const FormatException('Ocean photograph exceeds 12 MB');
+      }
+      final bytes = await file.readAsBytes();
+      if (bytes.isEmpty || bytes.length > 12 * 1024 * 1024) {
+        throw const FormatException('Invalid image size (12 MB maximum)');
+      }
+      final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
+      ui.Image? decoded;
+      try {
+        final descriptor = await ui.ImageDescriptor.encoded(buffer);
+        try {
+          if (descriptor.width < 720 || descriptor.height < 720 ||
+              descriptor.width.toDouble() * descriptor.height > 45000000) {
+            throw const FormatException('Image must be >=720px per edge, <=45MP');
+          }
+          final maxEdge = math.max(descriptor.width, descriptor.height);
+          final scale = math.min(1.0, 2048 / maxEdge);
+          final codec = await descriptor.instantiateCodec(
+            targetWidth: math.max(1, (descriptor.width * scale).round()),
+            targetHeight: math.max(1, (descriptor.height * scale).round()));
+          try {
+            decoded = (await codec.getNextFrame()).image;
+          } finally {
+            codec.dispose();
+          }
+        } finally {
+          descriptor.dispose();
+        }
+      } finally {
+        buffer.dispose();
+      }
+      if (!mounted) {
+        decoded?.dispose();
+        return;
+      }
+      final previous = _webPhotograph;
+      setState(() {
+        _webPhotograph = decoded;
+        _webCompareProcedural = false;
+        _error = null;
+      });
+      // Image is held only by this editor; clearing/reloading releases it.
+      WidgetsBinding.instance.addPostFrameCallback((_) => previous?.dispose());
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _clearWebOceanPhoto() {
+    final old = _webPhotograph;
+    setState(() {
+      _webPhotograph = null;
+      _webCompareProcedural = false;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => old?.dispose());
+  }
+
+  ui.Image? get _activePreviewPhoto =>
+      kIsWeb && !_webCompareProcedural ? _webPhotograph : null;
 
   Future<void> _pickOceanPhoto() async {
     if (!WallpaperChannel.supported) return;
@@ -316,6 +391,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               scene: _config.scene, field: IconField.fromConfig(_config),
               beachProgram: _beachProgram, palette: _config.palette,
               renderQuality: _config.renderQuality,
+              photograph: _activePreviewPhoto,
               night: _config.night, phase: _config.reduceMotion ? 0 :
                 ((_animation.value * 240).floor() / 240) * math.pi * 2,
             ))),
@@ -351,6 +427,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
 
   @override
   void dispose() {
+    _webPhotograph?.dispose();
     WidgetsBinding.instance.removeObserver(this);
     _animation.dispose();
     super.dispose();
@@ -438,6 +515,32 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             style: style.bodySmall,
           ),
         ),
+      if (_config.scene == 'beach' && kIsWeb) ...[
+        section(l.webPhotoPreviewTitle),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          OutlinedButton.icon(
+            key: const Key('al-web-import-ocean-photo'),
+            onPressed: _busy ? null : _pickWebOceanPhoto,
+            icon: const Icon(Icons.add_photo_alternate_outlined),
+            label: Text(l.webPhotoChoose),
+          ),
+          if (_webPhotograph != null) TextButton.icon(
+            key: const Key('al-web-clear-ocean-photo'),
+            onPressed: _clearWebOceanPhoto,
+            icon: const Icon(Icons.clear),
+            label: Text(l.clearOceanPhoto),
+          ),
+        ]),
+        if (_webPhotograph != null) SwitchListTile(
+          key: const Key('al-web-before-after'),
+          title: Text(l.webCompareProcedural),
+          subtitle: Text(l.webCompareExplanation),
+          value: _webCompareProcedural,
+          onChanged: (value) => setState(() => _webCompareProcedural = value),
+          contentPadding: EdgeInsets.zero,
+        ),
+        Text(l.webPhotoPrivacyHint, style: style.bodySmall),
+      ],
       if (_config.scene == 'beach' && WallpaperChannel.supported) ...[
         section(l.oceanPhotoTitle),
         Wrap(spacing: 8, runSpacing: 8, children: [
@@ -618,6 +721,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               beachProgram: _beachProgram,
               night: _config.night, palette: _config.palette,
               renderQuality: _config.renderQuality,
+              photograph: _activePreviewPhoto,
               phase: _config.reduceMotion ? 0 :
                   ((_animation.value * 240).floor() / 240) * math.pi * 2,
             ))),
