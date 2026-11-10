@@ -106,7 +106,8 @@ internal object OceanPhotoStore {
                     FileOutputStream(temp).use {
                         check(resized.compress(Bitmap.CompressFormat.JPEG, 90, it))
                     }
-                    require(temp.length() in 1024..(12 * 1024 * 1024)) {
+                    require(temp.length() >= 1024L &&
+                        temp.length() <= 12L * 1024L * 1024L) {
                         "Ocean photo exceeds the 12 MB on-device limit"
                     }
                     // Atomic replace when supported by app-private storage.
