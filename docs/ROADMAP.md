@@ -1,21 +1,32 @@
-# Product Bible and 5 Maxi-Step roadmap — 2026-11-10
+# Adaptive Landscape — Five Maxi-step implementation and evidence ledger
 
-Product: original premium Android live wallpaper that reacts to a user's Home icon layout. Standalone paid-download plan: €1.99 for initial pilot, €2.99 if differentiation/quality validated. Prices are proposals, not published offers. No ads, sign-in, subscriptions, backend or AI. More themes can be added later without new app binaries, subject to quality and licensing.
+Baseline Factory: `riccardopinato/App-Factory-Core@d4ed1185d36d419228fba6b57a979cde308bd321`.
+App repository source of truth: https://github.com/riccardopinato/Adaptive-Landscape-Android
 
-## Current software evidence
-- `SOURCE_PREPARED` local kit only. Generated Flutter Android project: not executed. Static XML/ARB/source structural checks only. APK and live wallpaper device runtime: NOT VERIFIED.
-- Upstream Deskland: PATTERN/PRODUCT reference E1 at `BLEZZ0102/Deskland@9818b577402ff476e1b59da07970c56472713126` (GPL-3.0). Not E3/Golden; do not claim its Windows tests prove our Android app.
+Status vocabulary: **CODED** = committed feature; **CI VERIFIED** = analyze/tests/Android and Web builds for exact SHA; **USER WEB CONFIRMED** = preview observed by user; **DEVICE UNVERIFIED** = no physical evidence. Physical and store gates must not be conflated.
 
-## Five Maxi-steps
-1. **Foundation & real Android wallpaper**: make dedicated repo; copy overlay into fresh Flutter project; CI analyze/test/debug APK; set stable original brand icon, test WallpaperService on physical device. Gate: real Home wallpaper visible, visibility pause works, clean startup.
-2. **Accurate icon calibration**: phone/density/launcher configuration; safe zones and dock; 5x8 grid editable per page; optional non-invasive user-guided import (never fake automatic access). Gate: icons/scene alignment on Pixel, Samsung, Xiaomi and common launchers.
-3. **Visual quality and animation**: premium, original vector design; two polished scenes; animation engine (cloud/wave/shadows/flowers/objects) with occupancy-aware collision, parallax, day/night; reduced motion and low-power mode. Gate: measure frame time, FPS and battery on real phones.
-4. **UX, local persistence, translations**: clear onboarding, profile export/import, ARB localized Android description, accessibility, privacy statement, theme presets. Gate: theme persists across process kill/restart/reboot and screen rotation; no unauthorized data collection.
-5. **Paid launch readiness**: persistent signing identity, Play Console one-time purchase download SKU/price, 1.99 vs 2.99 pricing test, screenshots using original assets, QA/AppLab, source artifact fingerprint, internal testing and country policy checks. Gate: Play internal install and update-in-place, battery/OEM verification, then store publication only via authorized action.
+| Phase | Deliverable | Evidence / remaining acceptance |
+|---|---|---|
+| 1. Foundation | Schema 2 normalized contract, local profiles, CI Flutter/Gradle, JDK17, tests, provenance and reproducible scaffold | CODED; verify CI exact PR head, source scaffold remains generated, not committed binaries |
+| 2. Icon & widget calibration | Configurable 3–8 × 3–12 grid, movable/resizeable excluded zones, multi-profile selection, JSON export/import, legacy reader | CODED; physical launcher coordinate/fingerprint matching unverified |
+| 3. Premium scenes | Original vector Beach/Meadow extended with night palettes, stars, animated clouds/waves/flowers; obstacle-influence in Dart/Android; battery saver & reduced-motion loops | CODED; physical visual comparison, FPS, thermal/battery and graphic quality acceptance unverified |
+| 4. UX & persistence | Responsive editor, six ARB locales, profile CRUD, clipboard import/export, no account/network, privacy notes | CODED; accessibility/locale manual screen QA unverified |
+| 5. Release engineering | CI Android debug + optimized internal APKs and Web Pages, privacy/provenance gates, device QA plan, Play signing checklist | CI pipeline configuration; dedicated release keystore, physical QA, AAB signing and Play testing **not done** |
 
-## Prioritized risks
-- P0 platform: icon positions are not provided by Android WallpaperService. Manual calibration is the truthful V1 approach.
-- P0 license: GPL-3.0 upstream; independent implementation only for proprietary paid product.
-- P1 OEM: wallpaper service lifecycle and battery saver; physical device tests mandatory.
-- P1 mismatch: Flutter preview/native renderer are separate implementations in MVP; match scene parameters or eventually share engine.
-- P2 battery/size: avoid large animation textures, keep low frame rates, pause when not visible.
+## Design/product remaining risks
+
+**P0**: Pixel/Samsung/Redmi physical lifecycle, wallpaper picker, permissions, surface and power management. No user testing yet.  
+**P0**: Scene geometry vs actual Home icon positions varies by launcher, widgets and page offsets. Manual approximation only.  
+**P1**: Native Kotlin renderer and Flutter Dart renderer have coordinate parity by algorithm description but are not pixel-equivalent. Use screenshot comparisons in physical gate.  
+**P1**: Multi-profile sync uses local preferences; verify process kills/reboots and migration from 0.1.  
+**P1**: Theme artwork is an improved vector baseline; subjective commercial/premium art acceptance is pending.  
+**P1**: Verify no upload/store privacy obligations overlooked before release.  
+**P2**: Accessibility screen reader/touch target checks, small tablet layouts and dark-mode settings.
+
+## Go/no-go gates
+
+1. CI gates green on precise merged commit: Flutter analyze/test, Kotlin compilation, debug APK, optimized APK and Web. Failed tests block merge.
+2. User verifies Web preview after deployed commit: controls, profiles, colors, zones, export/import.
+3. Physical matrix `docs/QA_MATRIX.md` PASS with device/Android/launcher, reproducible evidence and APK SHA.
+4. Google Play Internal Testing install/update `versionCode` monotonic, AAB signed with stable private release key, Play Console declarations and policies verified.
+5. Commercial release only after battery, legal/art/license and accessibility acceptance. Proposed one-time price €1.99 pilot / €2.99 after differentiation; no ads/subscriptions.
