@@ -11,6 +11,7 @@ import android.graphics.Shader
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
 import android.service.wallpaper.WallpaperService
 import android.view.SurfaceHolder
 import kotlin.math.PI
@@ -28,7 +29,7 @@ class AdaptiveWallpaperService : WallpaperService() {
         private var visible = false
         private var settings = WallpaperState()
         private var offset = 0.5f
-        private var startTime = System.currentTimeMillis()
+        private var startTime = SystemClock.uptimeMillis()
         private val frame = object : Runnable {
             override fun run() {
                 if (!visible) return
@@ -110,7 +111,7 @@ class AdaptiveWallpaperService : WallpaperService() {
             val h = c.height.toFloat()
             if (w <= 0f || h <= 0f) return
             val t = if (settings.staticScene) 0.0 else
-                ((System.currentTimeMillis() - startTime) % 12000L) / 12000.0 * 2 * PI * settings.motion
+                (SystemClock.uptimeMillis() - startTime).coerceAtLeast(0L) / 12000.0 * 2 * PI * settings.motion
             if (settings.scene == "beach") {
                 coastalBeach.draw(c, settings, t)
                 return

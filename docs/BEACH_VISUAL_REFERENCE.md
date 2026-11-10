@@ -27,3 +27,7 @@
 - Waves and foam pulse, shallow water fades to deeper sea, wet sand visible.
 - Switching Beach↔Meadow, palettes and motion does not crash; profile persistence unchanged.
 - Flutter analyze, tests and Web build PASS on the PR exact SHA. Do not claim smartphone QA from this.
+
+### Seamless speed controls — v0.3.1
+
+A non-integer speed (for example 0.5×) must not cause the phase to jump when the 12-second base animation period ends. Flutter changes its controller period to `12000 / speed` milliseconds and always sends phase [0,2π]; Android derives phase continuously from monotonic `SystemClock.uptimeMillis()` instead of modulo-wrapping the source time. Static/reduced motion still stops frame scheduling; the declared native 20fps/8fps cadence remains unchanged. This is source/CI verification only, not physical timing certification.
