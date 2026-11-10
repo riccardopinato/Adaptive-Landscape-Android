@@ -58,6 +58,7 @@ internal class GpuOceanRenderer(context: Context) {
         uniform float uPalette;
         uniform float uQuality;
         uniform float uHasLand;
+        uniform float uMeadow;
         uniform sampler2D uMask;
         uniform sampler2D uOcean;
         uniform float uPhotoActive;
@@ -97,6 +98,44 @@ internal class GpuOceanRenderer(context: Context) {
             uv.y = 1.0 - uv.y;
             float t = uPhase;
             float occ = texture2D(uMask, uv).r * uHasLand;
+            // Render both themes through one EGL producer on the same Surface.
+            // Never mix lockCanvas() and EGL when a wallpaper theme changes.
+            if (uMeadow > 0.5) {
+                vec3 skyTop = vec3(0.48, 0.72, 0.90);
+                vec3 skyBottom = vec3(0.92, 0.96, 0.87);
+                if (uPalette > 0.5 && uPalette < 1.5) {
+                    skyTop = vec3(0.94, 0.57, 0.60);
+                    skyBottom = vec3(0.98, 0.83, 0.69);
+                }
+                if (uPalette > 1.5) {
+                    skyTop = vec3(0.53, 0.82, 0.77);
+                    skyBottom = vec3(0.91, 0.97, 0.84);
+                }
+                if (uNight > 0.5) {
+                    skyTop = vec3(0.07, 0.14, 0.30);
+                    skyBottom = vec3(0.30, 0.39, 0.55);
+                }
+                vec3 meadow = mix(skyTop, skyBottom, smoothstep(0.0, 0.83, uv.y));
+                // Same three hill layers/normalized occupancy as original Canvas.
+                float h0 = 0.53 + 0.035*sin(uv.x*9.0) + 0.045*occ;
+                float h1 = 0.61 + 0.035*sin(uv.x*9.0 + 3.0) + 0.045*occ;
+                float h2 = 0.70 + 0.035*sin(uv.x*9.0 + 6.0) + 0.045*occ;
+                if (uv.y > h0) meadow = vec3(0.43, 0.63, 0.39);
+                if (uv.y > h1) meadow = vec3(0.29, 0.53, 0.35);
+                if (uv.y > h2) meadow = vec3(0.20, 0.44, 0.30);
+                if (uv.y > h0) meadow += (noise(uv*vec2(118.0,210.0))-0.5)*0.025;
+                vec2 sun = (uv - vec2(0.77, 0.17)) *
+                    vec2(uResolution.x/uResolution.x, uResolution.y/uResolution.x);
+                float sunMask = 1.0-smoothstep(0.084,0.094,length(sun));
+                meadow = mix(meadow, (uNight>0.5) ?
+                    vec3(0.86,0.91,0.99) : vec3(1.0,0.95,0.75),
+                    sunMask * (1.0-step(h0,uv.y)));
+                if (uNight > 0.5 && uv.y > h0) {
+                    meadow *= vec3(0.46, 0.61, 0.70);
+                }
+                gl_FragColor = vec4(clamp(meadow,0.0,1.0),1.0);
+                return;
+            }
 
             // Empty layout -> no sand, foam or fake permanent coast.
             float rough = 0.008 * sin(uv.y * 37.0 + uv.x * 9.0) +
@@ -316,6 +355,7 @@ internal class GpuOceanRenderer(context: Context) {
                 width.toFloat(), height.toFloat())
             f("uPhase", (phase % (2 * PI)).toFloat())
             f("uNight", if (state.night) 1f else 0f)
+            f("uMeadow", if (state.scene == "meadow") 1f else 0f)
             f("uHasLand", if (state.occupied.isEmpty() && state.zones.isEmpty()) 0f else 1f)
             f("uPalette", when (state.palette) { "sunset" -> 1f; "mint" -> 2f; else -> 0f })
             f("uQuality", when (state.renderQuality) {
