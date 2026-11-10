@@ -21,6 +21,7 @@ class BeachSurface {
     final key = [
       size.width.toStringAsFixed(1), size.height.toStringAsFixed(1),
       field.gridColumns, field.gridRows, field.top, field.span,
+      field.gridInset,
       field.encodeOccupied(),
       for (final zone in field.zones)
         '${zone.x.toStringAsFixed(5)},${zone.y.toStringAsFixed(5)},'

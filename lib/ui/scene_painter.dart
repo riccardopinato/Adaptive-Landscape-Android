@@ -151,6 +151,7 @@ class ScenePainter extends CustomPainter {
     phase != old.phase || !identical(beachProgram, old.beachProgram) ||
     field.gridColumns != old.field.gridColumns ||
     field.gridRows != old.field.gridRows || field.top != old.field.top ||
+    field.gridInset != old.field.gridInset ||
     field.span != old.field.span ||
     field.zones.length != old.field.zones.length ||
     field.encodeOccupied() != old.field.encodeOccupied() ||

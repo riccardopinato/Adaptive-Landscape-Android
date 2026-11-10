@@ -50,6 +50,7 @@ class BeachGpuSurface {
     try {
       final key = [
         field.gridColumns, field.gridRows, field.top, field.span,
+        field.gridInset,
         field.encodeOccupied(),
         for (final z in field.zones)
           '${z.x.toStringAsFixed(6)}|${z.y.toStringAsFixed(6)}|'

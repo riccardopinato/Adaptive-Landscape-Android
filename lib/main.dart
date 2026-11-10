@@ -414,6 +414,50 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     );
   }
 
+  Future<void> _openPrecisionCalibration() async {
+    if (!mounted) return;
+    setState(() => _showGuides = true);
+    final l = AppLocalizations.of(context)!;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog.fullscreen(
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(l.calibrateZoomTitle),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: l.closePreview,
+                onPressed: () => Navigator.pop(dialogContext),
+              ),
+            ],
+          ),
+          body: SafeArea(child: Column(children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Text(l.calibrateZoomHint),
+            ),
+            Expanded(child: LayoutBuilder(builder: (context, constraints) {
+              final width = math.min(390.0, constraints.maxWidth - 20.0);
+              return InteractiveViewer(
+                key: const Key('al-precision-interactive-view'),
+                minScale: 1.0,
+                maxScale: 5.0,
+                boundaryMargin: const EdgeInsets.all(220),
+                constrained: false,
+                child: SizedBox(
+                  width: width,
+                  height: width * 19.5 / 9,
+                  child: _preview(l),
+                ),
+              );
+            })),
+          ])),
+        ),
+      ),
+    );
+  }
+
   Future<void> _openPicker() async {
     setState(() => _busy = true);
     try {
@@ -567,6 +611,36 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         Text(l.oceanPhotoAndroidOnly, style: style.bodySmall),
       ],
       section(l.selectIcons),
+      OutlinedButton.icon(
+        key: const Key('al-precision-calibration'),
+        onPressed: _openPrecisionCalibration,
+        icon: const Icon(Icons.zoom_in_map_outlined),
+        label: Text(l.calibrateZoomTitle),
+      ),
+      const SizedBox(height: 6),
+      Text(l.calibrateZoomHint, style: style.bodySmall),
+      Text('${l.calibrateTop}: ${(_config.top * 100).round()}%'),
+      Slider(
+        key: const Key('al-calibrate-top'),
+        min: 0, max: 0.4, divisions: 40,
+        value: _config.top,
+        onChanged: (v) => _apply(_config.copyWith(
+          top: v, span: math.min(_config.span, 1 - v))),
+      ),
+      Text('${l.calibrateHeight}: ${(_config.span * 100).round()}%'),
+      Slider(
+        key: const Key('al-calibrate-span'),
+        min: 0.2, max: 1 - _config.top,
+        value: _config.span.clamp(0.2, 1 - _config.top),
+        onChanged: (v) => _apply(_config.copyWith(span: v)),
+      ),
+      Text('${l.calibrateSide}: ${(_config.gridInset * 100).round()}%'),
+      Slider(
+        key: const Key('al-calibrate-side'),
+        min: 0, max: 0.2, divisions: 20,
+        value: _config.gridInset,
+        onChanged: (v) => _apply(_config.copyWith(gridInset: v)),
+      ),
       Text(l.selectIconsHint, style: style.bodySmall),
       if (WallpaperChannel.supported) ...[
         const SizedBox(height: 8),
@@ -707,7 +781,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         key: const Key('al-native-renderer-status'),
       ),
       const SizedBox(height: 6),
-      const Text('Beach Web + Android v0.4.4', style: TextStyle(fontSize: 11)),
+      const Text('Beach Web + Android v0.4.5', style: TextStyle(fontSize: 11)),
       if (_error != null) SelectableText('${l.failure}: $_error',
         style: TextStyle(color: Theme.of(context).colorScheme.error)),
     ]);
@@ -727,7 +801,10 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             }
             return;
           }
-          final col = (x * _config.columns).floor().clamp(0, _config.columns - 1);
+          if (x < _config.gridInset || x > 1 - _config.gridInset) return;
+          final col = ((x - _config.gridInset) /
+              (1 - 2 * _config.gridInset) * _config.columns)
+              .floor().clamp(0, _config.columns - 1);
           final row = ((y - _config.top) / _config.span * _config.rows).floor();
           if (row < 0 || row >= _config.rows) return;
           _toggleCell(row * _config.columns + col);
@@ -749,7 +826,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
             ))),
             if (_homeScreenshot != null) Positioned.fill(
               child: IgnorePointer(child: Opacity(opacity: 0.72,
-                child: Image.memory(_homeScreenshot!, fit: BoxFit.fill,
+                child: Image.memory(_homeScreenshot!, fit: BoxFit.cover,
                   gaplessPlayback: true))),
             ),
             if (_showGuides && _mode == 'grid') ...List.generate(_config.cellCount, (i) {

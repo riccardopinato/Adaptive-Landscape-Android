@@ -77,5 +77,10 @@
   "waterTuning": "Regolazione realismo del mare",
   "refractionIntensity": "Rifrazione della fotografia",
   "foamIntensityLabel": "Schiuma sulla battigia",
-  "waterTuningHint": "Regola con moderazione: deve prevalere il dettaglio fotografico. La velocità delle onde è indipendente dalla rifrazione."
+  "waterTuningHint": "Regola con moderazione: deve prevalere il dettaglio fotografico. La velocità delle onde è indipendente dalla rifrazione.",
+  "calibrateZoomTitle": "Calibrazione precisa Home · zoom",
+  "calibrateZoomHint": "Ingrandisci con due dita (fino a 5×), spostati per esaminare lo screenshot e tocca le celle delle icone; le aree widget si trascinano. Controlla i margini sul launcher reale.",
+  "calibrateTop": "Margine superiore griglia",
+  "calibrateHeight": "Altezza della griglia",
+  "calibrateSide": "Margini laterali griglia"
 }

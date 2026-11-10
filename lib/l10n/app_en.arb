@@ -77,5 +77,10 @@
   "waterTuning": "Water realism controls",
   "refractionIntensity": "Photo refraction",
   "foamIntensityLabel": "Shoreline foam",
-  "waterTuningHint": "Adjust gently: photographic detail should dominate. Motion speed is independent of refraction strength."
+  "waterTuningHint": "Adjust gently: photographic detail should dominate. Motion speed is independent of refraction strength.",
+  "calibrateZoomTitle": "Precision Home calibration · zoom",
+  "calibrateZoomHint": "Pinch with two fingers to zoom (up to 5×). Pan to inspect the Home screenshot and tap icon cells; widget zones can be dragged. Insets must be verified on the actual launcher.",
+  "calibrateTop": "Grid top offset",
+  "calibrateHeight": "Grid vertical span",
+  "calibrateSide": "Grid side margins"
 }

@@ -71,3 +71,15 @@ v0.4.2**. See [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V042.md).
 | R43 | Existing schema2 profile | Defaults restored; old icons, dock/widgets and profiles remain |
 | R44 | Web vs Android optical controls | Same setting accepted independently; pixel equivalence not claimed |
 | R45 | Asset provenance | Photo license and author verified for anything bundled; avoid mislabeling generated water |
+
+
+## v0.4.5 calibration acceptance on physical hardware
+
+| ID | Scenario | Evidence |
+|---|---|---|
+| C51 | Import Home screenshot / close editor | Image disappears after process exit, no app-private screenshot |
+| C52 | Zoom 1×/3×/5× and pan | User can distinguish icon centers; taps change correct cells |
+| C53 | Side insets 0/10/20% | Beach aligns with actual leftmost and rightmost icons |
+| C54 | Top/height slider | Correct row centers with navigation/status bars visible |
+| C55 | Drag widget / dock | Native wallpaper responds only to explicitly marked positions |
+| C56 | Profile switching / restart | Insets+geometry persist per profile without damaging old saved profiles |

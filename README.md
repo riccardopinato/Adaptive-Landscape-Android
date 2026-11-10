@@ -126,3 +126,18 @@ Only a truly photographic source can yield authentic texture; no invented
 "4K photo" should be represented as a photograph. No photo assets are
 redistributed without source license + provenance. See
 [CC0 photo sourcing notes](docs/PHOTO_SOURCES_CC0.md).
+
+
+## v0.4.5 — advanced manual Home calibration
+
+The optional schema2 `gridInset` (symmetric 0–20% side margin) is now
+used consistently for Flutter grid centers, occupancy sampling, sand mask,
+Web fallback and native Android `WallpaperState`. Existing configurations
+default to zero inset and are not migrated or deleted. The editor also
+exposes `top` and `span` vertical margin controls and a fullscreen
+`InteractiveViewer` zoom/pan calibration experience (1×–5×), plus
+drag/resizable widget zones and the temporary Home screenshot overlay.
+
+A generic Android `WallpaperService` **still cannot read launcher icons**.
+Screenshot and icon positions are manually selected; this is not an
+Accessibility-based or background photo reader.

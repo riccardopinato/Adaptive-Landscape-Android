@@ -15,6 +15,7 @@ internal data class WallpaperState(
     val rows: Int = 8,
     val top: Float = 0.115f,
     val span: Float = 0.765f,
+    val gridInset: Float = 0f,
     val occupied: Set<Int> = emptySet(),
     val zones: List<LandscapeZone> = emptyList(),
     val palette: String = "original",
@@ -31,9 +32,10 @@ internal data class WallpaperState(
         var sum = 0.0
         for (index in occupied) {
             if (index !in 0 until (columns * rows)) continue
-            val ix = ((index % columns) + 0.5) / columns.toDouble()
+            val ix = gridInset + ((index % columns) + 0.5) *
+                (1.0 - 2.0 * gridInset) / columns
             val iy = top + ((index / columns) + 0.5) * span / rows
-            val dx = (x - ix) / (0.58 / columns)
+            val dx = (x - ix) / (0.58 * (1.0 - 2.0 * gridInset) / columns)
             val dy = (y - iy) / (0.58 * span / rows)
             sum += exp(-0.5 * (dx * dx + dy * dy))
         }
@@ -84,6 +86,7 @@ internal data class WallpaperState(
                         return WallpaperState(
                             scene = if (json.optString("scene") == "beach") "beach" else "meadow",
                             columns = columns, rows = rows, top = top, span = span,
+                            gridInset = number(json, "gridInset", 0.0, 0.0, 0.2),
                             occupied = occupied, zones = zones,
                             palette = json.optString("palette").let {
                                 if (it == "sunset" || it == "mint") it else "original"

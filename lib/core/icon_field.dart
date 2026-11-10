@@ -9,12 +9,14 @@ class IconField {
     this.gridRows = 8,
     this.top = 0.115,
     this.span = 0.765,
+    this.gridInset = 0.0,
     this.zones = const [],
   });
 
   factory IconField.fromConfig(LandscapeConfig config) => IconField(
         occupied: config.occupied, gridColumns: config.columns, gridRows: config.rows,
-        top: config.top, span: config.span, zones: config.zones,
+        top: config.top, span: config.span,
+        gridInset: config.gridInset, zones: config.zones,
       );
 
   static const int columns = 5;
@@ -26,6 +28,7 @@ class IconField {
   final int gridRows;
   final double top;
   final double span;
+  final double gridInset;
   final List<LayoutZone> zones;
 
   static (double, double) centerFor(int index) {
@@ -37,9 +40,10 @@ class IconField {
     var total = 0.0;
     for (final index in occupied) {
       if (index < 0 || index >= gridColumns * gridRows) continue;
-      final cx = ((index % gridColumns) + 0.5) / gridColumns;
+      final cx = gridInset + ((index % gridColumns) + 0.5) *
+          (1 - 2 * gridInset) / gridColumns;
       final cy = top + ((index ~/ gridColumns) + 0.5) * span / gridRows;
-      final dx = (x - cx) / (0.58 / gridColumns);
+      final dx = (x - cx) / (0.58 * (1 - 2 * gridInset) / gridColumns);
       final dy = (y - cy) / (0.58 * span / gridRows);
       total += math.exp(-0.5 * (dx * dx + dy * dy));
     }
