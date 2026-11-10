@@ -51,6 +51,7 @@ class LandscapeConfig {
     this.rows = 8,
     this.top = 0.115,
     this.span = 0.765,
+    this.gridInset = 0.0,
     this.occupied = const {},
     this.zones = const [],
     this.palette = 'original',
@@ -68,6 +69,8 @@ class LandscapeConfig {
   final int rows;
   final double top;
   final double span;
+  /// Symmetric horizontal Home-grid margin (0-0.20), schema2 optional.
+  final double gridInset;
   final Set<int> occupied;
   final List<LayoutZone> zones;
   final String palette;
@@ -84,12 +87,12 @@ class LandscapeConfig {
   int get cellCount => columns * rows;
   (double, double) cellCenter(int index) {
     if (index < 0 || index >= cellCount) throw RangeError.index(index, List.filled(cellCount, 0));
-    return (((index % columns) + 0.5) / columns, top + ((index ~/ columns) + 0.5) * span / rows);
+    return (gridInset + ((index % columns) + 0.5) * (1 - 2 * gridInset) / columns, top + ((index ~/ columns) + 0.5) * span / rows);
   }
 
   Map<String, Object> toJson() => {
         'schema': schemaVersion, 'scene': scene, 'columns': columns, 'rows': rows,
-        'top': top, 'span': span,
+        'top': top, 'span': span, 'gridInset': gridInset,
         'occupied': (occupied.where((i) => i >= 0 && i < cellCount).toList()..sort()),
         'zones': zones.map((x) => x.toJson()).toList(),
         'palette': palette, 'night': night, 'motion': motion,
@@ -136,6 +139,7 @@ class LandscapeConfig {
     return LandscapeConfig(
       scene: m['scene'] == 'beach' ? 'beach' : 'meadow',
       columns: columns, rows: rows, top: top, span: span,
+      gridInset: d('gridInset', 0.0, 0.0, 0.20),
       occupied: occupied, zones: zones,
       palette: m['palette'] == 'sunset' ? 'sunset' : m['palette'] == 'mint' ? 'mint' : 'original',
       night: m['night'] == true,
@@ -150,6 +154,7 @@ class LandscapeConfig {
 
   LandscapeConfig copyWith({
     String? scene, int? columns, int? rows, double? top, double? span,
+    double? gridInset,
     Set<int>? occupied, List<LayoutZone>? zones, String? palette,
     bool? night, double? motion, bool? reduceMotion,
     String? renderQuality,
@@ -158,6 +163,7 @@ class LandscapeConfig {
         scene: scene ?? this.scene,
         columns: columns ?? this.columns, rows: rows ?? this.rows,
         top: top ?? this.top, span: span ?? this.span,
+        gridInset: gridInset ?? this.gridInset,
         occupied: occupied ?? this.occupied, zones: zones ?? this.zones,
         palette: palette ?? this.palette, night: night ?? this.night,
         motion: motion ?? this.motion, reduceMotion: reduceMotion ?? this.reduceMotion,
