@@ -73,5 +73,9 @@
   "webPhotoChoose": "Scegli foto del mare",
   "webCompareProcedural": "Confronta con il mare precedente",
   "webCompareExplanation": "Mostra il vecchio mare sintetico al posto della foto. Disattiva per tornare alla fotografia.",
-  "webPhotoPrivacyHint": "La foto Web resta solo in memoria: nessun upload, salvataggio o export nei profili. L'anteprima non certifica lo sfondo nativo Android."
+  "webPhotoPrivacyHint": "La foto Web resta solo in memoria: nessun upload, salvataggio o export nei profili. L'anteprima non certifica lo sfondo nativo Android.",
+  "waterTuning": "Regolazione realismo del mare",
+  "refractionIntensity": "Rifrazione della fotografia",
+  "foamIntensityLabel": "Schiuma sulla battigia",
+  "waterTuningHint": "Regola con moderazione: deve prevalere il dettaglio fotografico. La velocità delle onde è indipendente dalla rifrazione."
 }
