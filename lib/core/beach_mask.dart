@@ -31,14 +31,21 @@ class BeachMask {
       final x1 = ((cx + halfW + 4 * rx) * width).ceil().clamp(0, width - 1).toInt();
       final y0 = ((cy - halfH - 4 * ry) * height).floor().clamp(0, height - 1).toInt();
       final y1 = ((cy + halfH + 4 * ry) * height).ceil().clamp(0, height - 1).toInt();
+      // Gaussian is separable: compute expensive exponentials once per
+      // occupied column and row, then use multiplications inside the grid.
+      final xs = Float32List(x1 - x0 + 1);
+      for (var x = x0; x <= x1; x++) {
+        final px = (x + 0.5) / width;
+        final dx = math.max(0.0, (px - cx).abs() - halfW) / rx;
+        xs[x - x0] = math.exp(-0.5 * dx * dx);
+      }
       for (var y = y0; y <= y1; y++) {
         final py = (y + 0.5) / height;
         final dy = math.max(0.0, (py - cy).abs() - halfH) / ry;
-        final yy = dy * dy;
+        final gy = math.exp(-0.5 * dy * dy);
+        final row = y * width;
         for (var x = x0; x <= x1; x++) {
-          final px = (x + 0.5) / width;
-          final dx = math.max(0.0, (px - cx).abs() - halfW) / rx;
-          values[y * width + x] += math.exp(-0.5 * (dx * dx + yy)).toDouble();
+          values[row + x] += xs[x - x0] * gy;
         }
       }
     }

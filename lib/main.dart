@@ -359,7 +359,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           for (final count in [0, 3, 4])
-            ChoiceChip(label: Text(count == 0 ? l.noDock : '${count}'),
+            ChoiceChip(label: Text(count == 0 ? l.noDock : '$count'),
               selected: DockLayout.count(_config.zones) == count,
               onSelected: (_) => _apply(_config.copyWith(
                 zones: DockLayout.withCount(_config.zones, count))),
