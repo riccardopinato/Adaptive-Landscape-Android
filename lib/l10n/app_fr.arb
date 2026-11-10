@@ -83,5 +83,8 @@
   "calibrateTop": "Marge supérieure",
   "calibrateHeight": "Hauteur de la grille",
   "calibrateSide": "Marges latérales",
-  "nativeFramePacingNote": "Cadences ciblées : Équilibrée ~12fps, Haute ~16fps, Ultra jusqu'à 20fps; économie d'énergie ~8fps. Les FPS, la chaleur et la batterie doivent être mesurés sur un téléphone."
+  "nativeFramePacingNote": "Cadences ciblées : Équilibrée ~12fps, Haute ~16fps, Ultra jusqu'à 20fps; économie d'énergie ~8fps. Les FPS, la chaleur et la batterie doivent être mesurés sur un téléphone.",
+  "qaSnapshotCopy": "Copier le résumé du test physique",
+  "qaSnapshotHint": "Copie uniquement les paramètres et l'état du rendu : aucune capture, identifiant personnel ou nom d'application installée.",
+  "qaSnapshotCopied": "Résumé du test copié"
 }
