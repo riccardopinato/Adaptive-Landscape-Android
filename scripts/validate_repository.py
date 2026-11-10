@@ -104,3 +104,15 @@ assert 'uRefraction' in frag and 'uFoamIntensity' in frag
 assert 'uRefraction' in gpu and 'uFoamIntensity' in gpu
 assert 'al-photo-refraction' in editor and 'al-foam-intensity' in editor
 print('PASS: v0.4.4 schema2 optional optics controls and photorealistic foam source gates')
+
+# v0.4.5: screenshot zoom + horizontal/vertical insets share the same geometry.
+cfg = (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
+editor = (root / 'lib/main.dart').read_text(encoding='utf-8')
+field = (root / 'lib/core/icon_field.dart').read_text(encoding='utf-8')
+mask = (root / 'lib/core/beach_mask.dart').read_text(encoding='utf-8')
+assert 'gridInset' in cfg and 'gridInset' in native_state
+assert 'field.gridInset' in mask and 'gridInset' in field
+assert 'InteractiveViewer(' in editor and 'al-precision-calibration' in editor
+assert 'al-calibrate-top' in editor and 'al-calibrate-side' in editor
+assert '0.4.5+12' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+print('PASS: v0.4.5 normalized Home insets and manual zoom calibration')
