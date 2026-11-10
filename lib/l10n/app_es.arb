@@ -68,5 +68,10 @@
   "oceanPhotoNotSelected": "Todavía no hay ninguna foto del mar",
   "oceanPhotoHint": "Elige una foto nítida del mar desde arriba (JPG/PNG, al menos 720 px, hasta 12 MB). Se guarda una copia optimizada sin metadatos solo en el dispositivo. Sin cargas ni permisos de fotos.",
   "oceanPhotoAndroidOnly": "El editor web sigue mostrando la vista previa procedural. Evalúa la calidad fotográfica en la pantalla de inicio Android.",
-  "nativePhotoGpuActive": "Android: textura marina fotográfica en la GPU nativa (comprobar en Inicio)"
+  "nativePhotoGpuActive": "Android: textura marina fotográfica en la GPU nativa (comprobar en Inicio)",
+  "webPhotoPreviewTitle": "Vista previa fotográfica Web",
+  "webPhotoChoose": "Elegir foto del mar",
+  "webCompareProcedural": "Comparar con el mar sintético anterior",
+  "webCompareExplanation": "Muestra el agua procedural anterior en lugar de la foto. Desactiva para volver a la foto.",
+  "webPhotoPrivacyHint": "La imagen Web solo está en memoria: no se carga, guarda ni exporta. La vista previa no valida el fondo de Android."
 }
