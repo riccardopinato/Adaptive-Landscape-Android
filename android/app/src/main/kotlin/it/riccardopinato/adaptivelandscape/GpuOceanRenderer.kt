@@ -67,6 +67,8 @@ internal class GpuOceanRenderer {
         uniform sampler2D uOceanPhoto;
         uniform float uHasPhoto;
         uniform vec2 uPhotoScale;
+        uniform float uRefraction;
+        uniform float uFoamIntensity;
 
         float hash(vec2 p) {
             p = fract(p * vec2(123.34, 456.21));
@@ -131,10 +133,12 @@ internal class GpuOceanRenderer {
             // or harsh caustics should paint over real photographic detail.
             vec2 photoDrift = vec2(
                 0.0022 * sin(uv.y * 19.0 + t) +
-                0.0011 * sin(uv.x * 37.0 - t * 2.0),
+                0.0011 * sin(uv.x * 37.0 - t * 2.0) +
+                0.00033 * cos(3.0 * t + uv.y * 41.0 + uv.x * 12.0),
                 0.0017 * sin(uv.x * 23.0 - t) +
-                0.0009 * sin(uv.y * 32.0 + t * 2.0)
-            );
+                0.0009 * sin(uv.y * 32.0 + t * 2.0) +
+                0.00027 * sin(3.0 * t - uv.y * 53.0 + uv.x * 17.0)
+            ) * uRefraction;
             vec2 coverUv = (uv + photoDrift - 0.5) * uPhotoScale + 0.5;
             vec3 photograph = texture2D(uOceanPhoto,
                 clamp(coverUv, vec2(0.001), vec2(0.999))).rgb;
@@ -181,6 +185,7 @@ internal class GpuOceanRenderer {
             float foam = uHasLand * clamp(
                 edge * (0.31 + 0.23 * detail) +
                 back * 0.19 * medium, 0.0, 0.58);
+            foam *= uFoamIntensity * mix(1.0, 0.38, uHasPhoto);
             color = mix(color, vec3(0.959, 0.972, 0.941), foam);
 
             if (uPalette > 1.5) color *= vec3(0.96, 1.02, 1.00);
@@ -380,6 +385,8 @@ internal class GpuOceanRenderer {
             f("uPhase", (phase % (2 * PI)).toFloat())
             f("uNight", if (state.night) 1f else 0f)
             f("uHasPhoto", if (photographActive) 1f else 0f)
+            f("uRefraction", state.photoRefraction)
+            f("uFoamIntensity", state.foamIntensity)
             val screenAspect = width.toFloat() / height.toFloat()
             GLES20.glUniform2f(GLES20.glGetUniformLocation(shaderProgram, "uPhotoScale"),
                 minOf(1f, screenAspect / photographAspect),
