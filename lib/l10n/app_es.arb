@@ -60,5 +60,13 @@
   "screenshotCalibrationHint": "Haz una captura de la pantalla de inicio, elígela aquí y marca las posiciones de iconos y carpetas. Usa Zonas para widgets. La captura es temporal; no se guarda ni se envía. Las posiciones dependen del launcher.",
   "nativeGpuActive": "Android: OpenGL a resolución de pantalla (verificar en inicio)",
   "nativeGpuFallback": "Android: OpenGL no disponible, modo Canvas de baja calidad.",
-  "nativeGpuUnknown": "Android: estado del renderizador no disponible. Configura el fondo y abre la app otra vez."
+  "nativeGpuUnknown": "Android: estado del renderizador no disponible. Configura el fondo y abre la app otra vez.",
+  "oceanPhotoTitle": "Océano fotográfico (Android)",
+  "importOceanPhoto": "Elegir foto del mar",
+  "clearOceanPhoto": "Quitar foto",
+  "oceanPhotoSelected": "Foto guardada de forma privada en este dispositivo",
+  "oceanPhotoNotSelected": "Todavía no hay ninguna foto del mar",
+  "oceanPhotoHint": "Elige una foto nítida del mar desde arriba (JPG/PNG, al menos 720 px, hasta 12 MB). Se guarda una copia optimizada sin metadatos solo en el dispositivo. Sin cargas ni permisos de fotos.",
+  "oceanPhotoAndroidOnly": "El editor web sigue mostrando la vista previa procedural. Evalúa la calidad fotográfica en la pantalla de inicio Android.",
+  "nativePhotoGpuActive": "Android: textura marina fotográfica en la GPU nativa (comprobar en Inicio)"
 }
