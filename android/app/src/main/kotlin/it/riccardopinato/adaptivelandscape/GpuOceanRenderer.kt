@@ -36,6 +36,7 @@ internal class GpuOceanRenderer {
     private var photoFingerprint = Long.MIN_VALUE
     var photographActive = false
         private set
+    private var photographAspect = 1f
     private var currentConfig: WallpaperState? = null
     private var disabledForSurface = false
     private val quad: FloatBuffer = ByteBuffer.allocateDirect(8 * 4)
@@ -65,6 +66,7 @@ internal class GpuOceanRenderer {
         uniform sampler2D uMask;
         uniform sampler2D uOceanPhoto;
         uniform float uHasPhoto;
+        uniform vec2 uPhotoScale;
 
         float hash(vec2 p) {
             p = fract(p * vec2(123.34, 456.21));
@@ -133,8 +135,9 @@ internal class GpuOceanRenderer {
                 0.0017 * sin(uv.x * 23.0 - t) +
                 0.0009 * sin(uv.y * 32.0 + t * 2.0)
             );
+            vec2 coverUv = (uv + photoDrift - 0.5) * uPhotoScale + 0.5;
             vec3 photograph = texture2D(uOceanPhoto,
-                clamp(uv + photoDrift, vec2(0.001), vec2(0.999))).rgb;
+                clamp(coverUv, vec2(0.001), vec2(0.999))).rgb;
             water = mix(water, photograph, uHasPhoto);
             water = mix(water, lagoon, wet * (0.66 - 0.55 * uHasPhoto));
             water += (medium - 0.48) * vec3(0.065, 0.082, 0.076) * (1.0 - 0.90 * uHasPhoto);
@@ -268,6 +271,7 @@ internal class GpuOceanRenderer {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
             photoFingerprint = Long.MIN_VALUE
             photographActive = false
+            photographAspect = 1f
             currentConfig = null
             hostSurface = surface
             surfaceWidth = w
@@ -322,6 +326,7 @@ internal class GpuOceanRenderer {
         if (fingerprint == photoFingerprint) return
         photoFingerprint = fingerprint
         photographActive = false
+        photographAspect = 1f
         GLES20.glActiveTexture(GLES20.GL_TEXTURE1)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, photoTexture)
         // Valid fallback sampler prevents undefined behavior when photo is absent.
@@ -345,6 +350,9 @@ internal class GpuOceanRenderer {
             try {
                 GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
                 photographActive = GLES20.glGetError() == GLES20.GL_NO_ERROR
+                if (photographActive) {
+                    photographAspect = bitmap.width.toFloat() / bitmap.height.toFloat()
+                }
             } finally {
                 bitmap.recycle()
             }
@@ -372,6 +380,10 @@ internal class GpuOceanRenderer {
             f("uPhase", (phase % (2 * PI)).toFloat())
             f("uNight", if (state.night) 1f else 0f)
             f("uHasPhoto", if (photographActive) 1f else 0f)
+            val screenAspect = width.toFloat() / height.toFloat()
+            GLES20.glUniform2f(GLES20.glGetUniformLocation(shaderProgram, "uPhotoScale"),
+                minOf(1f, screenAspect / photographAspect),
+                minOf(1f, photographAspect / screenAspect))
             f("uHasLand", if (state.occupied.isEmpty() && state.zones.isEmpty()) 0f else 1f)
             f("uPalette", when (state.palette) { "sunset" -> 1f; "mint" -> 2f; else -> 0f })
             f("uQuality", when (state.renderQuality) {
@@ -441,5 +453,6 @@ internal class GpuOceanRenderer {
         currentConfig = null
         photoFingerprint = Long.MIN_VALUE
         photographActive = false
+        photographAspect = 1f
     }
 }
