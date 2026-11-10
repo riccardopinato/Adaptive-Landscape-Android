@@ -20,7 +20,7 @@ internal object OceanPhotoStore {
     private const val MAX_EDGE = 2560
     private const val GENERATION_KEY = "ocean_photo_generation_v1"
 
-    fun file(context: Context): File = File(context.filesDir, FILE_NAME)
+    fun file(context: Context): File = File(context.noBackupFilesDir, FILE_NAME)
     fun exists(context: Context): Boolean = file(context).isFile && file(context).length() > 0L
 
     private fun notifyWallpaper(context: Context) {
@@ -33,7 +33,7 @@ internal object OceanPhotoStore {
 
     fun importPhoto(context: Context, uri: Uri) {
         val source = File.createTempFile("ocean_input_", ".tmp", context.cacheDir)
-        val candidate = File(context.filesDir, "$FILE_NAME.tmp")
+        val candidate = File(context.noBackupFilesDir, "$FILE_NAME.tmp")
         try {
             val stream = context.contentResolver.openInputStream(uri)
                 ?: throw IllegalArgumentException("Selected photo cannot be opened")
