@@ -68,5 +68,10 @@
   "oceanPhotoNotSelected": "No ocean photograph selected yet",
   "oceanPhotoHint": "Choose a clear overhead photo of open water (JPG/PNG, 720px minimum, up to 12 MB). The app keeps an optimized private copy without metadata. No upload or image permissions.",
   "oceanPhotoAndroidOnly": "The Web editor still shows the procedural preview; judge photographic quality on the real Android Home screen.",
-  "nativePhotoGpuActive": "Android: photographic ocean texture on native GPU (verify on Home)"
+  "nativePhotoGpuActive": "Android: photographic ocean texture on native GPU (verify on Home)",
+  "webPhotoPreviewTitle": "Photographic Web preview",
+  "webPhotoChoose": "Choose water photo",
+  "webCompareProcedural": "Compare with previous synthetic sea",
+  "webCompareExplanation": "Show procedural water instead of the selected photo. Switch back to compare.",
+  "webPhotoPrivacyHint": "The Web image stays in memory only: not uploaded, not stored, not part of profiles. This is a browser visual test, not native Android wallpaper validation."
 }
