@@ -73,5 +73,9 @@
   "webPhotoChoose": "Choose water photo",
   "webCompareProcedural": "Compare with previous synthetic sea",
   "webCompareExplanation": "Show procedural water instead of the selected photo. Switch back to compare.",
-  "webPhotoPrivacyHint": "The Web image stays in memory only: not uploaded, not stored, not part of profiles. This is a browser visual test, not native Android wallpaper validation."
+  "webPhotoPrivacyHint": "The Web image stays in memory only: not uploaded, not stored, not part of profiles. This is a browser visual test, not native Android wallpaper validation.",
+  "waterTuning": "Water realism controls",
+  "refractionIntensity": "Photo refraction",
+  "foamIntensityLabel": "Shoreline foam",
+  "waterTuningHint": "Adjust gently: photographic detail should dominate. Motion speed is independent of refraction strength."
 }
