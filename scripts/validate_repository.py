@@ -75,9 +75,12 @@ assert 'pickOceanPhoto' in channel and 'clearOceanPhoto' in channel
 dart = (root / 'lib/main.dart').read_text(encoding='utf-8')
 assert 'al-import-ocean-photo' in dart and 'al-ocean-photo-status' in dart
 # Since the v0.4.2 source persists in stacked later releases, verify minimum.
-import re
-version_match = re.search(r'^version:\\s*(0\\.4\\.(\\d+))\\+(\\d+)', (root / 'pubspec.yaml').read_text(encoding='utf-8'), re.M)
-assert version_match and int(version_match.group(2)) >= 2 and int(version_match.group(3)) >= 9
+version_line = next((line.strip() for line in
+    (root / 'pubspec.yaml').read_text(encoding='utf-8').splitlines()
+    if line.startswith('version:')), '')
+assert version_line.startswith('version: 0.4.')
+parts = version_line.split(':', 1)[1].strip().split('+')
+assert len(parts) == 2 and int(parts[0].split('.')[2]) >= 2 and int(parts[1]) >= 9
 print('PASS: v0.4.2 local photo import, metadata stripping, GPU texture and UI contract')
 
 # v0.4.3: photo preview uses local image sampler and is explicitly ephemeral.
