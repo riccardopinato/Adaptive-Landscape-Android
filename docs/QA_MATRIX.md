@@ -60,3 +60,14 @@ Do not mark these PASS from GitHub Actions alone. Store release, donor certifica
 
 Web photo rendering and automatic launcher icon detection are **not part of
 v0.4.2**. See [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V042.md).
+
+
+## v0.4.4 controls (physical proof pending)
+
+| ID | Scenario | Evidence |
+|---|---|---|
+| R41 | Refraction 0 / 0.5 / 1 | Image recognizable in all modes, continuous periodic motion, no visible loop seam |
+| R42 | Foam 0 / 0.5 / 1 | No artificial white line, no foam at all when no zones selected |
+| R43 | Existing schema2 profile | Defaults restored; old icons, dock/widgets and profiles remain |
+| R44 | Web vs Android optical controls | Same setting accepted independently; pixel equivalence not claimed |
+| R45 | Asset provenance | Photo license and author verified for anything bundled; avoid mislabeling generated water |
