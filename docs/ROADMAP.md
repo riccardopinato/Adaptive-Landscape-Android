@@ -124,3 +124,17 @@ Detailed user test contract: [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V04
 - [PENDING PHYSICAL] Test portrait screenshots with actual navbar/insets,
   launcher variants, grid/dock/widget alignment, tap and drag gesture priority.
 - [NOT IMPLEMENTED] Automatic detection of installed apps or icon positions.
+
+
+## v0.4.6 — performance and on-device test readiness
+
+- [CODED] GPU bypass for procedural water fields when actual photograph active.
+- [CODED] Quality-specific texture caps and refresh when tier changes.
+- [CODED] Native interval targets Balanced 83ms / High 63ms / Ultra 50ms,
+  battery saver min 125ms. Pausing while wallpaper hidden preserved.
+- [CODED] Web preview quantization and UI performance disclaimers (six locales).
+- [PENDING CI] Android debug/optimized APK, Web compile, Dart tests.
+- [PENDING PHYSICAL] Actual FPS, texture memory, heat, battery drain,
+  background behavior and device-specific EGL reliability.
+- [DO NOT CLAIM] 4K photo at Ultra: texture resolution is at most 2560px,
+  with 4K framebuffer shading possible on compatible surfaces.

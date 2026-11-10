@@ -82,5 +82,6 @@
   "calibrateZoomHint": "Mit zwei Fingern bis 5× zoomen, Screenshot verschieben und Symbolzellen antippen. Widgetzonen lassen sich ziehen. Abstände auf dem echten Launcher prüfen.",
   "calibrateTop": "Oberer Rasterrand",
   "calibrateHeight": "Rasterhöhe",
-  "calibrateSide": "Seitliche Rasterränder"
+  "calibrateSide": "Seitliche Rasterränder",
+  "nativeFramePacingNote": "Zielbildraten auf dem Startbildschirm: Ausgewogen ~12fps, Hoch ~16fps, Ultra bis 20fps; Energiesparen ~8fps. Tatsächliche FPS, Wärme und Akku am Gerät messen."
 }

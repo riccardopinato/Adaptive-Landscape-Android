@@ -116,13 +116,22 @@ internal class GpuOceanRenderer {
             float land = uHasLand * smoothstep(-0.013, 0.045, shore);
 
             vec2 drift = vec2(0.032 * cos(t), 0.026 * sin(t));
-            float slow = fbm(uv * vec2(5.0, 8.0) + drift);
-            vec2 displace = vec2(
-                fbm(uv * vec2(12.0, 18.0) + drift),
-                fbm(uv * vec2(13.0, 15.0) - drift * 0.8));
-            vec2 uvWater = uv + (displace - 0.5) * 0.008;
-            float medium = fbm(uvWater * vec2(24.0, 42.0) + drift);
-            float detail = fbm(uvWater * vec2(80.0, 136.0) - drift);
+            float slow = 0.52;
+            vec2 displace = vec2(0.5);
+            vec2 uvWater = uv;
+            float medium = 0.5;
+            float detail = 0.5;
+            // On a real photo these expensive synthetic procedural layers
+            // cannot improve authenticity. Skip them entirely to save GPU work.
+            if (uHasPhoto < 0.5) {
+                slow = fbm(uv * vec2(5.0, 8.0) + drift);
+                displace = vec2(
+                    fbm(uv * vec2(12.0, 18.0) + drift),
+                    fbm(uv * vec2(13.0, 15.0) - drift * 0.8));
+                uvWater = uv + (displace - 0.5) * 0.008;
+                medium = fbm(uvWater * vec2(24.0, 42.0) + drift);
+                detail = fbm(uvWater * vec2(80.0, 136.0) - drift);
+            }
 
             vec3 deep = vec3(0.010, 0.345, 0.480);
             vec3 aqua = vec3(0.026, 0.660, 0.715);
@@ -147,6 +156,7 @@ internal class GpuOceanRenderer {
             water += (medium - 0.48) * vec3(0.065, 0.082, 0.076) * (1.0 - 0.90 * uHasPhoto);
 
             // Deliberately visible, fluid caustics; no nearest-neighbor pixels.
+            if (uHasPhoto < 0.5) {
             float scaleX = min(200.0, uResolution.x * 0.25);
             float scaleY = min(300.0, uResolution.y * 0.23);
             vec2 waves = uvWater * vec2(scaleX, scaleY);
@@ -169,6 +179,7 @@ internal class GpuOceanRenderer {
                 water += sparkle * vec3(0.048, 0.073, 0.070) * (1.0 - 0.9 * uHasPhoto);
                 water += (micro - 0.5) * vec3(0.016, 0.026, 0.022) * (1.0 - 0.95 * uHasPhoto);
             }
+            } // synthetic-only caustics and microfacets
 
             float grain = noise(uv * vec2(240.0, 385.0));
             vec3 sandWet = vec3(0.739, 0.719, 0.666);
@@ -324,10 +335,11 @@ internal class GpuOceanRenderer {
         currentConfig = state
     }
 
-    private fun uploadPhotograph(context: Context) {
+    private fun uploadPhotograph(context: Context, quality: String) {
         val imageFile = OceanPhotoStore.file(context)
         val fingerprint = if (imageFile.isFile)
-            imageFile.lastModified() xor (imageFile.length() shl 1) else -1L
+            imageFile.lastModified() xor (imageFile.length() shl 1) xor
+                quality.hashCode().toLong() else -1L
         if (fingerprint == photoFingerprint) return
         photoFingerprint = fingerprint
         photographActive = false
@@ -346,7 +358,12 @@ internal class GpuOceanRenderer {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeFile(imageFile.absolutePath, bounds)
             if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return
-            val limit = minOf(2560, maxTexture[0])
+            val qualityLimit = when (quality) {
+                "balanced" -> 1024
+                "high" -> 1536
+                else -> 2560
+            }
+            val limit = minOf(qualityLimit, maxTexture[0])
             if (limit < 256) return
             var sample = 1
             while (maxOf(bounds.outWidth, bounds.outHeight) / sample > limit) sample *= 2
@@ -374,7 +391,7 @@ internal class GpuOceanRenderer {
             if (!EGL14.eglMakeCurrent(display, window, window, context))
                 throw IllegalStateException("EGL context lost")
             uploadMask(state)
-            uploadPhotograph(appContext)
+            uploadPhotograph(appContext, state.renderQuality)
             GLES20.glViewport(0, 0, width, height)
             GLES20.glUseProgram(shaderProgram)
             fun f(name: String, value: Float) {

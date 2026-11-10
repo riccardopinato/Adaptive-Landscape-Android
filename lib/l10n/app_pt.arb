@@ -82,5 +82,6 @@
   "calibrateZoomHint": "Amplie com dois dedos (até 5×), percorra a captura e toque nas células. As zonas dos widgets podem ser arrastadas. Verifique as margens no launcher real.",
   "calibrateTop": "Margem superior",
   "calibrateHeight": "Altura da grelha",
-  "calibrateSide": "Margens laterais"
+  "calibrateSide": "Margens laterais",
+  "nativeFramePacingNote": "Taxas alvo no ecrã inicial: Equilibrada ~12fps, Alta ~16fps, Ultra até 20fps; poupança de energia ~8fps. FPS, aquecimento e bateria reais exigem medição no telefone."
 }

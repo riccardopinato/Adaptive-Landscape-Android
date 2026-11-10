@@ -114,5 +114,17 @@ assert 'gridInset' in cfg and 'gridInset' in native_state
 assert 'field.gridInset' in mask and 'gridInset' in field
 assert 'InteractiveViewer(' in editor and 'al-precision-calibration' in editor
 assert 'al-calibrate-top' in editor and 'al-calibrate-side' in editor
-assert '0.4.5+12' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert int(parts[0].split('.')[2]) >= 5 and int(parts[1]) >= 12
 print('PASS: v0.4.5 normalized Home insets and manual zoom calibration')
+
+# v0.4.6: native photo path skips procedural shading, quality controls image memory and pacing.
+gpu = (base / 'GpuOceanRenderer.kt').read_text(encoding='utf-8')
+engine = (base / 'AdaptiveWallpaperService.kt').read_text(encoding='utf-8')
+assert 'if (uHasPhoto < 0.5)' in gpu
+assert '"balanced" -> 1024' in gpu and '"high" -> 1536' in gpu
+assert 'quality.hashCode().toLong()' in gpu
+assert '"balanced" -> 83L' in engine and '"high" -> 63L' in engine
+assert 'maxOf(125L, target)' in engine
+assert '_framesPerPreviewCycle' in (root / 'lib/main.dart').read_text(encoding='utf-8')
+assert int(parts[0].split('.')[2]) >= 6 and int(parts[1]) >= 13
+print('PASS: v0.4.6 photo fast path, tiered GPU texture budget and pacing targets')

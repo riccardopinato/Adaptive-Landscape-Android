@@ -82,5 +82,6 @@
   "calibrateZoomHint": "Ingrandisci con due dita (fino a 5×), spostati per esaminare lo screenshot e tocca le celle delle icone; le aree widget si trascinano. Controlla i margini sul launcher reale.",
   "calibrateTop": "Margine superiore griglia",
   "calibrateHeight": "Altezza della griglia",
-  "calibrateSide": "Margini laterali griglia"
+  "calibrateSide": "Margini laterali griglia",
+  "nativeFramePacingNote": "Obiettivi dei frame sulla Home: Bilanciata ~12fps, Alta ~16fps, Ultra fino a 20fps; risparmio energetico ~8fps. FPS, calore e batteria reali vanno misurati sul telefono."
 }

@@ -82,5 +82,6 @@
   "calibrateZoomHint": "Zoomez à deux doigts (jusqu'à 5×), naviguez sur la capture et touchez les cellules. Déplacez les zones des widgets. Vérifiez les marges sur le lanceur réel.",
   "calibrateTop": "Marge supérieure",
   "calibrateHeight": "Hauteur de la grille",
-  "calibrateSide": "Marges latérales"
+  "calibrateSide": "Marges latérales",
+  "nativeFramePacingNote": "Cadences ciblées : Équilibrée ~12fps, Haute ~16fps, Ultra jusqu'à 20fps; économie d'énergie ~8fps. Les FPS, la chaleur et la batterie doivent être mesurés sur un téléphone."
 }

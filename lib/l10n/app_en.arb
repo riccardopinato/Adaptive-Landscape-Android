@@ -82,5 +82,6 @@
   "calibrateZoomHint": "Pinch with two fingers to zoom (up to 5×). Pan to inspect the Home screenshot and tap icon cells; widget zones can be dragged. Insets must be verified on the actual launcher.",
   "calibrateTop": "Grid top offset",
   "calibrateHeight": "Grid vertical span",
-  "calibrateSide": "Grid side margins"
+  "calibrateSide": "Grid side margins",
+  "nativeFramePacingNote": "Native frame targets while visible: Balanced ~12fps, High ~16fps, Ultra up to 20fps; battery saver caps at ~8fps. Real FPS, heat and battery must be measured on a phone."
 }
