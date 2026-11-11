@@ -18,3 +18,12 @@
 - User-selected genuine sea photo may live in Android noBackupFilesDir; screenshot remains transient. No image assets from Deskland.
 - Stacked PR dependency chain #13 → #16 → #17 → #18 → #19 → #20 → prephysical QA. Never merge untested design or bypass required checks. See docs/PHYSICAL_QA_V042_V046.md.
 - Do not publish internal QA files (screenshots, meminfo, device serial) to the repo. CI source SHA on PR may identify a synthetic merge; record both PR head SHA and actual workflow source.
+
+- **Experimental Auto Home exception (separate scope)**: the user wants live
+  sand following real icon drags. Android WallpaperService alone cannot do this
+  for other launcher windows. A user-selected, optional native Home Activity
+  can own its own icon views and publish `auto_home_config_v1` while holding
+  ROLE_HOME. Do not add AccessibilityService or inspect MIUI/Samsung launchers.
+  Preserve the existing non-destructive manual wallpaper mode.
+- Do not claim complete launcher support, stock Home migration, widget/folder
+  parity, or real-device correctness for this experimental candidate.
