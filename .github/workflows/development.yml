@@ -47,6 +47,15 @@ jobs:
       - name: Build smaller per-ABI internal release-mode APKs (not Play-signed)
         working-directory: generated_app
         run: flutter build apk --release --split-per-abi --dart-define=BUILD_SOURCE_SHA=${{ github.sha }}
+      - name: Build universal internal Android APK (all supported ABIs)
+        working-directory: generated_app
+        run: flutter build apk --release --dart-define=BUILD_SOURCE_SHA=${{ github.sha }}
+      - name: Verify universal APK ABI coverage and record Android requirements
+        shell: bash
+        run: |
+          bash scripts/verify_universal_apk.sh \
+            generated_app/build/app/outputs/flutter-apk/app-release.apk \
+            generated_app/build/app/outputs/flutter-apk
       - name: Build Web-only interactive editor preview
         working-directory: generated_app
         run: flutter build web --release --base-href /Adaptive-Landscape-Android/ --dart-define=BUILD_SOURCE_SHA=${{ github.sha }}
@@ -62,6 +71,16 @@ jobs:
         with:
           name: adaptive-landscape-internal-optimized-NOT-PLAY-SIGNED
           path: generated_app/build/app/outputs/flutter-apk/*release.apk
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload universal APK for Android compatibility testing
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: adaptive-landscape-universal-internal-NOT-PLAY-SIGNED
+          path: |
+            generated_app/build/app/outputs/flutter-apk/app-release.apk
+            generated_app/build/app/outputs/flutter-apk/APK_COMPATIBILITY.txt
+            generated_app/build/app/outputs/flutter-apk/SHA256SUMS-universal.txt
           if-no-files-found: error
           retention-days: 30
       - name: Upload Web preview as Pages artifact
