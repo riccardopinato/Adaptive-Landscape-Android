@@ -1,6 +1,10 @@
 package it.riccardopinato.adaptivelandscape
 
 import android.app.WallpaperManager
+import android.app.role.RoleManager
+import android.os.Build
+import android.provider.Settings
+import android.content.Context
 import android.app.Activity
 import java.io.ByteArrayOutputStream
 import android.content.ComponentName
@@ -15,14 +19,25 @@ class MainActivity : FlutterActivity() {
     companion object {
         private const val SCREENSHOT_PICKER = 9127
         private const val OCEAN_PHOTO_PICKER = 9128
+        private const val AUTO_HOME_ROLE_REQUEST = 9129
         private const val MAX_SCREENSHOT_BYTES = 10 * 1024 * 1024
     }
 
     private var screenshotResult: MethodChannel.Result? = null
     private var oceanPhotoResult: MethodChannel.Result? = null
+    private var autoHomeResult: MethodChannel.Result? = null
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == AUTO_HOME_ROLE_REQUEST) {
+            val callback = autoHomeResult
+            autoHomeResult = null
+            if (resultCode == Activity.RESULT_OK) {
+                startActivity(Intent(this, AdaptiveHomeActivity::class.java))
+                callback?.success(true)
+            } else callback?.success(false)
+            return
+        }
         if (requestCode == OCEAN_PHOTO_PICKER) {
             val callback = oceanPhotoResult ?: return
             oceanPhotoResult = null
@@ -149,6 +164,35 @@ class MainActivity : FlutterActivity() {
                             result.success(null)
                         } catch (error: Exception) {
                             result.error("OCEAN_PHOTO_REMOVE_FAILED", error.message, null)
+                        }
+                    }
+                    "requestAdaptiveHome" -> {
+                        if (autoHomeResult != null) {
+                            result.error("HOME_ROLE_BUSY", "Home selection is already active", null)
+                            return@setMethodCallHandler
+                        }
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                val roles = getSystemService(Context.ROLE_SERVICE) as RoleManager
+                                if (!roles.isRoleAvailable(RoleManager.ROLE_HOME)) {
+                                    result.error("HOME_ROLE_UNAVAILABLE", "This Android device has no Home role", null)
+                                } else if (roles.isRoleHeld(RoleManager.ROLE_HOME)) {
+                                    startActivity(Intent(this, AdaptiveHomeActivity::class.java))
+                                    result.success(true)
+                                } else {
+                                    autoHomeResult = result
+                                    startActivityForResult(
+                                        roles.createRequestRoleIntent(RoleManager.ROLE_HOME),
+                                        AUTO_HOME_ROLE_REQUEST)
+                                }
+                            } else {
+                                // Android 8/9 uses default-app Settings instead of RoleManager.
+                                startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
+                                result.success(false)
+                            }
+                        } catch (error: Exception) {
+                            autoHomeResult = null
+                            result.error("HOME_ROLE_FAILED", error.message, null)
                         }
                     }
                     "openPicker" -> {
