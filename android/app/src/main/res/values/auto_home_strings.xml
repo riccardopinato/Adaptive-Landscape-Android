@@ -20,4 +20,25 @@
     <string name="auto_home_widget_move">Move to next page</string>
     <string name="auto_home_widget_resize">Increase size</string>
     <string name="auto_home_widget_remove">Remove widget</string>
+    <string name="auto_home_folder">Folder</string>
+    <string name="auto_home_folder_create">Create folder</string>
+    <string name="auto_home_folder_manage">Manage folders</string>
+    <string name="auto_home_folder_empty">No folders yet</string>
+    <string name="auto_home_folder_name">Folder name</string>
+    <string name="auto_home_folder_rename">Rename folder</string>
+    <string name="auto_home_folder_add">Add app to folder</string>
+    <string name="auto_home_folder_remove">Remove app from folder</string>
+    <string name="auto_home_folder_unpack">Unpack folder</string>
+    <string name="auto_home_folder_full">Folder is full</string>
+    <string name="auto_home_folder_two">Select at least two apps</string>
+    <string name="auto_home_dock">Dock</string>
+    <string name="auto_home_dock_add">Add app to dock</string>
+    <string name="auto_home_dock_remove">Remove from dock</string>
+    <string name="auto_home_dock_full">Dock has four apps</string>
+    <string name="auto_home_organize">Organize</string>
+    <string name="auto_home_reset_title">Reset Home layout</string>
+    <string name="auto_home_reset_warning">Remove pinned apps, folders and dock from Deskland only? Installed apps, widgets, other launcher layout and wallpaper will remain unchanged.</string>
+    <string name="auto_home_reset_confirm">Clear Deskland Home</string>
+    <string name="auto_home_already_pinned">App already on Home or in a folder</string>
+    <string name="auto_home_first_run">This is your real Deskland Home. Tap here to choose your own apps.</string>
 </resources>
