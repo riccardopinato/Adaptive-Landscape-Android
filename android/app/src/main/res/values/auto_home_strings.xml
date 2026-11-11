@@ -11,4 +11,6 @@
     <string name="auto_home_apps">Apps</string>
     <string name="auto_home_search">Search apps</string>
     <string name="auto_home_change_home">Change Home launcher</string>
+    <string name="auto_home_page">Page %1$d/%2$d</string>
+    <string name="auto_home_wallpaper_needed">Select Deskland live wallpaper to enable adaptive sand.</string>
 </resources>
