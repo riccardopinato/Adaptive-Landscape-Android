@@ -372,6 +372,54 @@ class AdaptiveHomeActivity : Activity() {
         }
     }
 
+    private fun showAppDrawer() {
+        if (available.isEmpty()) {
+            Toast.makeText(this, R.string.auto_home_no_space, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((12 * dp).roundToInt(), (8 * dp).roundToInt(),
+                (12 * dp).roundToInt(), 0)
+        }
+        val search = SearchView(this).apply {
+            queryHint = getString(R.string.auto_home_search)
+            isIconified = false
+        }
+        val list = ListView(this)
+        val matches = ArrayList(available)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1,
+            matches.map { it.label.toString() }.toMutableList())
+        list.adapter = adapter
+        container.addView(search)
+        container.addView(list, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, (350 * dp).roundToInt()))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_apps)
+            .setView(container)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        list.setOnItemClickListener { _, _, position, _ ->
+            matches.getOrNull(position)?.let { startApp(it) }
+            dialog.dismiss()
+        }
+        search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean = true
+            override fun onQueryTextChange(query: String?): Boolean {
+                val term = query.orEmpty().trim()
+                matches.clear()
+                matches.addAll(available.filter {
+                    term.isEmpty() || it.label.contains(term, ignoreCase = true)
+                })
+                adapter.clear()
+                adapter.addAll(matches.map { it.label.toString() })
+                adapter.notifyDataSetChanged()
+                return true
+            }
+        })
+        dialog.show()
+    }
+
     private fun chromeButton(title: String, action: () -> Unit): TextView =
         TextView(this).apply {
             text = title
@@ -399,9 +447,24 @@ class AdaptiveHomeActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
-        bottom.addView(chromeButton(getString(R.string.auto_home_add)) { showAppPicker() })
-        bottom.addView(chromeButton(getString(R.string.auto_home_manage)) { showRemovePicker() })
-        bottom.addView(chromeButton(getString(R.string.auto_home_wallpaper)) { selectWallpaper() })
+        val actions = listOf<Pair<Int, () -> Unit>>(
+            R.string.auto_home_apps to { showAppDrawer() },
+            R.string.auto_home_add to { showAppPicker() },
+            R.string.auto_home_manage to { showRemovePicker() },
+            R.string.auto_home_wallpaper to { selectWallpaper() }
+        )
+        for ((label, action) in actions) {
+            bottom.addView(chromeButton(getString(label), action),
+                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+        }
+        val switchHome = chromeButton(getString(R.string.auto_home_change_home)) {
+            openHomeSettings()
+        }
+        canvas.addView(switchHome, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT, (40 * dp).roundToInt(),
+            Gravity.TOP or Gravity.END).apply {
+                topMargin = (40 * dp).roundToInt()
+            })
         canvas.addView(bottom, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, (54 * dp).roundToInt(),
             Gravity.BOTTOM).apply { bottomMargin = (36 * dp).roundToInt() })
