@@ -176,3 +176,21 @@ compile-time source SHA, which for PR runs may be a synthetic merge SHA.
 CI green establishes only source/build readiness. Real ocean authenticity,
 FPS/battery/thermal, icon alignment, device signatures and Play publishing
 still require physical tests and user approval.
+
+
+### Android installation problem: APK not compatible
+
+The optimized GitHub Actions ZIP contains separate CPU variants. A typical
+64-bit ARM Android phone must receive `app-arm64-v8a-release.apk`, **not**
+the `app-x86_64-release.apk` (usually emulator/Intel). To eliminate that
+selection mistake, the CI also uploads
+`adaptive-landscape-universal-internal-NOT-PLAY-SIGNED`: extract the ZIP
+and install **`app-release.apk`**. The adjacent
+`APK_COMPATIBILITY.txt` records exact package/minSdk/ABIs and the SHA256
+file establishes downloaded identity. The debug archive's `app-debug.apk`
+is also a possible universal fallback, but its signature may differ from
+any previously installed version.
+
+A green CI does not imply physical installation or Play signing. If Android
+still reports incompatibility, inspect `adb install -r` and the exact
+failure reason before changing minSdk/ABI or removing an existing app.

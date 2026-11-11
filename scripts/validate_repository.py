@@ -139,3 +139,13 @@ for p in ('physical_qa_capture.sh', 'physical_qa_capture.ps1'):
 assert (root / 'docs/PHYSICAL_QA_V042_V046.md').is_file()
 assert 'physical_qa_local/' in (root / '.gitignore').read_text(encoding='utf-8')
 print('PASS: prephysical QA evidence workflow exists, hardware results remain pending')
+
+# Universal APK delivery requires a separately validated all-ABI package.
+ci = (root / '.github/workflows/development.yml').read_text(encoding='utf-8')
+assert 'flutter build apk --release --dart-define=BUILD_SOURCE_SHA=' in ci
+assert 'adaptive-landscape-universal-internal-NOT-PLAY-SIGNED' in ci
+assert 'scripts/verify_universal_apk.sh' in ci
+assert 'chore/v050-prephysical-qa' in ci, 'CI must include this PR target branch'
+assert (root / 'scripts/verify_universal_apk.sh').is_file()
+assert "armeabi-v7a arm64-v8a x86_64" in (root / 'scripts/verify_universal_apk.sh').read_text(encoding='utf-8')
+print('PASS: Android universal QA artifact with ABI and SDK metadata gate')
