@@ -362,7 +362,7 @@ class AdaptiveHomeActivity : Activity() {
         val options = available.filter {
             it.componentName.flattenToString() !in present
         }
-        if (options.isEmpty || placed.size >= maxSlots) {
+        if (options.isEmpty() || placed.size >= maxSlots) {
             Toast.makeText(this, R.string.auto_home_no_space, Toast.LENGTH_SHORT).show()
             return
         }
