@@ -1,0 +1,11 @@
+<resources>
+    <string name="auto_home_caption">Accueil adaptatif — expérimental</string>
+    <string name="auto_home_add">Ajouter une appli</string>
+    <string name="auto_home_manage">Retirer une appli</string>
+    <string name="auto_home_wallpaper">Activer le fond animé</string>
+    <string name="auto_home_not_default">Choisissez Deskland comme accueil par défaut pour activer le sable automatique.</string>
+    <string name="auto_home_cannot_open">Impossible d\'ouvrir l\'appli</string>
+    <string name="auto_home_no_space">Accueil plein ou aucune appli disponible</string>
+    <string name="auto_home_wallpaper_failed">Impossible d\'ouvrir le fond animé</string>
+    <string name="auto_home_role_failed">Impossible d\'ouvrir les réglages d\'accueil</string>
+</resources>
