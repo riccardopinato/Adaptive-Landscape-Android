@@ -26,6 +26,8 @@ jobs:
 
       - name: Shell QA capture script static syntax (no physical device)
         run: bash -n scripts/physical_qa_capture.sh
+      - name: Universal APK verification script lint
+        run: bash -n scripts/verify_universal_apk.sh
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
