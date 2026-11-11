@@ -290,6 +290,11 @@ class AdaptiveHomeActivity : Activity() {
             tile.x = leftFor(item.cell)
             tile.y = topFor(item.cell)
             views[item.id] = tile
+            // Child views are measured after renderHome(). Republish their live
+            // geometry after layout, or a page round-trip can leave zero zones.
+            tile.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+                if (v.parent === canvas) requestPublish()
+            }
             attachTouch(tile, item.id, info)
         }
         renderWidgets()
@@ -523,6 +528,9 @@ class AdaptiveHomeActivity : Activity() {
                     (width / dp).roundToInt(), (height / dp).roundToInt(),
                     (width / dp).roundToInt(), (height / dp).roundToInt())
                 widgetViews[item.widgetId] = tile
+                tile.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+                    if (v.parent === canvas) requestPublish()
+                }
             } catch (_: RuntimeException) {
                 // A broken provider cannot take down the whole launcher.
             }

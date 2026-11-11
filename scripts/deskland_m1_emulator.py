@@ -5,6 +5,8 @@ from pathlib import Path
 PKG="it.riccardopinato.adaptive_landscape"
 ROLE="android.app.role.HOME"
 APK=Path(sys.argv[1])
+ROLE_CHANGED=False
+ORIGINAL_HOLDERS=[]
 OUT=Path(os.getenv("RUNNER_TEMP","/tmp"))/"deskland-m1-evidence.json"
 steps={}; digest=None
 def adb(*a, strict=True):
@@ -25,7 +27,8 @@ def wait(label,pred):
         current=ET.fromstring(adb("exec-out","run-as",PKG,"cat","shared_prefs/adaptive_landscape.xml"))
         pages=[n.get("value") for n in current if n.get("name")=="auto_home_page_v1"]
         activity=[l.strip() for l in adb("shell","dumpsys","activity","activities").splitlines() if "topResumedActivity=" in l][-2:]
-        print("SAFE_DIAG",json.dumps({"test":label,"page_labels":ui_labels,"stored_page":pages,"activity":activity}),flush=True)
+        current_zones=zones()
+        print("SAFE_DIAG",json.dumps({"test":label,"page_labels":ui_labels,"stored_page":pages,"zones_count":len(current_zones),"activity":activity}),flush=True)
     except Exception as err:
         print("SAFE_DIAG_UNAVAILABLE",type(err).__name__,flush=True)
     raise AssertionError("Timed out: "+label)
@@ -65,7 +68,7 @@ def n_zones(n):
     z=zones()
     return len(z)==n
 def main():
-    global digest
+    global digest, ROLE_CHANGED, ORIGINAL_HOLDERS
     assert APK.is_file()
     digest=hashlib.sha256(APK.read_bytes()).hexdigest()
     ok("apk_sha256",digest)
@@ -80,6 +83,7 @@ def main():
     ok("editor_start")
     original=adb("shell","cmd","role","get-role-holders",ROLE)
     holders=re.findall(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+",original)
+    ORIGINAL_HOLDERS=holders
     if PKG in holders:
         raise AssertionError("Deskland unexpectedly owns Home before assignment")
     if not holders:
@@ -87,6 +91,7 @@ def main():
     else:
         ok("original_launcher_role_present")
     adb("shell","cmd","role","add-role-holder",ROLE,PKG)
+    ROLE_CHANGED=True
     wait("role holder",lambda:PKG in adb("shell","cmd","role","get-role-holders",ROLE))
     ok("shell_home_role","Test privilege; not real consent dialog")
     adb("shell","input","keyevent","KEYCODE_HOME")
@@ -148,5 +153,17 @@ except Exception as exc:
     print("FAIL",exc,file=sys.stderr,flush=True)
     sys.exit(1)
 finally:
-    OUT.write_text(json.dumps({"source_head":"6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd","source_run":42947060839,"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
+    # Always undo the emulator-only HOME role mutation, even on failures.
+    if ROLE_CHANGED:
+        try:
+            device=adb("shell","getprop","ro.product.model",strict=False).lower()
+            if "sdk" in device or "emulator" in device:
+                if ORIGINAL_HOLDERS:
+                    adb("shell","cmd","role","add-role-holder",ROLE,ORIGINAL_HOLDERS[0],strict=False)
+                else:
+                    adb("shell","cmd","role","remove-role-holder",ROLE,PKG,strict=False)
+                steps["teardown_home_role"]="attempted (ephemeral emulator)"
+        except Exception as err:
+            steps["teardown_home_role"]="FAILED: "+type(err).__name__
+    OUT.write_text(json.dumps({"base_candidate":"6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd","built_source_sha":os.getenv("GITHUB_SHA"),"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
     print("Evidence record:",OUT,flush=True)

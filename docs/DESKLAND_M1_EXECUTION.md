@@ -6,7 +6,7 @@ Source CI: https://github.com/riccardopinato/Adaptive-Landscape-Android/actions/
 Existing debug APK artifact: adaptive-landscape-android-debug, ID 13822384905. Signing is internal/debug only; no Play certification.
 
 ## Emulator gate (not physical QA)
-The workflow downloads the existing APK without recompilation, records SHA-256, installs it on a disposable Android 35 emulator, temporarily assigns the Home role using shell test privileges, observes actual Home UI and source-app preferences, checks empty page, add/remove/move app icons, process restart, then restores the original Home role. Evidence contains only named checks and hashes. It refuses to run on real devices.
+The workflow builds a fresh debug APK from the QA branch using pinned Flutter and source, then, records SHA-256, installs it on a disposable Android 35 emulator, temporarily assigns the Home role using shell test privileges, observes actual Home UI and source-app preferences, checks empty page, add/remove/move app icons, process restart, then restores the original Home role. Evidence contains only named checks and hashes. It refuses to run on real devices.
 It is a non-production test. It does not bypass actual user consent to change wallpaper, modify user phone settings, capture photos, or copy GPL assets.
 
 ## Physical follow-up (NOT RUN)
@@ -25,4 +25,7 @@ It is a non-production test. It does not bypass actual user consent to change wa
 | GPU visual realism, motion=0, OEM, battery | NOT RUN |
 | Production merge / signed release | BLOCKED |
 
-This QA-only PR targets the experimental widget branch; it does not change Flutter, Android renderer, product schema or main.
+This experimental PR adds a bounded native Home layout-update correction and QA harness; it does not change Flutter, Android wallpaper renderer, config schema, or main.
+
+## Observed runtime defect and bounded correction
+Earlier emulator runs installed original PR #26 APK. They passed Home role selection, 6 visible icon zones, and empty page with zero zones; when returning to page 1 the UI and stored page indicated 1/3 but the published coastline count did not recover. Cause in source: `renderHome` publishes before new child tiles have measured bounds, and existing global layout callback reacts only to canvas size changes. This PR uses child `addOnLayoutChangeListener` on icons and widgets so final bounds cause a debounced republish. The fix MUST be verified against a freshly compiled APK from this branch. CI green does not certify physical reality.
