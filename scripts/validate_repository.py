@@ -128,3 +128,14 @@ assert 'maxOf(125L, target)' in engine
 assert '_framesPerPreviewCycle' in (root / 'lib/main.dart').read_text(encoding='utf-8')
 assert int(parts[0].split('.')[2]) >= 6 and int(parts[1]) >= 13
 print('PASS: v0.4.6 photo fast path, tiered GPU texture budget and pacing targets')
+
+# Prephysical QA handoff: source capture is never a physical PASS.
+qa = (root / 'lib/core/qa_snapshot.dart').read_text(encoding='utf-8')
+editor = (root / 'lib/main.dart').read_text(encoding='utf-8')
+assert 'UNTESTED_PHYSICAL' in qa and 'manualMarkedIcons' in qa
+assert 'al-copy-qa-snapshot' in editor
+for p in ('physical_qa_capture.sh', 'physical_qa_capture.ps1'):
+    assert (root / 'scripts' / p).is_file()
+assert (root / 'docs/PHYSICAL_QA_V042_V046.md').is_file()
+assert 'physical_qa_local/' in (root / '.gitignore').read_text(encoding='utf-8')
+print('PASS: prephysical QA evidence workflow exists, hardware results remain pending')

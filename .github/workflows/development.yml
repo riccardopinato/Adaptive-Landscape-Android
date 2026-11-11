@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main, fix-android-v041-gpu-wallpaper-and-home-calibration, feat/v042-photographic-ocean, feat/v043-web-photo-preview, feat/v044-realism, feat/v045-smart-calibration, feat/v046-perf-qa]
+    branches: [main, fix-android-v041-gpu-wallpaper-and-home-calibration, feat/v042-photographic-ocean, feat/v043-web-photo-preview, feat/v044-realism, feat/v045-smart-calibration, feat/v046-perf-qa, chore/v050-prephysical-qa]
   workflow_dispatch:
 
 permissions:
@@ -23,6 +23,9 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Repository source privacy + localization contract
         run: python3 scripts/validate_repository.py
+
+      - name: Shell QA capture script static syntax (no physical device)
+        run: bash -n scripts/physical_qa_capture.sh
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
@@ -43,10 +46,10 @@ jobs:
         run: bash BOOTSTRAP_LINUX_MAC.sh generated_app
       - name: Build smaller per-ABI internal release-mode APKs (not Play-signed)
         working-directory: generated_app
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --dart-define=BUILD_SOURCE_SHA=${{ github.sha }}
       - name: Build Web-only interactive editor preview
         working-directory: generated_app
-        run: flutter build web --release --base-href /Adaptive-Landscape-Android/
+        run: flutter build web --release --base-href /Adaptive-Landscape-Android/ --dart-define=BUILD_SOURCE_SHA=${{ github.sha }}
       - name: Upload debug APK for physical testing
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

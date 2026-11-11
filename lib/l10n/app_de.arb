@@ -83,5 +83,8 @@
   "calibrateTop": "Oberer Rasterrand",
   "calibrateHeight": "Rasterhöhe",
   "calibrateSide": "Seitliche Rasterränder",
-  "nativeFramePacingNote": "Zielbildraten auf dem Startbildschirm: Ausgewogen ~12fps, Hoch ~16fps, Ultra bis 20fps; Energiesparen ~8fps. Tatsächliche FPS, Wärme und Akku am Gerät messen."
+  "nativeFramePacingNote": "Zielbildraten auf dem Startbildschirm: Ausgewogen ~12fps, Hoch ~16fps, Ultra bis 20fps; Energiesparen ~8fps. Tatsächliche FPS, Wärme und Akku am Gerät messen.",
+  "qaSnapshotCopy": "Bericht zum Gerätetest kopieren",
+  "qaSnapshotHint": "Kopiert nur Szeneneinstellungen und Rendererstatus, keine Screenshots, privaten Gerätekennungen oder App-Namen.",
+  "qaSnapshotCopied": "Testbericht in die Zwischenablage kopiert"
 }

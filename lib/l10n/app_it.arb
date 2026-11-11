@@ -83,5 +83,8 @@
   "calibrateTop": "Margine superiore griglia",
   "calibrateHeight": "Altezza della griglia",
   "calibrateSide": "Margini laterali griglia",
-  "nativeFramePacingNote": "Obiettivi dei frame sulla Home: Bilanciata ~12fps, Alta ~16fps, Ultra fino a 20fps; risparmio energetico ~8fps. FPS, calore e batteria reali vanno misurati sul telefono."
+  "nativeFramePacingNote": "Obiettivi dei frame sulla Home: Bilanciata ~12fps, Alta ~16fps, Ultra fino a 20fps; risparmio energetico ~8fps. FPS, calore e batteria reali vanno misurati sul telefono.",
+  "qaSnapshotCopy": "Copia riepilogo collaudo fisico",
+  "qaSnapshotHint": "Copia soltanto impostazioni della scena e stato del renderer; nessuno screenshot, identificativo del dispositivo o nome delle app installate.",
+  "qaSnapshotCopied": "Riepilogo collaudo copiato negli appunti"
 }

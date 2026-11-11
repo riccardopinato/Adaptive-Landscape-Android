@@ -21,5 +21,5 @@ flutter pub get
 flutter gen-l10n
 flutter analyze
 flutter test
-flutter build apk --debug
+flutter build apk --debug --dart-define=BUILD_SOURCE_SHA="${GITHUB_SHA:-manual-local}"
 echo "Debug APK: $DEST/build/app/outputs/flutter-apk/app-debug.apk"

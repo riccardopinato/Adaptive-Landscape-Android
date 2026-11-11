@@ -162,3 +162,17 @@ quantizes shader updates to 144/192/240 frames per loop respectively.
 
 No background network, app scanning, screenshot capture or new
 permission added.
+
+
+## Prephysical QA (source staged, hardware NOT RUN)
+
+The roadmap has a [physical acceptance runbook](docs/PHYSICAL_QA_V042_V046.md)
+and two locally executed ADB scripts in `scripts/`. The editor offers a
+voluntary **Copy physical QA summary** action: selected scene, quality,
+reported renderer, photo-present flag and normalized grid counts (no device
+identifiers or installed app names). GitHub debug/optimized builds include a
+compile-time source SHA, which for PR runs may be a synthetic merge SHA.
+
+CI green establishes only source/build readiness. Real ocean authenticity,
+FPS/battery/thermal, icon alignment, device signatures and Play publishing
+still require physical tests and user approval.
