@@ -112,22 +112,23 @@ def main():
     wait("app added",lambda:n_zones(base)); ok("add_app_new_sand")
     controls=("Widgets","Apps","Add app","Remove app","Set live wallpaper","Change Home launcher","Adaptive Home")
     def icon():
-        return next((n for n in nodes() if n.get("content-desc") and n.get("clickable")=="true" and not n.get("content-desc").startswith(controls) and not n.get("content-desc").startswith("Page ")),None)
+        # Native app tiles are LinearLayout. A description-only search can
+        # accidentally select a system navigation control outside the Home.
+        return next((n for n in nodes() if n.get("class")=="android.widget.LinearLayout" and n.get("content-desc") and n.get("clickable")=="true" and not n.get("content-desc").startswith(controls) and not n.get("content-desc").startswith("Page ")),None)
     x,y=point(wait("draggable app icon",icon))
     dimensions=re.search(r"(\d+)x(\d+)",adb("shell","wm","size"))
     assert dimensions
     width=int(dimensions.group(1)); step=round(width/5)
     destination=x+step if x+step<width*.90 else x-step
     saved=pref()["auto_home_icons_v1"]
-    adb("shell","input","motionevent","DOWN",str(x),str(y))
-    try:
-        time.sleep(.9)
-        adb("shell","input","motionevent","MOVE",str(destination),str(y))
-        time.sleep(.3)
-        adb("shell","input","motionevent","UP",str(destination),str(y))
-    finally:
-        adb("shell","input","motionevent","UP",str(destination),str(y),strict=False)
+    # One Android InputShellCommand process keeps a single touch pointer
+    # throughout DOWN -> long press -> MOVE -> UP. Separate adb motionevent
+    # invocations do NOT reliably maintain the pointer across processes.
+    # The 1250ms duration exceeds ViewConfiguration.longPressTimeout.
+    adb("shell","input","touchscreen","draganddrop",str(x),str(y),str(destination),str(y),"1250")
+    wait("Home retained after drag",lambda:node_text("Add app"))
     wait("drag writes new layout",lambda:pref().get("auto_home_icons_v1")!=saved)
+    wait("drag preserves geometry",lambda:n_zones(base))
     ok("long_press_drag")
     adb("shell","am","force-stop",PKG)
     adb("shell","input","keyevent","KEYCODE_HOME")
@@ -143,7 +144,10 @@ def main():
         steps["original_home_role_restored"]="NOT VERIFIED: emulator initially had no role holder"
     assert PKG not in adb("shell","cmd","role","get-role-holders",ROLE)
     adb("shell","input","keyevent","KEYCODE_HOME")
-    assert node_text("Add app") is None
+    def stock_home_selected():
+        if node_text("Add app") is not None: return False
+        return PKG not in adb("shell","cmd","role","get-role-holders",ROLE)
+    wait("stock Home in foreground after restore",stock_home_selected)
     ok("deskland_role_revoked")
     for key in ("live_wallpaper_consent","physical_device","aesthetic_quality","battery_thermal"):
         steps[key]="NOT VERIFIED"
