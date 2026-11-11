@@ -17,7 +17,7 @@ def wait(label,pred):
     for i in range(30):
         try:
             result=pred()
-            if result: return result
+            if isinstance(result, ET.Element) or result: return result
         except (ValueError,RuntimeError,ET.ParseError,KeyError,AssertionError): pass
         time.sleep(1)
     raise AssertionError("Timed out: "+label)
