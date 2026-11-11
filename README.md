@@ -194,3 +194,38 @@ any previously installed version.
 A green CI does not imply physical installation or Play signing. If Android
 still reports incompatibility, inspect `adb install -r` and the exact
 failure reason before changing minSdk/ABI or removing an existing app.
+
+
+## v0.4.7 — Experimental Auto Home (optional native Home role)
+
+The original Live WallpaperService **cannot inspect icon positions on the
+existing Xiaomi/Pixel/Samsung launcher**. Android does not expose an API
+granting arbitrary wallpapers real-time access to other Home apps' icon
+geometry. There is no reliable way to copy the existing launcher arrangement
+or follow its drags from a generic wallpaper.
+
+The experimental alternative is an **opt-in Home Activity** owned by Deskland:
+- User explicitly chooses Deskland as the Home/launcher using Android's
+  standard role selection. No silent launcher takeover.
+- Initial chosen apps are placed automatically in a small 5×8 Home grid;
+  **their order is not imported from any previous launcher**.
+- Actual on-screen app icon views create sand regions in the existing native
+  `WallpaperService` through `auto_home_config_v1`.
+- Dragging an icon updates the active sand mask while dragging and after
+  snapping to a grid cell. Adding/removing an app updates sand automatically.
+- Layout is stored locally as selected component IDs and positions.
+- Manual `config_v2` and Flutter profile data are preserved, not overwritten.
+- When Deskland is not the selected system Home, its live icon source is
+  ignored and manual wallpaper config remains the fallback.
+- Needs user to activate the Deskland live wallpaper separately.
+- Android-only; browser does not simulate a real system launcher.
+
+**Important blocker:** this is a **prototype, not a complete replacement
+launcher**. Widgets, folders, notification badges, work profiles, search,
+gesture parity, original launcher layout migration, icon packs, TalkBack
+and many OEM behaviors are *not yet implemented/validated*. Do not merge
+or distribute this feature as a full launcher until these are addressed.
+
+Using AccessibilityService to scrape the old launcher would be unreliable,
+privacy-sensitive and subject to Google Play declarations and review. This
+prototype avoids that permission and does not inspect other apps' UI.
