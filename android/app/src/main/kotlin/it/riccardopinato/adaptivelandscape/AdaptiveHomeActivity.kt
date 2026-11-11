@@ -284,7 +284,16 @@ class AdaptiveHomeActivity : Activity() {
         var startLeft = 0f
         var startTop = 0f
         var moving = false
+        var armed = false
+        var cancelledByGesture = false
         val slop = ViewConfiguration.get(this).scaledTouchSlop.toFloat()
+        val armDrag = Runnable {
+            if (!cancelledByGesture) {
+                armed = true
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            }
+        }
+        view.setOnClickListener { startApp(info) }
         view.setOnTouchListener { v, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -293,12 +302,19 @@ class AdaptiveHomeActivity : Activity() {
                     startLeft = v.x
                     startTop = v.y
                     moving = false
+                    armed = false
+                    cancelledByGesture = false
+                    handler.postDelayed(armDrag, ViewConfiguration.getLongPressTimeout().toLong())
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val dx = event.rawX - downRawX
                     val dy = event.rawY - downRawY
-                    if (!moving && (abs(dx) > slop || abs(dy) > slop)) moving = true
+                    if (!armed && (abs(dx) > slop || abs(dy) > slop)) {
+                        cancelledByGesture = true
+                        handler.removeCallbacks(armDrag)
+                    }
+                    if (armed && (abs(dx) > slop || abs(dy) > slop)) moving = true
                     if (moving) {
                         draggingId = id
                         v.x = (startLeft + dx).coerceIn(0f,
@@ -310,17 +326,20 @@ class AdaptiveHomeActivity : Activity() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
+                    handler.removeCallbacks(armDrag)
                     if (moving) {
                         snapToNearestCell(id, v)
                         draggingId = null
                         saveLayout()
                         renderHome()
-                    } else {
-                        startApp(info)
+                    } else if (!cancelledByGesture) {
+                        // Supports TalkBack and keyboard activation through click semantics.
+                        v.performClick()
                     }
                     true
                 }
                 MotionEvent.ACTION_CANCEL -> {
+                    handler.removeCallbacks(armDrag)
                     draggingId = null
                     renderHome()
                     true
