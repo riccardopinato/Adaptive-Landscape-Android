@@ -20,6 +20,14 @@ def wait(label,pred):
             if isinstance(result, ET.Element) or result: return result
         except (ValueError,RuntimeError,ET.ParseError,KeyError,AssertionError): pass
         time.sleep(1)
+    try:
+        ui_labels=[n.get("text") for n in nodes() if n.get("text","").startswith("Page ")]
+        current=ET.fromstring(adb("exec-out","run-as",PKG,"cat","shared_prefs/adaptive_landscape.xml"))
+        pages=[n.get("value") for n in current if n.get("name")=="auto_home_page_v1"]
+        activity=[l.strip() for l in adb("shell","dumpsys","activity","activities").splitlines() if "topResumedActivity=" in l][-2:]
+        print("SAFE_DIAG",json.dumps({"test":label,"page_labels":ui_labels,"stored_page":pages,"activity":activity}),flush=True)
+    except Exception as err:
+        print("SAFE_DIAG_UNAVAILABLE",type(err).__name__,flush=True)
     raise AssertionError("Timed out: "+label)
 def nodes():
     x=adb("exec-out","uiautomator","dump","/dev/tty")
@@ -86,10 +94,11 @@ def main():
     press("Page 2/3"); wait("third page",lambda:node_text("Page 3/3"))
     press("Page 3/3"); wait("first page",lambda:node_text("Page 1/3"))
     wait("page1 recovered",lambda:n_zones(base)); ok("page_roundtrip")
-    press("Add app"); tap(wait("app picker",first_row))
-    wait("app added",lambda:n_zones(base+1)); ok("add_app_new_sand")
+    # An emulator may have only six launchable packages: remove first, then re-add.
     press("Remove app"); tap(wait("remove picker",first_row))
-    wait("app removed",lambda:n_zones(base)); ok("remove_app_erases_sand")
+    wait("app removed",lambda:n_zones(base-1)); ok("remove_app_erases_sand")
+    press("Add app"); tap(wait("app picker",first_row))
+    wait("app added",lambda:n_zones(base)); ok("add_app_new_sand")
     controls=("Widgets","Apps","Add app","Remove app","Set live wallpaper","Change Home launcher","Adaptive Home")
     def icon():
         return next((n for n in nodes() if n.get("content-desc") and n.get("clickable")=="true" and not n.get("content-desc").startswith(controls) and not n.get("content-desc").startswith("Page ")),None)
