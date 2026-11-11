@@ -140,3 +140,39 @@ checks succeed and a traceable artifact is available. Physical and aesthetic
 checks then determine PASS/FAIL. Only after approvals and branch dependencies
 resolve can the normal App Factory protected-branch PR/merge process proceed.
 **Google Play signing, store Data Safety and AAB certification remain separate.**
+
+
+## Correct APK selection and compatibility (install failure triage)
+
+When Android reports "App not installed as package appears incompatible"
+("App non installata perché non compatibile"), do not automatically conclude
+that the device is unsupported. The original optimized CI artifact contains
+**multiple ABI-specific files**; install the one matching the physical device:
+`app-arm64-v8a-release.apk` for ARM64,
+`app-armeabi-v7a-release.apk` for ARMv7,
+`app-x86_64-release.apk` only for compatible x86_64 devices/emulators.
+
+The **universal internal APK** is now built separately in CI as
+`adaptive-landscape-universal-internal-NOT-PLAY-SIGNED`, file
+`app-release.apk`. Download and extract the ZIP, then install the .apk,
+not the .zip. The QA artifact also contains `APK_COMPATIBILITY.txt`
+(min/target SDK, package name/versionCode and ABIs) and
+`SHA256SUMS-universal.txt`. **Universal means multiple ABIs, not support
+for every Android OS version or every OEM.**
+
+The previous `adaptive-landscape-android-debug` ZIP contains
+`app-debug.apk` as another all-ABI QA fallback (larger and slower).
+If same-package data exist, **do not uninstall** to solve a signing failure.
+A CI-created APK might use a different debug signing certificate than
+the existing installation.
+
+To get the exact failure with user-authorized ADB:
+`adb install -r app-release.apk` (this attempts the installation).
+Relevant diagnostics:
+- `INSTALL_FAILED_NO_MATCHING_ABIS`: downloaded wrong ABI or native libraries missing
+- `INSTALL_FAILED_OLDER_SDK`: Android API level below APK minSdk
+- `INSTALL_FAILED_UPDATE_INCOMPATIBLE`: same package but signer mismatch
+- `INSTALL_FAILED_VERSION_DOWNGRADE`: installed versionCode greater than proposed
+
+Physical installation is NOT VERIFIED by the CI runner; only test on the
+actual device with the exact artifact SHA.
