@@ -386,8 +386,10 @@ class AdaptiveHomeActivity : Activity() {
                         draggingId = null
                         saveLayout()
                         renderHome()
-                    } else if (!cancelledByGesture) {
-                        // Supports TalkBack and keyboard activation through click semantics.
+                    } else if (!armed && !cancelledByGesture) {
+                        // A stationary long press must never launch an app.
+                        // Only a short, non-drag tap triggers the app click.
+                        // Supports TalkBack and keyboard activation via performClick.
                         v.performClick()
                     }
                     true

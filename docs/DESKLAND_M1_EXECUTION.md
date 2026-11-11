@@ -29,3 +29,9 @@ This experimental PR adds a bounded native Home layout-update correction and QA 
 
 ## Observed runtime defect and bounded correction
 Earlier emulator runs installed original PR #26 APK. They passed Home role selection, 6 visible icon zones, and empty page with zero zones; when returning to page 1 the UI and stored page indicated 1/3 but the published coastline count did not recover. Cause in source: `renderHome` publishes before new child tiles have measured bounds, and existing global layout callback reacts only to canvas size changes. This PR uses child `addOnLayoutChangeListener` on icons and widgets so final bounds cause a debounced republish. The fix MUST be verified against a freshly compiled APK from this branch. CI green does not certify physical reality.
+
+## M1 incremental QA — stationary long-press guard and reproducible artifact
+- A source-level defect was found in `AdaptiveHomeActivity.attachTouch`: `ACTION_UP` could call `performClick()` after an armed long press without movement. This must not start an application, so the app-launch condition is now `!armed && !cancelledByGesture`.
+- Disposable emulator test now verifies a stationary 900ms long-press does not navigate away before the one-process `input touchscreen draganddrop` trial. This distinguishes a click leak from a true drag failure.
+- The workflow now checks out the exact PR head commit rather than the synthetic merge commit and uploads its matching debug APK (`deskland-m1-qa-debug-NOT-PLAY-SIGNED`) for human testing, with SHA-256 in job logs and JSON. APK artifact is unverified until CI actually completes.
+- If CI fails, read the `SAFE_DIAG` role holder, foreground activity, process-alive and zone-count fields. Never label a failed drag as PASS.

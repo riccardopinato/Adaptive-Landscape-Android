@@ -28,7 +28,9 @@ def wait(label,pred):
         pages=[n.get("value") for n in current if n.get("name")=="auto_home_page_v1"]
         activity=[l.strip() for l in adb("shell","dumpsys","activity","activities").splitlines() if "topResumedActivity=" in l][-2:]
         current_zones=zones()
-        print("SAFE_DIAG",json.dumps({"test":label,"page_labels":ui_labels,"stored_page":pages,"zones_count":len(current_zones),"activity":activity}),flush=True)
+        roles=adb("shell","cmd","role","get-role-holders",ROLE,strict=False)
+        process=bool(adb("shell","pidof",PKG,strict=False))
+        print("SAFE_DIAG",json.dumps({"test":label,"page_labels":ui_labels,"stored_page":pages,"zones_count":len(current_zones),"role_still_held":PKG in roles,"process_alive":process,"activity":activity}),flush=True)
     except Exception as err:
         print("SAFE_DIAG_UNAVAILABLE",type(err).__name__,flush=True)
     raise AssertionError("Timed out: "+label)
@@ -115,7 +117,15 @@ def main():
         # Native app tiles are LinearLayout. A description-only search can
         # accidentally select a system navigation control outside the Home.
         return next((n for n in nodes() if n.get("class")=="android.widget.LinearLayout" and n.get("content-desc") and n.get("clickable")=="true" and not n.get("content-desc").startswith(controls) and not n.get("content-desc").startswith("Page ")),None)
-    x,y=point(wait("draggable app icon",icon))
+    target=wait("draggable app icon",icon)
+    x,y=point(target)
+    assert target.get("class")=="android.widget.LinearLayout"
+    assert PKG in adb("shell","cmd","role","get-role-holders",ROLE)
+    ok("tile_targeted_for_drag","native clickable tile")
+    # A stationary long-press is not a tap: must not launch an app.
+    adb("shell","input","touchscreen","swipe",str(x),str(y),str(x),str(y),"900")
+    wait("Home retained after stationary long press",lambda:node_text("Add app"))
+    ok("long_press_no_unwanted_launch")
     dimensions=re.search(r"(\d+)x(\d+)",adb("shell","wm","size"))
     assert dimensions
     width=int(dimensions.group(1)); step=round(width/5)
@@ -127,6 +137,7 @@ def main():
     # The 1250ms duration exceeds ViewConfiguration.longPressTimeout.
     adb("shell","input","touchscreen","draganddrop",str(x),str(y),str(destination),str(y),"1250")
     wait("Home retained after drag",lambda:node_text("Add app"))
+    assert PKG in adb("shell","cmd","role","get-role-holders",ROLE),"Deskland lost HOME role"
     wait("drag writes new layout",lambda:pref().get("auto_home_icons_v1")!=saved)
     wait("drag preserves geometry",lambda:n_zones(base))
     ok("long_press_drag")
@@ -169,5 +180,5 @@ finally:
                 steps["teardown_home_role"]="attempted (ephemeral emulator)"
         except Exception as err:
             steps["teardown_home_role"]="FAILED: "+type(err).__name__
-    OUT.write_text(json.dumps({"base_candidate":"6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd","built_source_sha":os.getenv("GITHUB_SHA"),"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
+    OUT.write_text(json.dumps({"base_candidate":"6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd","built_source_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
     print("Evidence record:",OUT,flush=True)
