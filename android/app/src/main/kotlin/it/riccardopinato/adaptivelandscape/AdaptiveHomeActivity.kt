@@ -447,7 +447,7 @@ class AdaptiveHomeActivity : Activity() {
             JSONObject()
         }
         base.put("schema", 2)
-            .put("scene", "beach")
+            .put("scene", if (base.optString("scene") == "meadow") "meadow" else "beach")
             .put("occupied", JSONArray())
             .put("zones", zones)
         val next = base.toString()
