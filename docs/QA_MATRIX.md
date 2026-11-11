@@ -95,3 +95,18 @@ v0.4.2**. See [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V042.md).
 | PERF64 | Replace photo / change quality 10× | No ANR, GPU texture leak, decoder OOM or broken wallpaper |
 | PERF65 | 30-min Home on / unlock / app switching | Battery %, thermal delta, memory peak and crashes |
 | PERF66 | Reboot and process recreation | Photo restored, correct quality, schema2 profiles intact |
+
+
+## Auto Home experimental physical acceptance (not run)
+
+| ID | Scenario | Gate |
+|---|---|---|
+| AH1 | Opt-in role grant/cancel | Cancel leaves current Home unchanged; grant enables only after system selection |
+| AH2 | Open native Home with 12 prefilled apps | Only the user-selected icons, no duplicate/hidden background app scanning |
+| AH3 | Drag icon slowly/rapidly between cells | Coast follows touch while dragging; resettles on snap; no ghost sand |
+| AH4 | Add/remove icon | Sand appears/recedes automatically without opening wallpaper editor |
+| AH5 | Choose previous stock Home in Settings | Manual wallpaper profile restored; app list/data retained |
+| AH6 | Existing Xiaomi/Samsung layout | NOT IMPORTED, no false promise of position copying |
+| AH7 | Widget/folder/work profile | NOT SUPPORTED — blocks production/Home replacement recommendation |
+| AH8 | 30-min stress, 5× repeated moves | No EGL leaks/jank/thermal spikes, review logs on physical phone |
+| AH9 | APK signature/install, default HOME and wallpaper activation | Exact artifact and device model required |
