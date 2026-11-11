@@ -27,18 +27,25 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - name: Reuse exact product-build APK; check source identity and SHA-256
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Set up Flutter for this source SHA
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: 3.41.4
+          channel: stable
+          cache: true
+      - name: Configure Android JDK 17
         run: |
-          set -euo pipefail
-          expected_native="55624858ee7785c2cbb039cc8acbe93199df7d25"
-          actual_native="$(git rev-parse HEAD:android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveHomeActivity.kt)"
-          test "$actual_native" = "$expected_native"
-          mkdir -p generated_app/build/app/outputs/flutter-apk
-          gh run download 43013339785 --repo "$GITHUB_REPOSITORY" --name deskland-m1-qa-debug-NOT-PLAY-SIGNED --dir generated_app/build/app/outputs/flutter-apk
-          printf '%s  %s\n' '598230629bbdd3638ee9dc017f1a0416f4630f50827f4136cc043ae3b95fe074' 'generated_app/build/app/outputs/flutter-apk/app-debug.apk' | sha256sum -c -
-      - name: Attach verified frozen debug APK for physical QA (NOT Play signed)
+          test -x "$JAVA_HOME_17_X64/bin/java"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          flutter config --jdk-dir="$JAVA_HOME_17_X64"
+      - name: Compile exact-head Android debug APK with Dart and native code checks
+        run: bash BOOTSTRAP_LINUX_MAC.sh generated_app
+      - name: Record compiled APK hash
+        run: |
+          test -s generated_app/build/app/outputs/flutter-apk/app-debug.apk
+          sha256sum generated_app/build/app/outputs/flutter-apk/app-debug.apk
+      - name: Publish exact-build debug APK for device QA (NOT Play signed)
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: deskland-m1-qa-debug-NOT-PLAY-SIGNED

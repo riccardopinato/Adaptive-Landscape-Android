@@ -89,6 +89,14 @@ class AdaptiveHomeActivity : Activity() {
     private val publishPending = Runnable { publishHomePositions() }
     private var lastWidth = 0
     private var lastHeight = 0
+    // Never modify FrameLayout children while Android is measuring or
+    // dispatching the touch that ended an icon drag.
+    private fun renderHomeNextFrame() {
+        if (!::canvas.isInitialized) return
+        canvas.postOnAnimation {
+            if (!isFinishing && !isDestroyed) renderHome()
+        }
+    }
     private var callbackRegistered = false
     private val packageCallback = object : LauncherApps.Callback() {
         override fun onPackageAdded(packageName: String, user: UserHandle) = refreshPackages()
@@ -167,7 +175,7 @@ class AdaptiveHomeActivity : Activity() {
                 (canvas.width != lastWidth || canvas.height != lastHeight)) {
                 lastWidth = canvas.width
                 lastHeight = canvas.height
-                renderHome()
+                renderHomeNextFrame()
             }
         }
     }
@@ -385,7 +393,7 @@ class AdaptiveHomeActivity : Activity() {
                         snapToNearestCell(id, v)
                         draggingId = null
                         saveLayout()
-                        renderHome()
+                        renderHomeNextFrame()
                     } else if (!armed && !cancelledByGesture) {
                         // A stationary long press must never launch an app.
                         // Only a short, non-drag tap triggers the app click.
@@ -397,7 +405,7 @@ class AdaptiveHomeActivity : Activity() {
                 MotionEvent.ACTION_CANCEL -> {
                     handler.removeCallbacks(armDrag)
                     draggingId = null
-                    renderHome()
+                    renderHomeNextFrame()
                     true
                 }
                 else -> true
