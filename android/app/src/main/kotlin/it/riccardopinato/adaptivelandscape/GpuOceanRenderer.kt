@@ -366,24 +366,87 @@ internal class GpuOceanRenderer {
     }
 
     private fun fillMask(state: WallpaperState): ByteArray {
-        val empty = state.occupied.isEmpty() && state.zones.isEmpty()
+        // The former implementation evaluated every obstacle for every one of
+        // 51,200 pixels on every drag event. Stamp bounded kernels instead:
+        // distant influence is visually negligible and the active Home can
+        // respond without repeatedly performing a full screen × icons scan.
         val data = ByteArray(maskWidth * maskHeight * 4)
-        // Empty layout is an explicitly black mask; no phantom island.
-        if (!empty) {
-            for (row in 0 until maskHeight) {
-                val y = (row + 0.5f) / maskHeight
-                for (col in 0 until maskWidth) {
-                    val x = (col + 0.5f) / maskWidth
-                    val v = (state.influence(x, y) * 255f).toInt()
-                        .coerceIn(0, 255).toByte()
-                    val i = (row * maskWidth + col) * 4
-                    data[i] = v
-                    data[i + 1] = v
-                    data[i + 2] = v
+        for (i in 3 until data.size step 4) data[i] = 255.toByte()
+        if (state.occupied.isEmpty() && state.zones.isEmpty()) return data
+
+        val accum = FloatArray(maskWidth * maskHeight)
+        val inset = state.gridInset.toDouble()
+        val usable = 1.0 - 2.0 * inset
+        val span = state.span.toDouble()
+        for (index in state.occupied) {
+            if (index !in 0 until state.columns * state.rows) continue
+            val centerX = inset + (index % state.columns + 0.5) * usable / state.columns
+            val centerY = state.top + (index / state.columns + 0.5) * span / state.rows
+            val sigmaX = 0.58 * usable / state.columns
+            val sigmaY = 0.58 * span / state.rows
+            val fromX = kotlin.math.floor((centerX - 5 * sigmaX) * maskWidth)
+                .toInt().coerceIn(0, maskWidth - 1)
+            val toX = kotlin.math.ceil((centerX + 5 * sigmaX) * maskWidth)
+                .toInt().coerceIn(0, maskWidth - 1)
+            val fromY = kotlin.math.floor((centerY - 5 * sigmaY) * maskHeight)
+                .toInt().coerceIn(0, maskHeight - 1)
+            val toY = kotlin.math.ceil((centerY + 5 * sigmaY) * maskHeight)
+                .toInt().coerceIn(0, maskHeight - 1)
+            for (row in fromY..toY) {
+                val y = (row + 0.5) / maskHeight
+                val dy = (y - centerY) / sigmaY
+                for (col in fromX..toX) {
+                    val ix = row * maskWidth + col
+                    if (accum[ix] >= 1f) continue
+                    val x = (col + 0.5) / maskWidth
+                    val dx = (x - centerX) / sigmaX
+                    val influence = kotlin.math.exp(-0.5 * (dx * dx + dy * dy)).toFloat()
+                    accum[ix] = (accum[ix] + influence).coerceAtMost(1f)
                 }
             }
         }
-        for (i in 3 until data.size step 4) data[i] = 255.toByte()
+
+        for (zone in state.zones) {
+            val cx = zone.x.toDouble()
+            val cy = zone.y.toDouble()
+            val halfWidth = zone.width.toDouble() / 2.0
+            val halfHeight = zone.height.toDouble() / 2.0
+            val spreadX = zone.width.toDouble() * 0.38
+            val spreadY = zone.height.toDouble() * 0.38
+            if (spreadX <= 0.0 || spreadY <= 0.0) continue
+            val reachX = halfWidth + 4.0 * spreadX
+            val reachY = halfHeight + 4.0 * spreadY
+            val fromX = kotlin.math.floor((cx - reachX) * maskWidth)
+                .toInt().coerceIn(0, maskWidth - 1)
+            val toX = kotlin.math.ceil((cx + reachX) * maskWidth)
+                .toInt().coerceIn(0, maskWidth - 1)
+            val fromY = kotlin.math.floor((cy - reachY) * maskHeight)
+                .toInt().coerceIn(0, maskHeight - 1)
+            val toY = kotlin.math.ceil((cy + reachY) * maskHeight)
+                .toInt().coerceIn(0, maskHeight - 1)
+            for (row in fromY..toY) {
+                val y = (row + 0.5) / maskHeight
+                val dy = kotlin.math.max(0.0, kotlin.math.abs(y - cy) - halfHeight) / spreadY
+                if (dy > 4.0) continue
+                for (col in fromX..toX) {
+                    val ix = row * maskWidth + col
+                    if (accum[ix] >= 1f) continue
+                    val x = (col + 0.5) / maskWidth
+                    val dx = kotlin.math.max(0.0, kotlin.math.abs(x - cx) - halfWidth) / spreadX
+                    if (dx > 4.0) continue
+                    val influence = kotlin.math.exp(-0.5 * (dx * dx + dy * dy)).toFloat()
+                    accum[ix] = (accum[ix] + influence).coerceAtMost(1f)
+                }
+            }
+        }
+
+        for (i in accum.indices) {
+            val value = (accum[i] * 255f).toInt().coerceIn(0, 255).toByte()
+            val pos = i * 4
+            data[pos] = value
+            data[pos + 1] = value
+            data[pos + 2] = value
+        }
         return data
     }
 
@@ -498,7 +561,9 @@ internal class GpuOceanRenderer {
             GLES20.glUniform2f(GLES20.glGetUniformLocation(shaderProgram, "uPhotoScale"),
                 minOf(1f, screenAspect / photographAspect),
                 minOf(1f, photographAspect / screenAspect))
-            val mixAmount = if (state.reduceMotion) 1f else
+            // Static scenes must display the latest coast immediately: no pending frames
+            // will advance a transition when motion is set to zero.
+            val mixAmount = if (state.staticScene) 1f else
                 maskMix(SystemClock.uptimeMillis())
             f("uMaskMix", mixAmount)
             f("uHasLand", if (maskToHasLand ||

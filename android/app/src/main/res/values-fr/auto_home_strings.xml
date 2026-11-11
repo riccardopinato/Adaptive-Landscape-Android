@@ -8,4 +8,16 @@
     <string name="auto_home_no_space">Accueil plein ou aucune appli disponible</string>
     <string name="auto_home_wallpaper_failed">Impossible d\'ouvrir le fond animé</string>
     <string name="auto_home_role_failed">Impossible d\'ouvrir les réglages d\'accueil</string>
+    <string name="auto_home_apps">Applications</string>
+    <string name="auto_home_search">Rechercher des applications</string>
+    <string name="auto_home_change_home">Changer d\'accueil</string>
+    <string name="auto_home_page">Page %1$d/%2$d</string>
+    <string name="auto_home_wallpaper_needed">Choisissez le fond animé Deskland pour activer le sable adaptatif.</string>
+    <string name="auto_home_widgets">Widgets</string>
+    <string name="auto_home_widget_add">Ajouter un widget</string>
+    <string name="auto_home_widget_manage">Gérer les widgets</string>
+    <string name="auto_home_widget_unavailable">Aucun widget disponible</string>
+    <string name="auto_home_widget_move">Déplacer vers la page suivante</string>
+    <string name="auto_home_widget_resize">Agrandir</string>
+    <string name="auto_home_widget_remove">Retirer le widget</string>
 </resources>

@@ -8,4 +8,16 @@
     <string name="auto_home_no_space">Home is full or no apps left to add</string>
     <string name="auto_home_wallpaper_failed">Could not open live wallpaper settings</string>
     <string name="auto_home_role_failed">Could not open Home settings</string>
+    <string name="auto_home_apps">Apps</string>
+    <string name="auto_home_search">Search apps</string>
+    <string name="auto_home_change_home">Change Home launcher</string>
+    <string name="auto_home_page">Page %1$d/%2$d</string>
+    <string name="auto_home_wallpaper_needed">Select Deskland live wallpaper to enable adaptive sand.</string>
+    <string name="auto_home_widgets">Widgets</string>
+    <string name="auto_home_widget_add">Add widget</string>
+    <string name="auto_home_widget_manage">Manage widgets</string>
+    <string name="auto_home_widget_unavailable">No widgets available</string>
+    <string name="auto_home_widget_move">Move to next page</string>
+    <string name="auto_home_widget_resize">Increase size</string>
+    <string name="auto_home_widget_remove">Remove widget</string>
 </resources>
