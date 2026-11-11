@@ -98,5 +98,6 @@
   "autoHomeStatusNotRendered": "O renderizador ainda não confirmou as posições recentes. Abra o início e atualize aqui.",
   "autoHomeStatusDataReady": "Posições recebidas pelo renderizador",
   "autoHomeStatusDisclaimer": "Isto confirma os dados, não a areia visível. As pastas ainda não são suportadas.",
-  "autoHomeStatusRefresh": "Atualizar diagnóstico"
+  "autoHomeStatusRefresh": "Atualizar diagnóstico",
+  "autoHomeStatusOpenHome": "Abrir início do Deskland"
 }

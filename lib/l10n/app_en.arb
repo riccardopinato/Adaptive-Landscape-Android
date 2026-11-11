@@ -98,5 +98,6 @@
   "autoHomeStatusNotRendered": "The renderer has not confirmed the latest positions. Open Home, return here and refresh.",
   "autoHomeStatusDataReady": "Positions received by renderer",
   "autoHomeStatusDisclaimer": "This confirms data routing, not visible sand pixels. Folders are not supported yet.",
-  "autoHomeStatusRefresh": "Refresh diagnostic"
+  "autoHomeStatusRefresh": "Refresh diagnostic",
+  "autoHomeStatusOpenHome": "Open Deskland Home"
 }

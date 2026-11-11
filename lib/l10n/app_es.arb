@@ -98,5 +98,6 @@
   "autoHomeStatusNotRendered": "El renderizador no ha confirmado las últimas posiciones. Abre Inicio y actualiza aquí.",
   "autoHomeStatusDataReady": "Posiciones recibidas por el renderizador",
   "autoHomeStatusDisclaimer": "Solo confirma el intercambio de datos, no que se vea arena. Las carpetas aún no funcionan.",
-  "autoHomeStatusRefresh": "Actualizar diagnóstico"
+  "autoHomeStatusRefresh": "Actualizar diagnóstico",
+  "autoHomeStatusOpenHome": "Abrir inicio de Deskland"
 }

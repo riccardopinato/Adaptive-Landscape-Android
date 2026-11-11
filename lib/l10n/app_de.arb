@@ -98,5 +98,6 @@
   "autoHomeStatusNotRendered": "Der Renderer hat die neuen Positionen nicht bestätigt. Öffne Home und aktualisiere danach hier.",
   "autoHomeStatusDataReady": "Positionen vom Renderer empfangen",
   "autoHomeStatusDisclaimer": "Dies bestätigt die Datenübertragung, nicht sichtbare Sandpixel. Ordner werden noch nicht unterstützt.",
-  "autoHomeStatusRefresh": "Diagnose aktualisieren"
+  "autoHomeStatusRefresh": "Diagnose aktualisieren",
+  "autoHomeStatusOpenHome": "Deskland-Startseite öffnen"
 }

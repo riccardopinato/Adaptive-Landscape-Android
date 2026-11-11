@@ -98,5 +98,6 @@
   "autoHomeStatusNotRendered": "Il renderer non ha ancora confermato le posizioni aggiornate. Apri la Home, poi torna qui e aggiorna.",
   "autoHomeStatusDataReady": "Posizioni ricevute dal renderer",
   "autoHomeStatusDisclaimer": "Questo stato conferma lo scambio dati, non la presenza visiva della sabbia. Le cartelle non sono ancora supportate.",
-  "autoHomeStatusRefresh": "Aggiorna diagnosi"
+  "autoHomeStatusRefresh": "Aggiorna diagnosi",
+  "autoHomeStatusOpenHome": "Apri la Home Deskland"
 }

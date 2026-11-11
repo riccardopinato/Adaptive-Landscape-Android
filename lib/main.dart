@@ -508,6 +508,17 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     }
   }
 
+  Future<void> _openAdaptiveHome() async {
+    setState(() => _busy = true);
+    try {
+      await _channel.openAdaptiveHome();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _openPicker() async {
     setState(() => _busy = true);
     try {
@@ -690,6 +701,21 @@ class _WallpaperEditorState extends State<WallpaperEditor>
               ),
               const SizedBox(height: 5),
               Text(l.autoHomeStatusDisclaimer, style: style.bodySmall),
+              const SizedBox(height: 8),
+              if (_runtimeStatus.desklandHomeSelected &&
+                  !_runtimeStatus.desklandWallpaperSelected)
+                FilledButton.icon(
+                  onPressed: _busy ? null : _openPicker,
+                  icon: const Icon(Icons.wallpaper),
+                  label: Text(l.install),
+                ),
+              if (_runtimeStatus.desklandHomeSelected &&
+                  _runtimeStatus.desklandWallpaperSelected)
+                FilledButton.icon(
+                  onPressed: _busy ? null : _openAdaptiveHome,
+                  icon: const Icon(Icons.home_outlined),
+                  label: Text(l.autoHomeStatusOpenHome),
+                ),
               TextButton.icon(
                 onPressed: _refreshNativeRenderer,
                 icon: const Icon(Icons.refresh),

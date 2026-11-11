@@ -98,5 +98,6 @@
   "autoHomeStatusNotRendered": "Le moteur graphique n'a pas confirmé les positions récentes. Revenez ici et actualisez.",
   "autoHomeStatusDataReady": "Positions reçues par le moteur graphique",
   "autoHomeStatusDisclaimer": "Cela confirme les données, pas les pixels de sable. Les dossiers ne sont pas encore pris en charge.",
-  "autoHomeStatusRefresh": "Actualiser le diagnostic"
+  "autoHomeStatusRefresh": "Actualiser le diagnostic",
+  "autoHomeStatusOpenHome": "Ouvrir l'accueil Deskland"
 }

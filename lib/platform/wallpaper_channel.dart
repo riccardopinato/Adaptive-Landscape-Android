@@ -78,6 +78,12 @@ class WallpaperChannel {
     return await _channel.invokeMethod<bool>('requestAdaptiveHome') ?? false;
   }
 
+  /// Opens the selected system HOME role, never an in-editor simulation.
+  Future<void> openAdaptiveHome() async {
+    if (!supported) return;
+    await _channel.invokeMethod<void>('openAdaptiveHome');
+  }
+
   Future<void> openLiveWallpaperPicker() async {
     if (!supported) throw UnsupportedError('Android is required for live wallpaper.');
     await _channel.invokeMethod<void>('openPicker');

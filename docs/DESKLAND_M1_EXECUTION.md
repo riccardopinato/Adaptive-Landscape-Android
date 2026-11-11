@@ -51,3 +51,10 @@ Strict source boundaries: a wallpaper cannot read or follow Xiaomi/Pixel/Samsung
 New diagnostic protocol: native MainActivity reports independently (a) selected Deskland Home role, (b) active Deskland live wallpaper, (c) count and revision of published Deskland Home zones, (d) source/count/revision observed by a real WallpaperService render call. A matching revision proves source routing, **not** visible coastline pixels; a zero/stale result is a concrete defect. The status appears in the Flutter editor (6 locales) without scraping app labels, screenshots or remote telemetry.
 
 Human release gate remains blocked until physical evidence confirms **actual sand pixels** for icon add/drag/remove and wallpaper running as selected; folders remain unsupported and cannot be marketed as implemented.
+
+## Physical activation gap — guided Home + wallpaper setup
+Owner reports the adaptive icon/sand scene responds to dragging but remains a virtual/trial-looking screen; diagnostics specifically show `desklandHomeSelected=true` and `desklandWallpaperSelected=false`. Android's HOME role selection is not live-wallpaper installation. Until the system's wallpaper confirmation is accepted for the *Home screen*, visible native sand is not guaranteed.
+
+The `requestAdaptiveHome` journey now opens the **Android system live-wallpaper confirmation** after a successful HOME role assignment if the wallpaper is not installed (or opens real Home if it is). A visible diagnostic CTA offers the native wallpaper chooser when the role is selected but wallpaper is missing; once both are selected it can explicitly open the resolved Android Home, not the Flutter editor. All choices remain user-confirmed; no hidden wallpaper/default launcher mutation.
+
+CI verifies compilation and existing icon-position smoke only. This new two-stage activation must be tested on the owner's phone: set both via OS confirmation, press Home, add/move icon and confirm sand actually changes; return to editor to verify renderer revision. OEM launcher folders still cannot be sensed and Deskland folders remain unsupported. Do not merge as certified without physical evidence.
