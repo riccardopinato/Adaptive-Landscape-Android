@@ -16,6 +16,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- The system may offer this as a Home app, but selection is never automatic. -->
+        <activity
+            android:name="it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity"
+            android:exported="true"
+            android:label="@string/auto_home_caption"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <service
             android:name="it.riccardopinato.adaptivelandscape.AdaptiveWallpaperService"
             android:label="@string/wallpaper_description"

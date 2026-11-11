@@ -1,0 +1,11 @@
+<resources>
+    <string name="auto_home_caption">Adaptive Home — experimental</string>
+    <string name="auto_home_add">Add app</string>
+    <string name="auto_home_manage">Remove app</string>
+    <string name="auto_home_wallpaper">Set live wallpaper</string>
+    <string name="auto_home_not_default">Make Deskland the default Home to enable automatic sand.</string>
+    <string name="auto_home_cannot_open">Unable to open app</string>
+    <string name="auto_home_no_space">Home is full or no apps left to add</string>
+    <string name="auto_home_wallpaper_failed">Could not open live wallpaper settings</string>
+    <string name="auto_home_role_failed">Could not open Home settings</string>
+</resources>

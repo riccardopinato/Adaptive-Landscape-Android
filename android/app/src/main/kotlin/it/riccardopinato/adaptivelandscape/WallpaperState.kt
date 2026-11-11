@@ -41,7 +41,9 @@ internal data class WallpaperState(
         }
         for (zone in zones) {
             val outsideX = max(0.0, abs(x - zone.x).toDouble() - zone.width / 2) / (zone.width * 0.38)
+            if (outsideX > 4.0) continue // Contribution < 1/255 at this distance.
             val outsideY = max(0.0, abs(y - zone.y).toDouble() - zone.height / 2) / (zone.height * 0.38)
+            if (outsideY > 4.0) continue
             sum += exp(-0.5 * (outsideX * outsideX + outsideY * outsideY))
         }
         return sum.coerceIn(0.0, 1.0).toFloat()
@@ -53,8 +55,12 @@ internal data class WallpaperState(
             return if (value.isFinite()) value.coerceIn(min, max).toFloat() else fallback.toFloat()
         }
 
-        fun fromPrefs(prefs: SharedPreferences): WallpaperState {
-            val raw = prefs.getString("config_v2", null)
+        fun fromPrefs(prefs: SharedPreferences, automaticHome: Boolean = false): WallpaperState {
+            // Separate source: never replace or delete the editor's manual profiles.
+            val raw = if (automaticHome)
+                prefs.getString("auto_home_config_v1", null)
+                    ?: prefs.getString("config_v2", null)
+                else prefs.getString("config_v2", null)
             if (!raw.isNullOrBlank()) {
                 try {
                     val json = JSONObject(raw)

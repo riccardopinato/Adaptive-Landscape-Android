@@ -1,0 +1,11 @@
+<resources>
+    <string name="auto_home_caption">Inicio adaptable — experimental</string>
+    <string name="auto_home_add">Añadir app</string>
+    <string name="auto_home_manage">Quitar app</string>
+    <string name="auto_home_wallpaper">Activar fondo animado</string>
+    <string name="auto_home_not_default">Elige Deskland como inicio predeterminado para habilitar la arena automática.</string>
+    <string name="auto_home_cannot_open">No se puede abrir la app</string>
+    <string name="auto_home_no_space">Inicio lleno o sin apps disponibles</string>
+    <string name="auto_home_wallpaper_failed">No se puede abrir el fondo animado</string>
+    <string name="auto_home_role_failed">No se puede abrir la configuración de inicio</string>
+</resources>

@@ -1,0 +1,11 @@
+<resources>
+    <string name="auto_home_caption">Início adaptativo — experimental</string>
+    <string name="auto_home_add">Adicionar app</string>
+    <string name="auto_home_manage">Remover app</string>
+    <string name="auto_home_wallpaper">Definir wallpaper animado</string>
+    <string name="auto_home_not_default">Selecione Deskland como início predefinido para ativar a areia automática.</string>
+    <string name="auto_home_cannot_open">Não foi possível abrir a app</string>
+    <string name="auto_home_no_space">Início cheio ou sem apps disponíveis</string>
+    <string name="auto_home_wallpaper_failed">Não foi possível abrir wallpaper</string>
+    <string name="auto_home_role_failed">Não foi possível abrir as definições de início</string>
+</resources>

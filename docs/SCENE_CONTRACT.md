@@ -49,3 +49,21 @@ schema2 field. It maps each grid center to
 The native Android geometry applies the same equation. Older profiles
 without the key behave exactly as before with `gridInset=0`.
 This is user-calibrated; no launcher APIs or location of real icons are read.
+
+
+### Experimental Auto Home v0.4.7 — separate live source
+
+Desktop/Flutter editor `config_v2` remains user-controlled/manual.
+The opt-in Android native launcher persists its icon grid in
+`adaptive_landscape/auto_home_icons_v1` and writes a temporary scene
+`auto_home_config_v1` with `schema:2`, `scene:beach`,
+`occupied:[]`, and zones generated from the **actual on-screen icon views**.
+The wallpaper reads it instead of `config_v2` *only while Deskland holds
+the Android system Home role* and `auto_home_active_v1` is true.
+The manual settings are never destructively overwritten.
+
+Dragging a tile emits a bounded stream of normalized icon zones; the
+native WallpaperService listener re-bakes its mask. Every island update
+must be physically validated for EGL re-uploads, frame pacing, GPU memory
+and visual quality. Zone counts are bounded to the 5×8 grid; this is not
+a capability to introspect other launchers or their widgets.

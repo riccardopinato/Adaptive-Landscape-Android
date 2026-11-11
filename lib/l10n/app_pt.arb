@@ -86,5 +86,9 @@
   "nativeFramePacingNote": "Taxas alvo no ecrã inicial: Equilibrada ~12fps, Alta ~16fps, Ultra até 20fps; poupança de energia ~8fps. FPS, aquecimento e bateria reais exigem medição no telefone.",
   "qaSnapshotCopy": "Copiar resumo do teste físico",
   "qaSnapshotHint": "Copia apenas definições e estado do renderer, sem capturas, identificadores pessoais ou nomes de apps instaladas.",
-  "qaSnapshotCopied": "Resumo do teste copiado"
+  "qaSnapshotCopied": "Resumo do teste copiado",
+  "adaptiveHomeTitle": "Início adaptativo (experimental)",
+  "adaptiveHomeExplanation": "Na página inicial Deskland, a areia segue as posições reais dos ícones e atualiza-se ao arrastá-los. Um wallpaper animado não pode ler o layout do launcher atual.",
+  "adaptiveHomeButton": "Experimentar início adaptativo",
+  "adaptiveHomeNoImport": "É necessário escolher Deskland como início predefinido. O layout Xiaomi/Samsung não pode ser importado; a Deskland dispõe inicialmente algumas apps. Widgets, pastas e perfis de trabalho ainda não são suportados. Pode voltar ao launcher anterior nas definições Android."
 }

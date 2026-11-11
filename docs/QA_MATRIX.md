@@ -95,3 +95,34 @@ v0.4.2**. See [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V042.md).
 | PERF64 | Replace photo / change quality 10× | No ANR, GPU texture leak, decoder OOM or broken wallpaper |
 | PERF65 | 30-min Home on / unlock / app switching | Battery %, thermal delta, memory peak and crashes |
 | PERF66 | Reboot and process recreation | Photo restored, correct quality, schema2 profiles intact |
+
+
+## Auto Home experimental physical acceptance (not run)
+
+| ID | Scenario | Gate |
+|---|---|---|
+| AH1 | Opt-in role grant/cancel | Cancel leaves current Home unchanged; grant enables only after system selection |
+| AH2 | Open native Home with 12 prefilled apps | Only the user-selected icons, no duplicate/hidden background app scanning |
+| AH3 | Drag icon slowly/rapidly between cells | Coast follows touch while dragging; resettles on snap; no ghost sand |
+| AH4 | Add/remove icon | Sand appears/recedes automatically without opening wallpaper editor |
+| AH5 | Choose previous stock Home in Settings | Manual wallpaper profile restored; app list/data retained |
+| AH6 | Existing Xiaomi/Samsung layout | NOT IMPORTED, no false promise of position copying |
+| AH7 | Widget/folder/work profile | NOT SUPPORTED — blocks production/Home replacement recommendation |
+| AH8 | 30-min stress, 5× repeated moves | No EGL leaks/jank/thermal spikes, review logs on physical phone |
+| AH9 | APK signature/install, default HOME and wallpaper activation | Exact artifact and device model required |
+
+
+## AH10 — original desktop smooth morphological behavior
+
+Source parity: native GLES2 holds previous and target occupancy masks;
+during each drag update the new previous mask is computed from the **currently
+displayed interpolation**, not the previous target (avoids backwards
+teleportation). Separate sampler `uMaskPrevious` and `uMaskMix` perform
+380ms smoothstep. Empty layout and remove transitions eventually go to pure
+sea; `reduceMotion` disables the morph.
+
+**PHYSICAL NOT VERIFIED:** verify by a real recording at 0.25× or step-frame
+that there is no abrupt coastline flash, no stale sea/sand after deletion,
+no lag exceeding the interaction tolerance and no GPU failure/fallback.
+This has not been compared frame-by-frame against user-supplied X videos
+(they were not reproducible in the analysis environment).

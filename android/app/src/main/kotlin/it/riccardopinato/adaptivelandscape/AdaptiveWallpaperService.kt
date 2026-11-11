@@ -8,6 +8,8 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Shader
+import android.app.role.RoleManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
@@ -56,8 +58,20 @@ class AdaptiveWallpaperService : WallpaperService() {
             // Delay is a ceiling target, not measured FPS; CPU/GPU time is extra.
         }
 
+        private fun isAdaptiveHomeSelected(): Boolean {
+            if (!prefs.getBoolean("auto_home_active_v1", false)) return false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val roles = getSystemService(Context.ROLE_SERVICE) as? RoleManager
+                return roles?.isRoleHeld(RoleManager.ROLE_HOME) == true
+            }
+            val home = android.content.Intent(android.content.Intent.ACTION_MAIN)
+                .addCategory(android.content.Intent.CATEGORY_HOME)
+            val match = packageManager.resolveActivity(home, 0)
+            return match?.activityInfo?.packageName == packageName
+        }
+
         private fun reload() {
-            settings = WallpaperState.fromPrefs(prefs)
+            settings = WallpaperState.fromPrefs(prefs, isAdaptiveHomeSelected())
             coastalBeach.invalidate()
             gpuOcean.invalidateLayout()
         }
@@ -71,6 +85,7 @@ class AdaptiveWallpaperService : WallpaperService() {
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
             if (key == "ocean_photo_generation_v1") gpuOcean.invalidatePhotograph()
             if (key == "scene" || key == "occupied" || key == "config_v2" ||
+                key == "auto_home_config_v1" || key == "auto_home_active_v1" ||
                 key == "ocean_photo_generation_v1") {
                 reload()
                 handler.removeCallbacks(frame)
@@ -81,7 +96,10 @@ class AdaptiveWallpaperService : WallpaperService() {
         override fun onVisibilityChanged(isVisible: Boolean) {
             visible = isVisible
             handler.removeCallbacks(frame)
-            if (visible) handler.post(frame)
+            if (visible) {
+                reload() // Re-check the selected Home role after launcher changes.
+                handler.post(frame)
+            }
         }
 
         override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {

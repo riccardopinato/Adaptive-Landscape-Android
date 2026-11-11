@@ -1,0 +1,11 @@
+<resources>
+    <string name="auto_home_caption">Adaptive Startseite — experimentell</string>
+    <string name="auto_home_add">App hinzufügen</string>
+    <string name="auto_home_manage">App entfernen</string>
+    <string name="auto_home_wallpaper">Live-Hintergrund wählen</string>
+    <string name="auto_home_not_default">Deskland als Standard-Startseite auswählen, um automatischen Sand zu aktivieren.</string>
+    <string name="auto_home_cannot_open">App kann nicht geöffnet werden</string>
+    <string name="auto_home_no_space">Startseite voll oder keine Apps verfügbar</string>
+    <string name="auto_home_wallpaper_failed">Live-Hintergrund lässt sich nicht öffnen</string>
+    <string name="auto_home_role_failed">Startbildschirm-Einstellungen nicht verfügbar</string>
+</resources>

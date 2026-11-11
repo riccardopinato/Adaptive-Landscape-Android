@@ -52,6 +52,13 @@ class WallpaperChannel {
     await _channel.invokeMethod<void>('clearOceanPhoto');
   }
 
+  /// Presents the system Home-role dialog. It never silently replaces
+  /// another launcher; the user can cancel without side effects.
+  Future<bool> requestAdaptiveHome() async {
+    if (!supported) return false;
+    return await _channel.invokeMethod<bool>('requestAdaptiveHome') ?? false;
+  }
+
   Future<void> openLiveWallpaperPicker() async {
     if (!supported) throw UnsupportedError('Android is required for live wallpaper.');
     await _channel.invokeMethod<void>('openPicker');

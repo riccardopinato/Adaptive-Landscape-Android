@@ -9,6 +9,7 @@ import android.opengl.EGLContext
 import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.opengl.GLES20
+import android.os.SystemClock
 import android.view.Surface
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -32,7 +33,18 @@ internal class GpuOceanRenderer {
     private var surfaceHeight = 0
     private var shaderProgram = 0
     private var maskTexture = 0
+    private var maskPreviousTexture = 0
     private var photoTexture = 0
+    // Stable resolution avoids framebuffer-size changes and supports smooth
+    // shape morphing when the user moves, adds or removes an icon.
+    private val maskWidth = 160
+    private val maskHeight = 320
+    private var maskFrom: ByteArray? = null
+    private var maskTo: ByteArray? = null
+    private var maskFromHasLand = false
+    private var maskToHasLand = false
+    private var maskTransitionStarted = 0L
+    private val maskMorphDurationMs = 380L
     private var photoFingerprint = Long.MIN_VALUE
     var photographActive = false
         private set
@@ -64,6 +76,8 @@ internal class GpuOceanRenderer {
         uniform float uQuality;
         uniform float uHasLand;
         uniform sampler2D uMask;
+        uniform sampler2D uMaskPrevious;
+        uniform float uMaskMix;
         uniform sampler2D uOceanPhoto;
         uniform float uHasPhoto;
         uniform vec2 uPhotoScale;
@@ -104,7 +118,11 @@ internal class GpuOceanRenderer {
             vec2 uv = gl_FragCoord.xy / max(uResolution, vec2(1.0));
             uv.y = 1.0 - uv.y;
             float t = uPhase;
-            float occ = texture2D(uMask, uv).r * uHasLand;
+            // Blend two privately generated icon masks, not icon graphics.
+            // The previous mask is the last *interpolated* coast, so a new
+            // drag event cannot cause the shore to jump backward.
+            float occ = mix(texture2D(uMaskPrevious, uv).r,
+                            texture2D(uMask, uv).r, uMaskMix) * uHasLand;
 
             // Empty layout -> no sand, foam or fake permanent coast.
             float rough = 0.008 * sin(uv.y * 37.0 + uv.x * 9.0) +
@@ -278,6 +296,14 @@ internal class GpuOceanRenderer {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glGenTextures(1, texture, 0)
+            maskPreviousTexture = texture[0]
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE2)
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, maskPreviousTexture)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+            GLES20.glGenTextures(1, texture, 0)
             photoTexture = texture[0]
             GLES20.glActiveTexture(GLES20.GL_TEXTURE1)
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, photoTexture)
@@ -289,6 +315,11 @@ internal class GpuOceanRenderer {
             photographActive = false
             photographAspect = 1f
             currentConfig = null
+            maskFrom = null
+            maskTo = null
+            maskFromHasLand = false
+            maskToHasLand = false
+            maskTransitionStarted = 0L
             hostSurface = surface
             surfaceWidth = w
             surfaceHeight = h
@@ -308,30 +339,89 @@ internal class GpuOceanRenderer {
         photoFingerprint = Long.MIN_VALUE
     }
 
-    private fun uploadMask(state: WallpaperState) {
-        if (state == currentConfig) return
+    private fun maskMix(now: Long): Float {
+        val elapsed = (now - maskTransitionStarted).coerceAtLeast(0L)
+        val t = (elapsed.toFloat() / maskMorphDurationMs).coerceIn(0f, 1f)
+        return t * t * (3f - 2f * t) // Continuous ease-in/out.
+    }
+
+    private fun blendCurrentMask(now: Long): ByteArray {
+        val target = maskTo ?: return ByteArray(maskWidth * maskHeight * 4)
+        val previous = maskFrom ?: return target.copyOf()
+        val t = maskMix(now)
+        if (t <= 0f) return previous.copyOf()
+        if (t >= 1f) return target.copyOf()
+        val mixed = ByteArray(target.size)
+        for (i in target.indices step 4) {
+            // RGBA grayscale occupancy; only the R channel is used by GLES.
+            val from = previous[i].toInt() and 255
+            val to = target[i].toInt() and 255
+            val v = (from + (to - from) * t).toInt().coerceIn(0, 255).toByte()
+            mixed[i] = v
+            mixed[i + 1] = v
+            mixed[i + 2] = v
+            mixed[i + 3] = 255.toByte()
+        }
+        return mixed
+    }
+
+    private fun fillMask(state: WallpaperState): ByteArray {
         val empty = state.occupied.isEmpty() && state.zones.isEmpty()
-        val w = if (empty) 1 else 192
-        val h = if (empty) 1 else 384
-        val bytes = ByteBuffer.allocateDirect(w * h * 4)
-            .order(ByteOrder.nativeOrder())
-        for (row in 0 until h) {
-            val y = (row + 0.5f) / h
-            for (col in 0 until w) {
-                val x = (col + 0.5f) / w
-                val value = if (empty) 0 else
-                    (state.influence(x, y) * 255f).toInt().coerceIn(0, 255)
-                bytes.put(value.toByte())
-                bytes.put(value.toByte())
-                bytes.put(value.toByte())
-                bytes.put(255.toByte())
+        val data = ByteArray(maskWidth * maskHeight * 4)
+        // Empty layout is an explicitly black mask; no phantom island.
+        if (!empty) {
+            for (row in 0 until maskHeight) {
+                val y = (row + 0.5f) / maskHeight
+                for (col in 0 until maskWidth) {
+                    val x = (col + 0.5f) / maskWidth
+                    val v = (state.influence(x, y) * 255f).toInt()
+                        .coerceIn(0, 255).toByte()
+                    val i = (row * maskWidth + col) * 4
+                    data[i] = v
+                    data[i + 1] = v
+                    data[i + 2] = v
+                }
             }
         }
-        bytes.position(0)
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, maskTexture)
+        for (i in 3 until data.size step 4) data[i] = 255.toByte()
+        return data
+    }
+
+    private fun uploadMaskTexture(textureId: Int, unit: Int, bytes: ByteArray) {
+        GLES20.glActiveTexture(unit)
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
+        val buffer = ByteBuffer.allocateDirect(bytes.size)
+            .order(ByteOrder.nativeOrder())
+        buffer.put(bytes)
+        buffer.position(0)
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
-            w, h, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, bytes)
+            maskWidth, maskHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,
+            buffer)
+    }
+
+    private fun uploadMask(state: WallpaperState) {
+        if (state == currentConfig) return
+        val now = SystemClock.uptimeMillis()
+        val target = fillMask(state)
+        val newHasLand = state.occupied.isNotEmpty() || state.zones.isNotEmpty()
+        if (maskTo == null) {
+            // First frame must have no transition from unknown/GPU garbage.
+            maskFrom = target.copyOf()
+            maskFromHasLand = newHasLand
+            maskTransitionStarted = now - maskMorphDurationMs
+        } else {
+            // On every drag update, use the actual visible blended mask as
+            // the next 'from' frame. This avoids coastline teleportation.
+            val elapsedMix = maskMix(now)
+            maskFrom = blendCurrentMask(now)
+            maskFromHasLand =
+                (maskFromHasLand && elapsedMix < 1f) || maskToHasLand
+            maskTransitionStarted = now
+        }
+        maskTo = target
+        maskToHasLand = newHasLand
+        uploadMaskTexture(maskPreviousTexture, GLES20.GL_TEXTURE2, maskFrom!!)
+        uploadMaskTexture(maskTexture, GLES20.GL_TEXTURE0, target)
         currentConfig = state
     }
 
@@ -408,7 +498,11 @@ internal class GpuOceanRenderer {
             GLES20.glUniform2f(GLES20.glGetUniformLocation(shaderProgram, "uPhotoScale"),
                 minOf(1f, screenAspect / photographAspect),
                 minOf(1f, photographAspect / screenAspect))
-            f("uHasLand", if (state.occupied.isEmpty() && state.zones.isEmpty()) 0f else 1f)
+            val mixAmount = if (state.reduceMotion) 1f else
+                maskMix(SystemClock.uptimeMillis())
+            f("uMaskMix", mixAmount)
+            f("uHasLand", if (maskToHasLand ||
+                (maskFromHasLand && mixAmount < 1f)) 1f else 0f)
             f("uPalette", when (state.palette) { "sunset" -> 1f; "mint" -> 2f; else -> 0f })
             f("uQuality", when (state.renderQuality) {
                 "balanced" -> 0f; "high" -> 1f; else -> 2f
@@ -416,6 +510,9 @@ internal class GpuOceanRenderer {
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, maskTexture)
             GLES20.glUniform1i(GLES20.glGetUniformLocation(shaderProgram, "uMask"), 0)
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE2)
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, maskPreviousTexture)
+            GLES20.glUniform1i(GLES20.glGetUniformLocation(shaderProgram, "uMaskPrevious"), 2)
             GLES20.glActiveTexture(GLES20.GL_TEXTURE1)
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, photoTexture)
             GLES20.glUniform1i(GLES20.glGetUniformLocation(shaderProgram, "uOceanPhoto"), 1)
@@ -452,6 +549,10 @@ internal class GpuOceanRenderer {
                 GLES20.glDeleteTextures(1, intArrayOf(maskTexture), 0)
                 maskTexture = 0
             }
+            if (maskPreviousTexture != 0) {
+                GLES20.glDeleteTextures(1, intArrayOf(maskPreviousTexture), 0)
+                maskPreviousTexture = 0
+            }
             if (photoTexture != 0) {
                 GLES20.glDeleteTextures(1, intArrayOf(photoTexture), 0)
                 photoTexture = 0
@@ -475,6 +576,11 @@ internal class GpuOceanRenderer {
         surfaceWidth = 0
         surfaceHeight = 0
         currentConfig = null
+        maskFrom = null
+        maskTo = null
+        maskFromHasLand = false
+        maskToHasLand = false
+        maskTransitionStarted = 0L
         photoFingerprint = Long.MIN_VALUE
         photographActive = false
         photographAspect = 1f
