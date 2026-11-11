@@ -110,3 +110,19 @@ v0.4.2**. See [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V042.md).
 | AH7 | Widget/folder/work profile | NOT SUPPORTED — blocks production/Home replacement recommendation |
 | AH8 | 30-min stress, 5× repeated moves | No EGL leaks/jank/thermal spikes, review logs on physical phone |
 | AH9 | APK signature/install, default HOME and wallpaper activation | Exact artifact and device model required |
+
+
+## AH10 — original desktop smooth morphological behavior
+
+Source parity: native GLES2 holds previous and target occupancy masks;
+during each drag update the new previous mask is computed from the **currently
+displayed interpolation**, not the previous target (avoids backwards
+teleportation). Separate sampler `uMaskPrevious` and `uMaskMix` perform
+380ms smoothstep. Empty layout and remove transitions eventually go to pure
+sea; `reduceMotion` disables the morph.
+
+**PHYSICAL NOT VERIFIED:** verify by a real recording at 0.25× or step-frame
+that there is no abrupt coastline flash, no stale sea/sand after deletion,
+no lag exceeding the interaction tolerance and no GPU failure/fallback.
+This has not been compared frame-by-frame against user-supplied X videos
+(they were not reproducible in the analysis environment).
