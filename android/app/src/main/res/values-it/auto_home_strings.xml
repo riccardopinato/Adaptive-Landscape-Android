@@ -13,4 +13,11 @@
     <string name="auto_home_change_home">Cambia launcher</string>
     <string name="auto_home_page">Pagina %1$d/%2$d</string>
     <string name="auto_home_wallpaper_needed">Imposta lo sfondo animato Deskland per attivare la sabbia adattiva.</string>
+    <string name="auto_home_widgets">Widget</string>
+    <string name="auto_home_widget_add">Aggiungi widget</string>
+    <string name="auto_home_widget_manage">Gestisci widget</string>
+    <string name="auto_home_widget_unavailable">Nessun widget disponibile</string>
+    <string name="auto_home_widget_move">Sposta alla pagina seguente</string>
+    <string name="auto_home_widget_resize">Aumenta dimensioni</string>
+    <string name="auto_home_widget_remove">Rimuovi widget</string>
 </resources>
