@@ -11,4 +11,6 @@
     <string name="auto_home_apps">Applications</string>
     <string name="auto_home_search">Rechercher des applications</string>
     <string name="auto_home_change_home">Changer d\'accueil</string>
+    <string name="auto_home_page">Page %1$d/%2$d</string>
+    <string name="auto_home_wallpaper_needed">Choisissez le fond animé Deskland pour activer le sable adaptatif.</string>
 </resources>
