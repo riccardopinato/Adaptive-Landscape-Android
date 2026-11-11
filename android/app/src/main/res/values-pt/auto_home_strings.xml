@@ -8,4 +8,9 @@
     <string name="auto_home_no_space">Início cheio ou sem apps disponíveis</string>
     <string name="auto_home_wallpaper_failed">Não foi possível abrir wallpaper</string>
     <string name="auto_home_role_failed">Não foi possível abrir as definições de início</string>
+    <string name="auto_home_apps">Apps</string>
+    <string name="auto_home_search">Pesquisar apps</string>
+    <string name="auto_home_change_home">Alterar inicial</string>
+    <string name="auto_home_page">Página %1$d/%2$d</string>
+    <string name="auto_home_wallpaper_needed">Selecione o fundo animado Deskland para ativar a areia.</string>
 </resources>

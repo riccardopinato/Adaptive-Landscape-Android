@@ -8,4 +8,9 @@
     <string name="auto_home_no_space">Startseite voll oder keine Apps verfügbar</string>
     <string name="auto_home_wallpaper_failed">Live-Hintergrund lässt sich nicht öffnen</string>
     <string name="auto_home_role_failed">Startbildschirm-Einstellungen nicht verfügbar</string>
+    <string name="auto_home_apps">Apps</string>
+    <string name="auto_home_search">Apps suchen</string>
+    <string name="auto_home_change_home">Startbildschirm wechseln</string>
+    <string name="auto_home_page">Seite %1$d/%2$d</string>
+    <string name="auto_home_wallpaper_needed">Deskland-Live-Hintergrund für den adaptiven Sand auswählen.</string>
 </resources>

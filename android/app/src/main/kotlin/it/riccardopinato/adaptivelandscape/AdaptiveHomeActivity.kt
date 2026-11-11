@@ -16,14 +16,19 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
+import android.os.UserHandle
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.ArrayAdapter
+import android.widget.ListView
+import android.widget.SearchView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -65,15 +70,39 @@ class AdaptiveHomeActivity : Activity() {
     private val publishPending = Runnable { publishHomePositions() }
     private var lastWidth = 0
     private var lastHeight = 0
+    private var callbackRegistered = false
+    private val packageCallback = object : LauncherApps.Callback() {
+        override fun onPackageAdded(packageName: String, user: UserHandle) = refreshPackages()
+        override fun onPackageRemoved(packageName: String, user: UserHandle) = refreshPackages()
+        override fun onPackageChanged(packageName: String, user: UserHandle) = refreshPackages()
+        override fun onPackagesAvailable(names: Array<out String>, user: UserHandle,
+                                         replacing: Boolean) = refreshPackages()
+        override fun onPackagesUnavailable(names: Array<out String>, user: UserHandle,
+                                           replacing: Boolean) = refreshPackages()
+    }
+
+    private fun refreshPackages() {
+        handler.post {
+            if (!isFinishing && !isDestroyed) {
+                loadLaunchableApps()
+                restoreSavedLayout()
+                renderHome()
+            }
+        }
+    }
 
     private val columns = 5
     private val rows = 8
     private val topFraction = 0.115
     private val spanFraction = 0.765
-    private val maxSlots = columns * rows
+    private val pageSlots = columns * rows
+    private val maxPages = 3
+    private val maxSlots = pageSlots * maxPages
+    private var currentPage = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        currentPage = prefs.getInt("auto_home_page_v1", 0).coerceIn(0, maxPages - 1)
         window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         window.statusBarColor = Color.TRANSPARENT
@@ -89,6 +118,30 @@ class AdaptiveHomeActivity : Activity() {
             clipToPadding = false
         }
         setContentView(canvas)
+        var swipeStartX = 0f
+        canvas.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    swipeStartX = event.x
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    val change = event.x - swipeStartX
+                    if (abs(change) > 72 * dp) {
+                        switchPage(currentPage + if (change < 0) 1 else -1)
+                    }
+                    true
+                }
+                else -> true
+            }
+        }
+        // Subscribe to launcher package changes; do not poll installed apps.
+        try {
+            launcherApps.registerCallback(packageCallback, handler)
+            callbackRegistered = true
+        } catch (_: RuntimeException) {
+            // A refresh on resume still supports a functioning Home.
+        }
         canvas.viewTreeObserver.addOnGlobalLayoutListener {
             if (canvas.width > 0 && canvas.height > 0 &&
                 (canvas.width != lastWidth || canvas.height != lastHeight)) {
@@ -114,6 +167,7 @@ class AdaptiveHomeActivity : Activity() {
 
     override fun onDestroy() {
         handler.removeCallbacks(publishPending)
+        if (callbackRegistered) launcherApps.unregisterCallback(packageCallback)
         super.onDestroy()
     }
 
@@ -128,7 +182,11 @@ class AdaptiveHomeActivity : Activity() {
 
     private fun loadLaunchableApps() {
         available = try {
-            launcherApps.getActivityList(null, Process.myUserHandle())
+            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                launcherApps.profiles else listOf(Process.myUserHandle())).flatMap { user ->
+                try { launcherApps.getActivityList(null, user) }
+                catch (_: SecurityException) { emptyList() }
+            }
                 .filter { it.componentName.packageName != packageName }
                 .distinctBy { it.componentName.flattenToString() }
                 .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.label.toString() })
@@ -178,8 +236,9 @@ class AdaptiveHomeActivity : Activity() {
     }
 
     private fun cellCenter(cell: Int): Pair<Float, Float> {
-        val col = cell % columns
-        val row = cell / columns
+        val localCell = cell % pageSlots
+        val col = localCell % columns
+        val row = localCell / columns
         return Pair((col + 0.5f) / columns,
             (topFraction + (row + 0.5) * spanFraction / rows).toFloat())
     }
@@ -200,6 +259,7 @@ class AdaptiveHomeActivity : Activity() {
         views.clear()
         val byId = available.associateBy { it.componentName.flattenToString() }
         for (item in placed) {
+            if (item.cell / pageSlots != currentPage) continue
             val info = byId[item.id] ?: continue
             val tile = makeTile(info)
             canvas.addView(tile, FrameLayout.LayoutParams(iconWidth(), iconHeight()))
@@ -236,6 +296,9 @@ class AdaptiveHomeActivity : Activity() {
         }
         vertical.addView(label, LinearLayout.LayoutParams(-1, -2))
         vertical.contentDescription = info.label
+        vertical.isClickable = true
+        vertical.isFocusable = true
+        vertical.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         return vertical
     }
 
@@ -245,7 +308,16 @@ class AdaptiveHomeActivity : Activity() {
         var startLeft = 0f
         var startTop = 0f
         var moving = false
+        var armed = false
+        var cancelledByGesture = false
         val slop = ViewConfiguration.get(this).scaledTouchSlop.toFloat()
+        val armDrag = Runnable {
+            if (!cancelledByGesture) {
+                armed = true
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            }
+        }
+        view.setOnClickListener { startApp(info) }
         view.setOnTouchListener { v, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -254,12 +326,19 @@ class AdaptiveHomeActivity : Activity() {
                     startLeft = v.x
                     startTop = v.y
                     moving = false
+                    armed = false
+                    cancelledByGesture = false
+                    handler.postDelayed(armDrag, ViewConfiguration.getLongPressTimeout().toLong())
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val dx = event.rawX - downRawX
                     val dy = event.rawY - downRawY
-                    if (!moving && (abs(dx) > slop || abs(dy) > slop)) moving = true
+                    if (!armed && (abs(dx) > slop || abs(dy) > slop)) {
+                        cancelledByGesture = true
+                        handler.removeCallbacks(armDrag)
+                    }
+                    if (armed && (abs(dx) > slop || abs(dy) > slop)) moving = true
                     if (moving) {
                         draggingId = id
                         v.x = (startLeft + dx).coerceIn(0f,
@@ -271,17 +350,20 @@ class AdaptiveHomeActivity : Activity() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
+                    handler.removeCallbacks(armDrag)
                     if (moving) {
                         snapToNearestCell(id, v)
                         draggingId = null
                         saveLayout()
                         renderHome()
-                    } else {
-                        startApp(info)
+                    } else if (!cancelledByGesture) {
+                        // Supports TalkBack and keyboard activation through click semantics.
+                        v.performClick()
                     }
                     true
                 }
                 MotionEvent.ACTION_CANCEL -> {
+                    handler.removeCallbacks(armDrag)
                     draggingId = null
                     renderHome()
                     true
@@ -297,7 +379,7 @@ class AdaptiveHomeActivity : Activity() {
         val col = (centerX * columns).toInt().coerceIn(0, columns - 1)
         val row = ((centerY - topFraction) / spanFraction * rows)
             .toInt().coerceIn(0, rows - 1)
-        val dest = row * columns + col
+        val dest = currentPage * pageSlots + row * columns + col
         val moving = placed.firstOrNull { it.id == id } ?: return
         val previousCell = moving.cell
         val occupant = placed.firstOrNull { it.id != id && it.cell == dest }
@@ -307,11 +389,75 @@ class AdaptiveHomeActivity : Activity() {
 
     private fun startApp(info: LauncherActivityInfo) {
         try {
-            launcherApps.startMainActivity(info.componentName, Process.myUserHandle(),
+            launcherApps.startMainActivity(info.componentName, info.user,
                 null, null)
         } catch (_: Exception) {
             Toast.makeText(this, R.string.auto_home_cannot_open, Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun switchPage(target: Int) {
+        val next = target.coerceIn(0, maxPages - 1)
+        if (next == currentPage) return
+        currentPage = next
+        prefs.edit().putInt("auto_home_page_v1", currentPage).apply()
+        renderHome()
+    }
+
+    private fun hasAdaptiveWallpaper(): Boolean = try {
+        val current = WallpaperManager.getInstance(this).wallpaperInfo
+        current?.packageName == packageName &&
+            current.serviceName == AdaptiveWallpaperService::class.java.name
+    } catch (_: Exception) {
+        false
+    }
+
+    private fun showAppDrawer() {
+        if (available.isEmpty()) {
+            Toast.makeText(this, R.string.auto_home_no_space, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((12 * dp).roundToInt(), (8 * dp).roundToInt(),
+                (12 * dp).roundToInt(), 0)
+        }
+        val search = SearchView(this).apply {
+            queryHint = getString(R.string.auto_home_search)
+            isIconified = false
+        }
+        val list = ListView(this)
+        val matches = ArrayList(available)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1,
+            matches.map { it.label.toString() }.toMutableList())
+        list.adapter = adapter
+        container.addView(search)
+        container.addView(list, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, (350 * dp).roundToInt()))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_apps)
+            .setView(container)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        list.setOnItemClickListener { _, _, position, _ ->
+            matches.getOrNull(position)?.let { startApp(it) }
+            dialog.dismiss()
+        }
+        search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean = true
+            override fun onQueryTextChange(query: String?): Boolean {
+                val term = query.orEmpty().trim()
+                matches.clear()
+                matches.addAll(available.filter {
+                    term.isEmpty() || it.label.contains(term, ignoreCase = true)
+                })
+                adapter.clear()
+                adapter.addAll(matches.map { it.label.toString() })
+                adapter.notifyDataSetChanged()
+                return true
+            }
+        })
+        dialog.show()
     }
 
     private fun chromeButton(title: String, action: () -> Unit): TextView =
@@ -337,13 +483,47 @@ class AdaptiveHomeActivity : Activity() {
             Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
                 topMargin = (40 * dp).roundToInt()
             })
+        val pageButton = chromeButton(
+            getString(R.string.auto_home_page, currentPage + 1, maxPages)) {
+            switchPage((currentPage + 1) % maxPages)
+        }
+        canvas.addView(pageButton, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT, (38 * dp).roundToInt(),
+            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+                bottomMargin = (96 * dp).roundToInt()
+            })
+        if (isDefault && !hasAdaptiveWallpaper()) {
+            val help = chromeButton(getString(R.string.auto_home_wallpaper_needed)) {
+                selectWallpaper()
+            }
+            canvas.addView(help, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, (45 * dp).roundToInt(),
+                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+                    bottomMargin = (140 * dp).roundToInt()
+                })
+        }
         val bottom = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
         }
-        bottom.addView(chromeButton(getString(R.string.auto_home_add)) { showAppPicker() })
-        bottom.addView(chromeButton(getString(R.string.auto_home_manage)) { showRemovePicker() })
-        bottom.addView(chromeButton(getString(R.string.auto_home_wallpaper)) { selectWallpaper() })
+        val actions = listOf<Pair<Int, () -> Unit>>(
+            R.string.auto_home_apps to { showAppDrawer() },
+            R.string.auto_home_add to { showAppPicker() },
+            R.string.auto_home_manage to { showRemovePicker() },
+            R.string.auto_home_wallpaper to { selectWallpaper() }
+        )
+        for ((label, action) in actions) {
+            bottom.addView(chromeButton(getString(label), action),
+                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+        }
+        val switchHome = chromeButton(getString(R.string.auto_home_change_home)) {
+            openHomeSettings()
+        }
+        canvas.addView(switchHome, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT, (40 * dp).roundToInt(),
+            Gravity.TOP or Gravity.END).apply {
+                topMargin = (40 * dp).roundToInt()
+            })
         canvas.addView(bottom, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, (54 * dp).roundToInt(),
             Gravity.BOTTOM).apply { bottomMargin = (36 * dp).roundToInt() })
@@ -370,7 +550,8 @@ class AdaptiveHomeActivity : Activity() {
             .setTitle(R.string.auto_home_add)
             .setItems(options.map { it.label.toString() }.toTypedArray()) { _, index ->
                 val used = placed.map { it.cell }.toSet()
-                val free = (0 until maxSlots).firstOrNull { it !in used }
+                val free = (currentPage * pageSlots until (currentPage + 1) * pageSlots)
+                    .firstOrNull { it !in used }
                 if (free != null) {
                     placed.add(PlacedIcon(options[index].componentName.flattenToString(), free))
                     saveLayout()
@@ -447,7 +628,7 @@ class AdaptiveHomeActivity : Activity() {
             JSONObject()
         }
         base.put("schema", 2)
-            .put("scene", "beach")
+            .put("scene", if (base.optString("scene") == "meadow") "meadow" else "beach")
             .put("occupied", JSONArray())
             .put("zones", zones)
         val next = base.toString()
