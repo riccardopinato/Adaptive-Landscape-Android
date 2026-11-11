@@ -390,9 +390,13 @@ internal class GpuOceanRenderer {
     private fun uploadMaskTexture(textureId: Int, unit: Int, bytes: ByteArray) {
         GLES20.glActiveTexture(unit)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
+        val buffer = ByteBuffer.allocateDirect(bytes.size)
+            .order(ByteOrder.nativeOrder())
+        buffer.put(bytes)
+        buffer.position(0)
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
             maskWidth, maskHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,
-            ByteBuffer.wrap(bytes))
+            buffer)
     }
 
     private fun uploadMask(state: WallpaperState) {
