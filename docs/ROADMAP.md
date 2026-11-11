@@ -150,3 +150,35 @@ Detailed user test contract: [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V04
 - [PENDING CI] Full stacked source validation.
 - [PENDING HUMAN] Physical device test, visual acceptance and signing.
 - [MERGE BLOCKED] PR #13/#16/#17/#18/#19/#20 and prephysical chain.
+
+
+## Adaptive Live Home v0.4.7 — product-scope pivot / experimental
+
+### A. Implemented prototype (not yet device verified)
+
+- [CODED] Optional Android `CATEGORY_HOME` Activity and user-mediated
+  `RoleManager.ROLE_HOME` selection, with fallback to Home Settings pre-Q.
+- [CODED] Privately queried launchable apps through `LauncherApps`; no
+  QUERY_ALL_PACKAGES or AccessibilityService.
+- [CODED] First-run automatic 5×8 grid seed; app picker/add/remove; tap
+  to launch; drag/drop icons with collision swap and live zone updates.
+- [CODED] Independent `auto_home_config_v1` and manual `config_v2` source,
+  Auto Home zones used only while Deskland is selected as system Home.
+- [CODED] Six native resource locales and Flutter opt-in strings.
+- [PENDING CI] Android compilation, Flutter test, Web compatibility, APK.
+- [PENDING PHYSICAL] Actual launcher selection, image/scene visibility,
+  precision alignment during drag and sustained performance.
+
+### B. Blocking work before usable launcher release
+
+- [TODO] Proper app widget hosting/binding/resizing using AppWidgetHost;
+  match every widget's actual bounding rectangle, no manual sand marking.
+- [TODO] Multiple Home pages, favorites/dock, folders, proper drag gestures,
+  uninstall/change listening, launcher shortcuts, backup/restore.
+- [TODO] App icon set and positions of current OEM Home cannot be imported
+  without unsupported/private access. User must know this before opting in.
+- [TODO] OEM navigation, accessibility, TalkBack, keyboard/D-pad support,
+  widget/provider lifecycle, tablet/rotation/insets.
+- [TODO] Actual physical QA, battery/thermal, API/Google Play policy gate.
+
+Do not treat the above TODOs as implemented.
