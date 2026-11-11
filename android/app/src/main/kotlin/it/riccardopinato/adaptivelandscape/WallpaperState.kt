@@ -53,8 +53,12 @@ internal data class WallpaperState(
             return if (value.isFinite()) value.coerceIn(min, max).toFloat() else fallback.toFloat()
         }
 
-        fun fromPrefs(prefs: SharedPreferences): WallpaperState {
-            val raw = prefs.getString("config_v2", null)
+        fun fromPrefs(prefs: SharedPreferences, automaticHome: Boolean = false): WallpaperState {
+            // Separate source: never replace or delete the editor's manual profiles.
+            val raw = if (automaticHome)
+                prefs.getString("auto_home_config_v1", null)
+                    ?: prefs.getString("config_v2", null)
+                else prefs.getString("config_v2", null)
             if (!raw.isNullOrBlank()) {
                 try {
                     val json = JSONObject(raw)
