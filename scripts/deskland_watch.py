@@ -50,8 +50,8 @@ def investigate(repo: str):
     pulls = api(f"/repos/{repo}/pulls?state=open&per_page=100")
     relevant = [
         pr for pr in pulls
-        if (pr.get("head", {}).get("ref", "").startswith(("feat/auto-home", "fix/deskland"))
-            or pr.get("number") in (23, 24))
+        if (pr.get("head", {}).get("ref", "").startswith(("feat/auto-home", "feat/deskland", "fix/deskland"))
+            or pr.get("number") in (23, 24, 26))
     ]
     if not relevant:
         return [], "No active Deskland audit PR was found. Verify the 13 audit gates manually."
