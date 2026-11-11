@@ -116,9 +116,19 @@ def main():
     wait("native Home resumed after editor",lambda:
          foreground_is("AdaptiveHomeActivity") and node_text("Add app"))
     ok("home_key_returns_to_native_launcher")
-    z=wait("icon geometry",lambda:(v if (v:=zones()) else None))
-    base=len(z)
-    ok("live_icon_geometry",str(base)+" zones")
+    # A real user's Home must not be auto-populated with the alphabetically
+    # first twelve installed apps. They are not the user's OEM Home.
+    wait("unseeded Home publishes empty scene",lambda:"auto_home_config_v1" in pref())
+    assert n_zones(0), "Fresh Home must contain no auto-generated stock icons"
+    assert json.loads(pref().get("auto_home_icons_v1","[]"))==[]
+    ok("real_home_empty_first_run")
+    # User-curated selection from the installed-app drawer, not simulation.
+    press("Add app"); tap(wait("first installed app",first_row))
+    wait("first user-pinned icon publishes real zone",lambda:n_zones(1))
+    press("Add app"); tap(wait("second installed app",first_row))
+    wait("second user-pinned icon publishes zone",lambda:n_zones(2))
+    base=2
+    ok("real_home_user_pins",str(base)+" selected apps")
     press("Page 1/3"); wait("second page",lambda:node_text("Page 2/3"))
     wait("page two clears sand",lambda:n_zones(0)); ok("empty_page_zero_sand")
     press("Page 2/3"); wait("third page",lambda:node_text("Page 3/3"))
@@ -166,13 +176,36 @@ def main():
     wait("Home retained after drag",lambda:node_text("Add app"))
     assert PKG in adb("shell","cmd","role","get-role-holders",ROLE),"Deskland lost HOME role"
     wait("drag writes new layout",lambda:pref().get("auto_home_icons_v1")!=saved)
-    wait("drag preserves geometry",lambda:n_zones(base))
-    ok("long_press_drag")
+    def folder_created():
+        data=json.loads(pref().get("auto_home_folders_v1","[]"))
+        return len(data)==1 and len(data[0]["members"])==2
+    wait("drag app onto app creates real persisted folder",folder_created)
+    wait("folder replaces two icon sand zones",lambda:n_zones(base-1))
+    ok("long_press_drag_and_folder",str(base)+" app icons -> 1 folder")
+    # Dock uses an installed app, persists across different pages and
+    # publishes a real zone on every page. This is not an OEM dock import.
+    press("Dock")
+    press("Add app to dock")
+    tap(wait("dock installed app picker",first_row))
+    def dock_populated():
+        return len(json.loads(pref().get("auto_home_dock_v1","[]")))==1
+    wait("real dock persisted",dock_populated)
+    wait("dock and folder geometry",lambda:n_zones(2))
+    ok("dock_real_app_persisted")
+    press("Page 1/3")
+    wait("second page",lambda:node_text("Page 2/3"))
+    wait("dock follows page",lambda:n_zones(1))
+    ok("dock_visible_across_pages")
+    press("Page 2/3")
+    press("Page 3/3")
+    wait("folder and dock restored",lambda:n_zones(2))
+    ok("home_folder_dock_roundtrip")
     adb("shell","am","force-stop",PKG)
     adb("shell","input","keyevent","KEYCODE_HOME")
     wait("Home after process kill",lambda:node_text("Add app"))
-    wait("geometry after process kill",lambda:n_zones(base))
-    ok("process_restart")
+    wait("geometry after process kill",lambda:n_zones(2))
+    assert folder_created() and dock_populated(), "Folder/dock lost after process kill"
+    ok("process_restart_persisted_user_home")
     if holders:
         adb("shell","cmd","role","add-role-holder",ROLE,holders[0])
         wait("original Home restored",lambda:holders[0] in adb("shell","cmd","role","get-role-holders",ROLE))
@@ -207,5 +240,5 @@ finally:
                 steps["teardown_home_role"]="attempted (ephemeral emulator)"
         except Exception as err:
             steps["teardown_home_role"]="FAILED: "+type(err).__name__
-    OUT.write_text(json.dumps({"base_candidate":"6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd","built_source_sha":"1810bc3a948c86fa00476e502f232d7c3ad49162","test_harness_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
+    OUT.write_text(json.dumps({"base_candidate":"6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd","built_source_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"test_harness_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
     print("Evidence record:",OUT,flush=True)
