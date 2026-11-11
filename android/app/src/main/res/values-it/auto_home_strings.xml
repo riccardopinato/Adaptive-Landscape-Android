@@ -11,4 +11,6 @@
     <string name="auto_home_apps">App</string>
     <string name="auto_home_search">Cerca app</string>
     <string name="auto_home_change_home">Cambia launcher</string>
+    <string name="auto_home_page">Pagina %1$d/%2$d</string>
+    <string name="auto_home_wallpaper_needed">Imposta lo sfondo animato Deskland per attivare la sabbia adattiva.</string>
 </resources>
