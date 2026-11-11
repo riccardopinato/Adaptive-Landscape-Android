@@ -8,4 +8,7 @@
     <string name="auto_home_no_space">Inicio lleno o sin apps disponibles</string>
     <string name="auto_home_wallpaper_failed">No se puede abrir el fondo animado</string>
     <string name="auto_home_role_failed">No se puede abrir la configuración de inicio</string>
+    <string name="auto_home_apps">Aplicaciones</string>
+    <string name="auto_home_search">Buscar aplicaciones</string>
+    <string name="auto_home_change_home">Cambiar inicio</string>
 </resources>
