@@ -1,5 +1,5 @@
 <resources>
-    <string name="auto_home_caption">Inicio adaptable — experimental</string>
+    <string name="auto_home_caption">Inicio adaptable</string>
     <string name="auto_home_add">Añadir app</string>
     <string name="auto_home_manage">Quitar app</string>
     <string name="auto_home_wallpaper">Activar fondo animado</string>

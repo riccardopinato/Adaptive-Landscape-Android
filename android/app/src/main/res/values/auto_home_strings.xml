@@ -1,5 +1,5 @@
 <resources>
-    <string name="auto_home_caption">Adaptive Home — experimental</string>
+    <string name="auto_home_caption">Adaptive Home</string>
     <string name="auto_home_add">Add app</string>
     <string name="auto_home_manage">Remove app</string>
     <string name="auto_home_wallpaper">Set live wallpaper</string>

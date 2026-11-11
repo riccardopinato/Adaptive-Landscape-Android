@@ -1,5 +1,5 @@
 <resources>
-    <string name="auto_home_caption">Home adattiva — sperimentale</string>
+    <string name="auto_home_caption">Home adattiva</string>
     <string name="auto_home_add">Aggiungi app</string>
     <string name="auto_home_manage">Rimuovi app</string>
     <string name="auto_home_wallpaper">Imposta sfondo live</string>

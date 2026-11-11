@@ -1,5 +1,5 @@
 <resources>
-    <string name="auto_home_caption">Adaptive Startseite — experimentell</string>
+    <string name="auto_home_caption">Adaptive Startseite</string>
     <string name="auto_home_add">App hinzufügen</string>
     <string name="auto_home_manage">App entfernen</string>
     <string name="auto_home_wallpaper">Live-Hintergrund wählen</string>

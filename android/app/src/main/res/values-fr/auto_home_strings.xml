@@ -1,5 +1,5 @@
 <resources>
-    <string name="auto_home_caption">Accueil adaptatif — expérimental</string>
+    <string name="auto_home_caption">Accueil adaptatif</string>
     <string name="auto_home_add">Ajouter une appli</string>
     <string name="auto_home_manage">Retirer une appli</string>
     <string name="auto_home_wallpaper">Activer le fond animé</string>
