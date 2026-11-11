@@ -30,6 +30,7 @@ import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONArray
 import org.json.JSONObject
+import it.riccardopinato.adaptive_landscape.R
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
