@@ -140,12 +140,14 @@ def main():
     press("Add app"); tap(wait("app picker",first_row))
     wait("app added",lambda:n_zones(base)); ok("add_app_new_sand")
     controls=("Widgets","Apps","Add app","Remove app","Set live wallpaper","Change Home launcher","Adaptive Home")
-    def icon():
-        # Native app tiles are LinearLayout. A description-only search can
-        # accidentally select a system navigation control outside the Home.
-        return next((n for n in nodes() if n.get("class")=="android.widget.LinearLayout" and n.get("content-desc") and n.get("clickable")=="true" and not n.get("content-desc").startswith(controls) and not n.get("content-desc").startswith("Page ")),None)
-    target=wait("draggable app icon",icon)
+    def icon_nodes():
+        # Use ACTUAL UI coordinates for both apps. The first entry may be
+        # cell 1 after remove/re-add; x + one grid column could be empty.
+        return [n for n in nodes() if n.get("class")=="android.widget.LinearLayout" and n.get("content-desc") and n.get("clickable")=="true" and not n.get("content-desc").startswith(controls) and not n.get("content-desc").startswith("Page ")]
+    target=wait("draggable app icon",lambda:(v[0] if len(v:=icon_nodes())>=2 else None))
     x,y=point(target)
+    destination_x,destination_y=point(icon_nodes()[1])
+    assert (x,y)!=(destination_x,destination_y),"Icons overlap before dragging"
     assert target.get("class")=="android.widget.LinearLayout"
     assert PKG in adb("shell","cmd","role","get-role-holders",ROLE)
     ok("tile_targeted_for_drag","native clickable tile")
@@ -153,18 +155,15 @@ def main():
     adb("shell","input","touchscreen","swipe",str(x),str(y),str(x),str(y),"900")
     wait("Home retained after stationary long press",lambda:node_text("Add app"))
     ok("long_press_no_unwanted_launch")
-    dimensions=re.search(r"(\d+)x(\d+)",adb("shell","wm","size"))
-    assert dimensions
-    width=int(dimensions.group(1)); step=round(width/5)
-    destination=x+step if x+step<width*.90 else x-step
     saved=pref()["auto_home_icons_v1"]
+    print("DRAG_TARGETS",json.dumps({"start": [x,y],"drop": [destination_x,destination_y]}),flush=True)
     # One Android InputShellCommand process keeps a single touch pointer
     # throughout DOWN -> long press -> MOVE -> UP. Separate adb motionevent
     # invocations do NOT reliably maintain the pointer across processes.
     # The 1250ms duration exceeds ViewConfiguration.longPressTimeout.
     # Only disposable emulator logs are cleared; no personal device is used.
     adb("shell","logcat","-c",strict=False)
-    adb("shell","input","touchscreen","draganddrop",str(x),str(y),str(destination),str(y),"1250")
+    adb("shell","input","touchscreen","draganddrop",str(x),str(y),str(destination_x),str(destination_y),"1250")
     time.sleep(2)
     alive=bool(adb("shell","pidof",PKG,strict=False))
     role_held=PKG in adb("shell","cmd","role","get-role-holders",ROLE,strict=False)

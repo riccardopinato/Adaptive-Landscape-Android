@@ -10,3 +10,7 @@ No reading OEM launcher-private layout. No Accessibility/overlay/QUERY_ALL_PACKA
 Existing manual config_v2 and profiles remain untouched.
 ## Evidence boundaries
 Source implementation is not user-device certification. Sand zones must include every on-screen real icon, folder, dock app and widget tile. The user must set Deskland as HOME and select its live wallpaper via separate Android confirmations.
+
+## QA refinement
+The first new-home smoke reached `real_home_user_pins PASS` and page/add/remove/drag gesture PASSES but folder assertion failed because the test estimated x + one grid column after remove/re-add, missing the actual second app. Harness now obtains exact UI bounds of both real app tiles and drags directly from one to the other. This rechecks actual folder membership and dock persistent geometry; no PASS implied until CI.
+When moving a dock app to a full page, the source app remains in dock; no destructive partial operation. Folder creation on a full page selects only a participating source tile as potential destination.

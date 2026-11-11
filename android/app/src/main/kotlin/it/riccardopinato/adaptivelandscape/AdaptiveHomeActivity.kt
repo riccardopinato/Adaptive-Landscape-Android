@@ -963,7 +963,8 @@ class AdaptiveHomeActivity : Activity() {
                 } else {
                     val cell = (currentPage * pageSlots until (currentPage + 1) * pageSlots)
                         .firstOrNull { freeCell(it) } ?: placed
-                            .firstOrNull { it.cell / pageSlots == currentPage }?.cell
+                            .firstOrNull { it.id in selected &&
+                                it.cell / pageSlots == currentPage }?.cell
                     if (cell == null) {
                         Toast.makeText(this, R.string.auto_home_no_space,
                             Toast.LENGTH_SHORT).show()
@@ -1339,28 +1340,23 @@ class AdaptiveHomeActivity : Activity() {
     }
 
     private fun pinAppToCurrentPage(id: String) {
-        if (placed.any { it.id == id }) {
-            Toast.makeText(this, R.string.auto_home_already_pinned,
-                Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (dock.remove(id)) {
-            // Moving from dock to page, not duplicating it.
-        } else if (folders.any { id in it.members }) {
+        if (placed.any { it.id == id } || folders.any { id in it.members }) {
             Toast.makeText(this, R.string.auto_home_already_pinned,
                 Toast.LENGTH_SHORT).show()
             return
         }
         val free = (currentPage * pageSlots until (currentPage + 1) * pageSlots)
             .firstOrNull { freeCell(it) }
-        if (free != null) {
-            placed.add(PlacedIcon(id, free))
-            saveLayout()
-            renderHomeNextFrame()
-        } else {
+        if (free == null) {
+            // Never remove a dock app unless the destination can accept it.
             Toast.makeText(this, R.string.auto_home_no_space,
                 Toast.LENGTH_SHORT).show()
+            return
         }
+        dock.remove(id)
+        placed.add(PlacedIcon(id, free))
+        saveLayout()
+        renderHomeNextFrame()
     }
 
     private fun showAppPicker() {
