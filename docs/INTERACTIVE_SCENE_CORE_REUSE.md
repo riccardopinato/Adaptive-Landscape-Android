@@ -1,6 +1,7 @@
 # Interactive Scene Core — reuse assessment
 Date: 2026-11-11
 Status: PROPOSED EXTRACTION / NOT CERTIFIED
+Dedicated core repo (docs/roadmap only): https://github.com/riccardopinato/Interactive-Scene-Core — bootstrap PR #1 merged 11/11/2026; no renderer extracted.
 Authority: App-Factory-Core CURRENT.yaml (pin source commit per session); this app's Product Bible, ROADMAP and AGENTS.md remain authoritative.
 Ideas register: https://github.com/riccardopinato/Idee-app-Archivi-riferimenti/blob/main/11-NUOVE-IDEE/AGENT_FACTORY_FINANCE_DESKLAND_2026-11-11.md (link becomes active after archive PR #90 merges).
 
