@@ -437,6 +437,264 @@ class AdaptiveHomeActivity : Activity() {
         false
     }
 
+    private fun widgetCells(item: PlacedWidget): Set<Int> = buildSet {
+        val page = item.cell / pageSlots
+        val local = item.cell % pageSlots
+        val col = local % columns
+        val row = local / columns
+        for (dy in 0 until item.spanY) for (dx in 0 until item.spanX) {
+            if (col + dx < columns && row + dy < rows)
+                add(page * pageSlots + (row + dy) * columns + (col + dx))
+        }
+    }
+
+    private fun freeCell(cell: Int): Boolean =
+        placed.none { it.cell == cell } &&
+            placedWidgets.none { cell in widgetCells(it) }
+
+    private fun canPlaceWidget(
+        cell: Int, spanX: Int, spanY: Int, ignoringWidgetId: Int = -1
+    ): Boolean {
+        if (cell !in 0 until maxSlots) return false
+        val local = cell % pageSlots
+        val col = local % columns
+        val row = local / columns
+        if (col + spanX > columns || row + spanY > rows) return false
+        val proposal = PlacedWidget(ignoringWidgetId, cell, spanX, spanY)
+        val occupied = widgetCells(proposal)
+        return placed.none { it.cell in occupied } &&
+            placedWidgets.none {
+                it.widgetId != ignoringWidgetId && widgetCells(it).any(occupied::contains)
+            }
+    }
+
+    private fun restoreWidgets() {
+        placedWidgets.clear()
+        val saved = prefs.getString("auto_home_widgets_v1", "[]") ?: "[]"
+        try {
+            val all = JSONArray(saved)
+            for (i in 0 until minOf(all.length(), 24)) {
+                val item = all.optJSONObject(i) ?: continue
+                val id = item.optInt("widgetId", -1)
+                val cell = item.optInt("cell", -1)
+                val sx = item.optInt("spanX", 2).coerceIn(1, columns)
+                val sy = item.optInt("spanY", 2).coerceIn(1, rows)
+                if (id < 0 || cell !in 0 until maxSlots ||
+                    widgetManager.getAppWidgetInfo(id) == null ||
+                    placedWidgets.any { it.widgetId == id }) continue
+                val local = cell % pageSlots
+                if (local % columns + sx > columns ||
+                    local / columns + sy > rows) continue
+                placedWidgets.add(PlacedWidget(id, cell, sx, sy))
+            }
+        } catch (_: Exception) {
+            // Malformed local widget persistence cannot crash the system Home.
+        }
+    }
+
+    private fun saveWidgets() {
+        val data = JSONArray()
+        for (item in placedWidgets) {
+            data.put(JSONObject()
+                .put("widgetId", item.widgetId)
+                .put("cell", item.cell)
+                .put("spanX", item.spanX)
+                .put("spanY", item.spanY))
+        }
+        prefs.edit().putString("auto_home_widgets_v1", data.toString()).apply()
+    }
+
+    private fun renderWidgets() {
+        val cellWidth = canvas.width.toFloat() / columns
+        val cellHeight = (canvas.height * spanFraction / rows).toFloat()
+        for (item in placedWidgets) {
+            if (item.cell / pageSlots != currentPage) continue
+            val info = widgetManager.getAppWidgetInfo(item.widgetId) ?: continue
+            try {
+                val tile = widgetHost.createView(this, item.widgetId, info)
+                val width = (cellWidth * item.spanX).roundToInt()
+                val height = (cellHeight * item.spanY).roundToInt()
+                canvas.addView(tile, FrameLayout.LayoutParams(width, height))
+                val local = item.cell % pageSlots
+                tile.x = local % columns * cellWidth
+                tile.y = (topFraction * canvas.height + local / columns * cellHeight)
+                    .toFloat()
+                tile.updateAppWidgetSize(null,
+                    (width / dp).roundToInt(), (height / dp).roundToInt(),
+                    (width / dp).roundToInt(), (height / dp).roundToInt())
+                widgetViews[item.widgetId] = tile
+            } catch (_: RuntimeException) {
+                // A broken provider cannot take down the whole launcher.
+            }
+        }
+    }
+
+    private fun showWidgetActions() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_widgets)
+            .setItems(arrayOf(getString(R.string.auto_home_widget_add),
+                getString(R.string.auto_home_widget_manage))) { _, index ->
+                if (index == 0) showWidgetPicker() else showWidgetManager()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showWidgetPicker() {
+        val providers = widgetManager.installedProviders
+            .filter { it.provider.packageName != packageName }
+            .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) {
+                it.loadLabel(packageManager).toString()
+            })
+        if (providers.isEmpty()) {
+            Toast.makeText(this, R.string.auto_home_widget_unavailable, Toast.LENGTH_SHORT).show()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_widget_add)
+            .setItems(providers.map { it.loadLabel(packageManager).toString() }
+                .toTypedArray()) { _, index ->
+                val info = providers[index]
+                // 2×2 is a bounded starting size; users can resize afterwards.
+                val sx = 2
+                val sy = 2
+                val free = (currentPage * pageSlots until (currentPage + 1) * pageSlots)
+                    .firstOrNull { canPlaceWidget(it, sx, sy) }
+                if (free == null) {
+                    Toast.makeText(this, R.string.auto_home_no_space, Toast.LENGTH_SHORT).show()
+                    return@setItems
+                }
+                try {
+                    val id = widgetHost.allocateAppWidgetId()
+                    pendingWidget = PlacedWidget(id, free, sx, sy)
+                    pendingInfo = info
+                    if (widgetManager.bindAppWidgetIdIfAllowed(id, info.provider)) {
+                        continueWidgetSetup()
+                    } else {
+                        startActivityForResult(Intent(AppWidgetManager.ACTION_APPWIDGET_BIND)
+                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, info.provider),
+                            REQUEST_BIND_WIDGET)
+                    }
+                } catch (_: Exception) {
+                    rejectPendingWidget()
+                    Toast.makeText(this, R.string.auto_home_widget_unavailable,
+                        Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun continueWidgetSetup() {
+        val info = pendingInfo ?: return rejectPendingWidget()
+        val id = pendingWidget?.widgetId ?: return rejectPendingWidget()
+        if (info.configure == null) {
+            commitPendingWidget()
+            return
+        }
+        try {
+            startActivityForResult(Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)
+                .setComponent(info.configure)
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id),
+                REQUEST_CONFIGURE_WIDGET)
+        } catch (_: Exception) {
+            rejectPendingWidget()
+        }
+    }
+
+    private fun commitPendingWidget() {
+        val placement = pendingWidget ?: return
+        if (widgetManager.getAppWidgetInfo(placement.widgetId) == null) {
+            rejectPendingWidget()
+            return
+        }
+        placedWidgets.add(placement)
+        pendingWidget = null
+        pendingInfo = null
+        saveWidgets()
+        renderHome()
+    }
+
+    private fun rejectPendingWidget() {
+        pendingWidget?.let {
+            try { widgetHost.deleteAppWidgetId(it.widgetId) } catch (_: Exception) { }
+        }
+        pendingWidget = null
+        pendingInfo = null
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_BIND_WIDGET || requestCode == REQUEST_CONFIGURE_WIDGET) {
+            if (resultCode != RESULT_OK) {
+                rejectPendingWidget()
+            } else if (requestCode == REQUEST_BIND_WIDGET) {
+                continueWidgetSetup()
+            } else {
+                commitPendingWidget()
+            }
+        }
+    }
+
+    private fun showWidgetManager() {
+        val selected = placedWidgets.toList()
+        if (selected.isEmpty()) {
+            Toast.makeText(this, R.string.auto_home_widget_unavailable, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val labels = selected.map {
+            widgetManager.getAppWidgetInfo(it.widgetId)?.loadLabel(packageManager)
+                ?.toString() ?: getString(R.string.auto_home_widgets)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_widget_manage)
+            .setItems(labels.toTypedArray()) { _, index ->
+                val item = selected[index]
+                val choices = arrayOf(
+                    getString(R.string.auto_home_widget_move),
+                    getString(R.string.auto_home_widget_resize),
+                    getString(R.string.auto_home_widget_remove))
+                AlertDialog.Builder(this)
+                    .setTitle(labels[index])
+                    .setItems(choices) { _, action ->
+                        when (action) {
+                            0 -> {
+                                val page = (item.cell / pageSlots + 1) % maxPages
+                                val free = (page * pageSlots until (page + 1) * pageSlots)
+                                    .firstOrNull {
+                                        canPlaceWidget(it, item.spanX, item.spanY, item.widgetId)
+                                    }
+                                if (free != null) item.cell = free
+                                else Toast.makeText(this, R.string.auto_home_no_space,
+                                    Toast.LENGTH_SHORT).show()
+                            }
+                            1 -> {
+                                val wider = if (item.spanX < columns) item.spanX + 1 else item.spanX
+                                val taller = if (wider == item.spanX && item.spanY < rows)
+                                    item.spanY + 1 else item.spanY
+                                if (canPlaceWidget(item.cell, wider, taller, item.widgetId)) {
+                                    item.spanX = wider
+                                    item.spanY = taller
+                                } else Toast.makeText(this, R.string.auto_home_no_space,
+                                    Toast.LENGTH_SHORT).show()
+                            }
+                            2 -> {
+                                placedWidgets.removeAll { it.widgetId == item.widgetId }
+                                try { widgetHost.deleteAppWidgetId(item.widgetId) }
+                                catch (_: Exception) { }
+                            }
+                        }
+                        saveWidgets()
+                        renderHome()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     private fun showAppDrawer() {
         if (available.isEmpty()) {
             Toast.makeText(this, R.string.auto_home_no_space, Toast.LENGTH_SHORT).show()
