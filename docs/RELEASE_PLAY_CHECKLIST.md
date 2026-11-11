@@ -32,3 +32,16 @@ profiles before considering uninstall; do not force data removal.
 Release signing remains outside GitHub until a private key handling process
 is independently approved. Stacked PRs are not approved to merge pending
 real-photo appearance, icon alignment, battery and device evidence.
+
+
+## Internal universal APK for incompatible-package troubleshooting
+
+The development workflow now generates **both** per-ABI optimized APKs and
+one **universal** `app-release.apk` test artifact. Do not confuse
+`universal` with permanently signed, Play-ready, or tested on real devices.
+`APK_COMPATIBILITY.txt` is generated from `aapt dump badging` and verified
+against included Flutter engine ABI libraries (ARMv7, ARM64, x86_64). SHA256
+is published alongside the APK. This avoids accidental x86 APK installs.
+Package compatibility failures can still occur from Android minSdk, signing
+or vendor policy. The user should report exact phone model/Android version
+and downloaded file name if the universal package also fails.
