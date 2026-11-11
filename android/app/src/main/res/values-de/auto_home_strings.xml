@@ -13,4 +13,11 @@
     <string name="auto_home_change_home">Startbildschirm wechseln</string>
     <string name="auto_home_page">Seite %1$d/%2$d</string>
     <string name="auto_home_wallpaper_needed">Deskland-Live-Hintergrund für den adaptiven Sand auswählen.</string>
+    <string name="auto_home_widgets">Widgets</string>
+    <string name="auto_home_widget_add">Widget hinzufügen</string>
+    <string name="auto_home_widget_manage">Widgets verwalten</string>
+    <string name="auto_home_widget_unavailable">Keine Widgets verfügbar</string>
+    <string name="auto_home_widget_move">Zur nächsten Seite verschieben</string>
+    <string name="auto_home_widget_resize">Größe erhöhen</string>
+    <string name="auto_home_widget_remove">Widget entfernen</string>
 </resources>
