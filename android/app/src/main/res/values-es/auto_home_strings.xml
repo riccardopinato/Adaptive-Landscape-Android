@@ -13,4 +13,11 @@
     <string name="auto_home_change_home">Cambiar inicio</string>
     <string name="auto_home_page">Página %1$d/%2$d</string>
     <string name="auto_home_wallpaper_needed">Selecciona el fondo animado de Deskland para activar la arena.</string>
+    <string name="auto_home_widgets">Widgets</string>
+    <string name="auto_home_widget_add">Añadir widget</string>
+    <string name="auto_home_widget_manage">Gestionar widgets</string>
+    <string name="auto_home_widget_unavailable">No hay widgets disponibles</string>
+    <string name="auto_home_widget_move">Mover a la página siguiente</string>
+    <string name="auto_home_widget_resize">Aumentar tamaño</string>
+    <string name="auto_home_widget_remove">Quitar widget</string>
 </resources>
