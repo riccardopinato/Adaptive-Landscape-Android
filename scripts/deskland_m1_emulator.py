@@ -41,6 +41,12 @@ def nodes():
     return list(ET.fromstring(x[a:b+12]).iter("node"))
 def node_text(s):
     return next((n for n in nodes() if n.get("text")==s),None)
+def foreground_activity():
+    lines=adb("shell","dumpsys","activity","activities").splitlines()
+    return next((line.strip() for line in reversed(lines) if "topResumedActivity=" in line),"")
+def foreground_is(name):
+    return (PKG+"/"+PKG+"."+name) in foreground_activity()
+
 def point(n):
     m=re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",n.get("bounds",""))
     if not m: raise ValueError("No bounds")
@@ -98,7 +104,17 @@ def main():
     ok("shell_home_role","Test privilege; not real consent dialog")
     adb("shell","input","keyevent","KEYCODE_HOME")
     wait("Home screen",lambda:node_text("Add app"))
+    wait("native HOME activity resumed",lambda:foreground_is("adaptivelandscape.AdaptiveHomeActivity"))
     ok("home_visible")
+    # Regression from real phone: Settings opened from native launcher must
+    # NEVER become the Activity returned by pressing the Android Home button.
+    tap(wait("Home settings entry",lambda:node_text("Adaptive Home — experimental")))
+    wait("Flutter editor activity opened",lambda:foreground_is("adaptivelandscape.MainActivity"))
+    ok("editor_launches_in_separate_task")
+    adb("shell","input","keyevent","KEYCODE_HOME")
+    wait("native Home resumed after editor",lambda:
+         foreground_is("adaptivelandscape.AdaptiveHomeActivity") and node_text("Add app"))
+    ok("home_key_returns_to_native_launcher")
     z=wait("icon geometry",lambda:(v if (v:=zones()) else None))
     base=len(z)
     ok("live_icon_geometry",str(base)+" zones")

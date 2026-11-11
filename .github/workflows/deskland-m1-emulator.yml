@@ -6,6 +6,8 @@ on:
       - .github/workflows/deskland-m1-emulator.yml
       - scripts/deskland_m1_emulator.py
       - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveHomeActivity.kt
+      - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/MainActivity.kt
+      - android/app/src/main/AndroidManifest.xml
       - docs/DESKLAND_M1_EXECUTION.md
   workflow_dispatch:
 permissions:

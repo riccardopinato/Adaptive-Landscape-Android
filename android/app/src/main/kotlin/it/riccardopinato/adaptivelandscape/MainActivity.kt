@@ -116,7 +116,8 @@ class MainActivity : FlutterActivity() {
     private fun continueAdaptiveHomeSetup() {
         if (!isDesklandHomeSelected()) return
         if (isDesklandWallpaperSelected()) {
-            startActivity(Intent(this, AdaptiveHomeActivity::class.java))
+            startActivity(Intent(this, AdaptiveHomeActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
         } else {
             try {
                 // Opens system preview only; nothing is set silently.

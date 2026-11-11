@@ -4,6 +4,7 @@ on:
     branches: [feat/deskland-android-widget-host-v049]
     paths:
       - .github/workflows/deskland-m1-arm64-release.yml
+      - android/app/src/main/AndroidManifest.xml
       - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/MainActivity.kt
       - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveWallpaperService.kt
       - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveHomeActivity.kt

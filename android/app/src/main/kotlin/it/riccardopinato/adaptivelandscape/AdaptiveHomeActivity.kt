@@ -785,7 +785,11 @@ class AdaptiveHomeActivity : Activity() {
                 topMargin = (40 * dp).roundToInt()
             })
         val top = chromeButton(getString(R.string.auto_home_caption)) {
-            startActivity(Intent(this, MainActivity::class.java))
+            // Settings is a separate Flutter app task. Never put the editor
+            // on top of the HOME task or the Home key may resurrect settings.
+            startActivity(Intent(this, MainActivity::class.java).addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
         }
         canvas.addView(top, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT, (40 * dp).roundToInt(),
