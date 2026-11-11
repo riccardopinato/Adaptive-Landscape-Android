@@ -13,6 +13,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
+import it.riccardopinato.adaptive_landscape.R
 
 /** Android-only bridge: no launcher usage, screenshots, or sensitive permissions. */
 class MainActivity : FlutterActivity() {
