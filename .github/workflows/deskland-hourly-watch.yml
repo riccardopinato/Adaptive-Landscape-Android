@@ -1,0 +1,31 @@
+name: Deskland hourly progress watch
+
+on:
+  schedule:
+    # Offset away from :00 to reduce GitHub scheduler congestion (UTC).
+    - cron: "23 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: deskland-progress-watch
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Detect stalled development and failed CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout monitor code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check Deskland PR heads and CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/deskland_watch.py
