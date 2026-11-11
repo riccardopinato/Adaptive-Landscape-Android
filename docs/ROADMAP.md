@@ -182,3 +182,17 @@ Detailed user test contract: [BEACH_PHOTOGRAPHIC_V042.md](BEACH_PHOTOGRAPHIC_V04
 - [TODO] Actual physical QA, battery/thermal, API/Google Play policy gate.
 
 Do not treat the above TODOs as implemented.
+
+
+### v0.4.7 desktop behavior matching — checkpoint
+
+- [CODED] Actual icons and drag events in the opt-in native Deskland Home.
+- [CODED] Double-buffered shoreline masks, smooth transitions that start
+  from the previously blended image rather than jumping to a stale mask.
+- [CODED] Add/remove produces/erases sand; existing manual editor untouched.
+- [CODED] Empty Home invariant, source validation, geometry regression tests.
+- [PENDING] Latest exact-head compilation and Android GLES verification.
+- [PENDING] Physical user video comparison, smoothness/performance/thermal.
+- [BLOCKED] Access to actual Xiaomi/Samsung launcher icon coordinates from
+  a plain wallpaper. Only user's own Deskland Home can supply exact coords.
+- [OUT OF SCOPE] Replicating all 13 paid PC themes or GPL artwork.
