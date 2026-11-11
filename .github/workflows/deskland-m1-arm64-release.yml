@@ -1,0 +1,68 @@
+name: Deskland M1 optimized ARM64 APK (internal QA)
+on:
+  pull_request:
+    branches: [feat/deskland-android-widget-host-v049]
+    paths:
+      - .github/workflows/deskland-m1-arm64-release.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deskland-m1-arm64-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  arm64-release:
+    name: Validate exact head and compile smaller ARM64 APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact candidate source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Select Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.41.4'
+          channel: stable
+          cache: true
+      - name: JDK 17
+        run: |
+          test -x "$JAVA_HOME_17_X64/bin/java"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          flutter config --jdk-dir="$JAVA_HOME_17_X64"
+      - name: Generate Flutter project and run full static and unit verification
+        run: bash BOOTSTRAP_LINUX_MAC.sh generated_app
+      - name: Compile optimized Android 64-bit release APK (test signing only)
+        working-directory: generated_app
+        env:
+          EXACT_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: flutter build apk --release --target-platform android-arm64 --dart-define=BUILD_SOURCE_SHA="$EXACT_SOURCE_SHA"
+      - name: Verify APK architecture signature and checksum
+        run: |
+          set -euo pipefail
+          APK=generated_app/build/app/outputs/flutter-apk/app-release.apk
+          test -s "$APK"
+          python3 - <<'PY'
+          from zipfile import ZipFile
+          p="generated_app/build/app/outputs/flutter-apk/app-release.apk"
+          with ZipFile(p) as z:
+              so=[x.filename for x in z.infolist() if x.filename.endswith("libflutter.so")]
+              assert so==["lib/arm64-v8a/libflutter.so"], f"Unexpected Flutter ABIs: {so}"
+              assert not any(x.filename.endswith("kernel_blob.bin") for x in z.infolist()), "Unexpected debug Dart kernel"
+              print("PASS: ARM64-only Flutter engine, no debug Dart kernel")
+          PY
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose "$APK"
+          sha256sum "$APK"
+          stat -c 'APK_SIZE_BYTES=%s' "$APK"
+      - name: Upload standalone ARM64 APK for physical QA (not Play signed)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: Deskland-M1-ARM64-optimized-APK-NOT-PLAY-SIGNED
+          path: generated_app/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
