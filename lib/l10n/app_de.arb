@@ -86,5 +86,9 @@
   "nativeFramePacingNote": "Zielbildraten auf dem Startbildschirm: Ausgewogen ~12fps, Hoch ~16fps, Ultra bis 20fps; Energiesparen ~8fps. Tatsächliche FPS, Wärme und Akku am Gerät messen.",
   "qaSnapshotCopy": "Bericht zum Gerätetest kopieren",
   "qaSnapshotHint": "Kopiert nur Szeneneinstellungen und Rendererstatus, keine Screenshots, privaten Gerätekennungen oder App-Namen.",
-  "qaSnapshotCopied": "Testbericht in die Zwischenablage kopiert"
+  "qaSnapshotCopied": "Testbericht in die Zwischenablage kopiert",
+  "adaptiveHomeTitle": "Adaptive Startseite (experimentell)",
+  "adaptiveHomeExplanation": "Innerhalb der Deskland-Startseite folgt der Sand den tatsächlichen Symbolpositionen und verändert sich beim Ziehen. Live-Hintergründe können das Layout anderer Launcher nicht auslesen.",
+  "adaptiveHomeButton": "Adaptive Startseite testen",
+  "adaptiveHomeNoImport": "Deskland muss als Standard-Startseite ausgewählt werden. Das Xiaomi/Samsung-Layout kann nicht importiert werden; Deskland ordnet einige Apps zunächst automatisch an. Widgets, Ordner und Arbeitsprofile fehlen noch. In Android-Einstellungen kann der bisherige Launcher wieder ausgewählt werden."
 }
