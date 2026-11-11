@@ -86,5 +86,9 @@
   "nativeFramePacingNote": "Native frame targets while visible: Balanced ~12fps, High ~16fps, Ultra up to 20fps; battery saver caps at ~8fps. Real FPS, heat and battery must be measured on a phone.",
   "qaSnapshotCopy": "Copy physical QA summary",
   "qaSnapshotHint": "Copies only scene settings and renderer status; no screenshots, personal device identifiers or installed app names.",
-  "qaSnapshotCopied": "QA summary copied to clipboard"
+  "qaSnapshotCopied": "QA summary copied to clipboard",
+  "adaptiveHomeTitle": "Adaptive Home (experimental)",
+  "adaptiveHomeExplanation": "Inside Deskland Home, the beach follows the real positions of icons and updates as you drag them. Android does not share icon locations from your current launcher with ordinary live wallpapers.",
+  "adaptiveHomeButton": "Use adaptive Home",
+  "adaptiveHomeNoImport": "You must choose Deskland as the default Home. Your existing Xiaomi/Samsung Home layout cannot be imported automatically; Deskland initially arranges some apps itself. Widgets, folders and work profiles are not supported in this prototype. You can switch back in Android settings."
 }
