@@ -11,4 +11,6 @@
     <string name="auto_home_apps">Aplicaciones</string>
     <string name="auto_home_search">Buscar aplicaciones</string>
     <string name="auto_home_change_home">Cambiar inicio</string>
+    <string name="auto_home_page">Página %1$d/%2$d</string>
+    <string name="auto_home_wallpaper_needed">Selecciona el fondo animado de Deskland para activar la arena.</string>
 </resources>
