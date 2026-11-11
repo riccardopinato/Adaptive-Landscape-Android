@@ -229,3 +229,19 @@ or distribute this feature as a full launcher until these are addressed.
 Using AccessibilityService to scrape the old launcher would be unreliable,
 privacy-sensitive and subject to Google Play declarations and review. This
 prototype avoids that permission and does not inspect other apps' UI.
+
+
+### v0.4.7 live morphology (native GLES2 only)
+
+The optional Deskland Home produces normalized occupancy zones directly
+from its real icon views. A drag event publishes them at a bounded cadence.
+The native wallpaper double-buffers occupancy textures and morphs its last
+visible coast to the new target over ~380ms. Every new event starts from
+the *already blended* prior mask rather than snapping to a stale keyframe.
+The in-house GLSL shader paints photographic sea, shallow water, wet/dry
+sand and attenuated foam over the dynamic field.
+
+The feature remains **experimental**: the first Kotlin compile failed on
+a trivial `List.isEmpty` syntax issue, subsequently corrected on the
+feature branch. No green CI, same-device visual parity or usable daily
+launcher claim is made until exact-head evidence is available.
