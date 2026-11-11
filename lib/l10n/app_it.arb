@@ -86,5 +86,9 @@
   "nativeFramePacingNote": "Obiettivi dei frame sulla Home: Bilanciata ~12fps, Alta ~16fps, Ultra fino a 20fps; risparmio energetico ~8fps. FPS, calore e batteria reali vanno misurati sul telefono.",
   "qaSnapshotCopy": "Copia riepilogo collaudo fisico",
   "qaSnapshotHint": "Copia soltanto impostazioni della scena e stato del renderer; nessuno screenshot, identificativo del dispositivo o nome delle app installate.",
-  "qaSnapshotCopied": "Riepilogo collaudo copiato negli appunti"
+  "qaSnapshotCopied": "Riepilogo collaudo copiato negli appunti",
+  "adaptiveHomeTitle": "Home adattiva (sperimentale)",
+  "adaptiveHomeExplanation": "Nella Home di Deskland la sabbia segue le posizioni reali delle icone e cambia mentre le trascini. Gli sfondi animati Android non possono leggere le posizioni delle icone del launcher attuale.",
+  "adaptiveHomeButton": "Prova la Home adattiva",
+  "adaptiveHomeNoImport": "Devi scegliere Deskland come Home predefinita. La disposizione delle icone nella Home Xiaomi/Samsung non si può importare automaticamente: Deskland organizza inizialmente alcune app. Widget, cartelle e profili lavoro non sono ancora supportati. Puoi tornare al launcher precedente dalle impostazioni Android."
 }
