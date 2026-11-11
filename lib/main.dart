@@ -64,6 +64,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   Uint8List? _homeScreenshot;
   String? _nativeRenderer;
   bool _oceanPhotoEnabled = false;
+  WallpaperConfig _runtimeStatus = const WallpaperConfig();
   ui.Image? _webPhotograph;
   bool _webCompareProcedural = false;
 
@@ -108,6 +109,7 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         setState(() {
           _nativeRenderer = value.nativeBackend;
           _oceanPhotoEnabled = value.oceanPhotoEnabled;
+          _runtimeStatus = value;
         });
       }
     } catch (_) { /* The wallpaper may not have been installed yet. */ }
@@ -506,6 +508,17 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     }
   }
 
+  Future<void> _openAdaptiveHome() async {
+    setState(() => _busy = true);
+    try {
+      await _channel.openAdaptiveHome();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _openPicker() async {
     setState(() => _busy = true);
     try {
@@ -669,6 +682,48 @@ class _WallpaperEditorState extends State<WallpaperEditor>
           label: Text(l.adaptiveHomeButton),
         ),
         Text(l.adaptiveHomeNoImport, style: style.bodySmall),
+        const SizedBox(height: 10),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(l.autoHomeStatusTitle, style: style.titleSmall),
+              const SizedBox(height: 5),
+              Text(
+                !_runtimeStatus.desklandHomeSelected ? l.autoHomeStatusNotHome :
+                !_runtimeStatus.desklandWallpaperSelected ? l.autoHomeStatusNoWallpaper :
+                !_runtimeStatus.autoHomeActive || _runtimeStatus.autoHomeZones == 0 ? l.autoHomeStatusNoZones :
+                _runtimeStatus.renderSource != 'auto_home' ||
+                    _runtimeStatus.renderRevision != _runtimeStatus.autoHomeRevision ||
+                    _runtimeStatus.renderZones == 0 ? l.autoHomeStatusNotRendered :
+                '${l.autoHomeStatusDataReady}: ${_runtimeStatus.renderZones}',
+                key: const Key('al-auto-home-runtime-status'),
+              ),
+              const SizedBox(height: 5),
+              Text(l.autoHomeStatusDisclaimer, style: style.bodySmall),
+              const SizedBox(height: 8),
+              if (_runtimeStatus.desklandHomeSelected &&
+                  !_runtimeStatus.desklandWallpaperSelected)
+                FilledButton.icon(
+                  onPressed: _busy ? null : _openPicker,
+                  icon: const Icon(Icons.wallpaper),
+                  label: Text(l.install),
+                ),
+              if (_runtimeStatus.desklandHomeSelected &&
+                  _runtimeStatus.desklandWallpaperSelected)
+                FilledButton.icon(
+                  onPressed: _busy ? null : _openAdaptiveHome,
+                  icon: const Icon(Icons.home_outlined),
+                  label: Text(l.autoHomeStatusOpenHome),
+                ),
+              TextButton.icon(
+                onPressed: _refreshNativeRenderer,
+                icon: const Icon(Icons.refresh),
+                label: Text(l.autoHomeStatusRefresh),
+              ),
+            ]),
+          ),
+        ),
       ],
       section(l.selectIcons),
       OutlinedButton.icon(

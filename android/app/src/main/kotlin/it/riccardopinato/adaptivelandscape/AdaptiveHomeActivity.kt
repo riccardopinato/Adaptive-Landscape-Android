@@ -14,6 +14,7 @@ import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -29,6 +30,8 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.GridLayout
+import android.widget.EditText
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.SearchView
@@ -37,6 +40,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import kotlin.math.ceil
+import java.util.UUID
 import org.json.JSONArray
 import org.json.JSONObject
 import it.riccardopinato.adaptive_landscape.R
@@ -44,18 +48,23 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * EXPERIMENTAL, user-chosen Home/launcher, not a background icon scanner.
+ * User-chosen native Android Home, not a background icon scanner.
  *
  * Android only exposes precise icon positions to the launcher that owns those
  * views. This Activity owns its displayed icons and publishes their positions
  * to the existing WallpaperService via a separate, volatile scene contract.
  *
- * Limitations: no migration from MIUI/Pixel/Samsung launcher grids, and no
- * widgets/folders/work-profile support yet. NEVER replace the default Home
- * without the user's explicit system RoleManager consent.
+ * Limitations: no automatic migration from other launcher layouts or OEM
+ * shortcuts. Widget hosting, user-curated folders and dock are locally owned;
+ * work/private profile behavior still requires per-device verification.
+ * NEVER replace the default Home without explicit Android system consent.
  */
 class AdaptiveHomeActivity : Activity() {
     private data class PlacedIcon(val id: String, var cell: Int)
+    private data class PlacedFolder(
+        val id: String, var name: String, var cell: Int,
+        val members: MutableList<String>
+    )
     private data class PlacedWidget(
         val widgetId: Int, var cell: Int, var spanX: Int, var spanY: Int
     )
@@ -75,6 +84,9 @@ class AdaptiveHomeActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
     private val dp by lazy { resources.displayMetrics.density }
     private val placed = ArrayList<PlacedIcon>()
+    private val folders = ArrayList<PlacedFolder>()
+    // Dock order is independent of every page and never auto-seeded.
+    private val dock = ArrayList<String>()
     private val views = LinkedHashMap<String, View>()
     private val widgetViews = LinkedHashMap<Int, View>()
     private val placedWidgets = ArrayList<PlacedWidget>()
@@ -89,6 +101,14 @@ class AdaptiveHomeActivity : Activity() {
     private val publishPending = Runnable { publishHomePositions() }
     private var lastWidth = 0
     private var lastHeight = 0
+    // Never modify FrameLayout children while Android is measuring or
+    // dispatching the touch that ended an icon drag.
+    private fun renderHomeNextFrame() {
+        if (!::canvas.isInitialized) return
+        canvas.postOnAnimation {
+            if (!isFinishing && !isDestroyed) renderHome()
+        }
+    }
     private var callbackRegistered = false
     private val packageCallback = object : LauncherApps.Callback() {
         override fun onPackageAdded(packageName: String, user: UserHandle) = refreshPackages()
@@ -112,8 +132,11 @@ class AdaptiveHomeActivity : Activity() {
 
     private val columns = 5
     private val rows = 8
-    private val topFraction = 0.115
-    private val spanFraction = 0.765
+    // Reserve the bottom band for an actual user-curated dock and controls.
+    // Cell numbers remain 5x8 for non-destructive v1 layout migration.
+    private val topFraction = 0.085
+    private val spanFraction = 0.605
+    private val dockSlots = 4
     private val pageSlots = columns * rows
     private val maxPages = 3
     private val maxSlots = pageSlots * maxPages
@@ -167,18 +190,34 @@ class AdaptiveHomeActivity : Activity() {
                 (canvas.width != lastWidth || canvas.height != lastHeight)) {
                 lastWidth = canvas.width
                 lastHeight = canvas.height
-                renderHome()
+                renderHomeNextFrame()
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
+        if (!isSelectedHome()) {
+            // When the system selects another Home, this Activity must no
+            // longer be shown as an obsolete launcher task.
+            finish()
+            return
+        }
         try { widgetHost.startListening() } catch (_: RuntimeException) { }
         restoreWidgets()
         loadLaunchableApps()
         restoreSavedLayout()
         canvas.post { renderHome() }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (!isSelectedHome()) {
+            finish()
+            return
+        }
+        renderHomeNextFrame()
     }
 
     override fun onPause() {
@@ -223,39 +262,70 @@ class AdaptiveHomeActivity : Activity() {
     private fun restoreSavedLayout() {
         val known = available.associateBy { it.componentName.flattenToString() }
         placed.clear()
-        val saved = prefs.getString("auto_home_icons_v1", null)
-        if (saved == null) {
-            // Initial layout is automatic but cannot import another launcher's
-            // personalized icon order. Users can move icons on this Home.
-            for ((i, item) in available.take(12).withIndex()) {
-                placed.add(PlacedIcon(item.componentName.flattenToString(), i + 5))
-            }
-            saveLayout()
-            return
-        }
+        folders.clear()
+        dock.clear()
+        val usedApps = HashSet<String>()
+        val usedCells = HashSet<Int>()
+        // Existing auto_home_icons_v1 is read unchanged. Older users never
+        // lose the layout previously saved on their device.
         try {
-            val array = JSONArray(saved)
-            val used = HashSet<Int>()
-            for (i in 0 until minOf(array.length(), maxSlots)) {
-                val item = array.optJSONObject(i) ?: continue
+            val saved = JSONArray(prefs.getString("auto_home_icons_v1", "[]") ?: "[]")
+            for (i in 0 until minOf(saved.length(), maxSlots)) {
+                val item = saved.optJSONObject(i) ?: continue
                 val id = item.optString("id")
                 val cell = item.optInt("cell", -1)
                 if (known.containsKey(id) && cell in 0 until maxSlots &&
-                    used.add(cell) && placed.none { it.id == id }) {
+                    cell !in usedCells && placedWidgets.none { cell in widgetCells(it) } &&
+                    usedApps.add(id)) {
+                    usedCells.add(cell)
                     placed.add(PlacedIcon(id, cell))
                 }
             }
-        } catch (_: Exception) {
-            // Invalid local JSON must not crash the selected Home.
-        }
+        } catch (_: Exception) { /* A malformed legacy layout stays local. */ }
+        try {
+            val raw = JSONArray(prefs.getString("auto_home_folders_v1", "[]") ?: "[]")
+            for (i in 0 until minOf(raw.length(), 60)) {
+                val o = raw.optJSONObject(i) ?: continue
+                val id = o.optString("id").takeIf { it.startsWith("folder:") } ?: continue
+                val cell = o.optInt("cell", -1)
+                if (cell !in 0 until maxSlots || !usedCells.add(cell) ||
+                    placedWidgets.any { cell in widgetCells(it) } ||
+                    folders.any { it.id == id }) continue
+                val members = mutableListOf<String>()
+                val items = o.optJSONArray("members") ?: JSONArray()
+                for (j in 0 until minOf(items.length(), 24)) {
+                    val member = items.optString(j)
+                    if (known.containsKey(member) && usedApps.add(member)) members.add(member)
+                }
+                if (members.isNotEmpty()) {
+                    folders.add(PlacedFolder(id, o.optString("name").take(48)
+                        .ifBlank { getString(R.string.auto_home_folder) }, cell, members))
+                } else usedCells.remove(cell)
+            }
+        } catch (_: Exception) { /* Never discard other valid sections. */ }
+        try {
+            val raw = JSONArray(prefs.getString("auto_home_dock_v1", "[]") ?: "[]")
+            for (i in 0 until minOf(raw.length(), dockSlots)) {
+                val id = raw.optString(i)
+                if (known.containsKey(id) && usedApps.add(id)) dock.add(id)
+            }
+        } catch (_: Exception) { /* Dock is optional. */ }
     }
 
     private fun saveLayout() {
-        val array = JSONArray()
-        for (item in placed) {
-            array.put(JSONObject().put("id", item.id).put("cell", item.cell))
-        }
-        prefs.edit().putString("auto_home_icons_v1", array.toString()).apply()
+        val icons = JSONArray()
+        for (item in placed) icons.put(JSONObject()
+            .put("id", item.id).put("cell", item.cell))
+        val groups = JSONArray()
+        for (folder in folders) groups.put(JSONObject()
+            .put("id", folder.id).put("name", folder.name)
+            .put("cell", folder.cell).put("members", JSONArray(folder.members)))
+        // Save every Home section together to avoid partial drag/folder state.
+        prefs.edit()
+            .putString("auto_home_icons_v1", icons.toString())
+            .putString("auto_home_folders_v1", groups.toString())
+            .putString("auto_home_dock_v1", JSONArray(dock).toString())
+            .apply()
     }
 
     private fun cellCenter(cell: Int): Pair<Float, Float> {
@@ -286,15 +356,82 @@ class AdaptiveHomeActivity : Activity() {
             if (item.cell / pageSlots != currentPage) continue
             val info = byId[item.id] ?: continue
             val tile = makeTile(info)
-            canvas.addView(tile, FrameLayout.LayoutParams(iconWidth(), iconHeight()))
-            tile.x = leftFor(item.cell)
-            tile.y = topFor(item.cell)
-            views[item.id] = tile
-            attachTouch(tile, item.id, info)
+            addHomeTile(tile, item.id, leftFor(item.cell), topFor(item.cell)) {
+                startApp(info)
+            }
+        }
+        for (folder in folders) {
+            if (folder.cell / pageSlots != currentPage) continue
+            val tile = makeFolderTile(folder, byId)
+            addHomeTile(tile, folder.id, leftFor(folder.cell), topFor(folder.cell)) {
+                openFolder(folder)
+            }
         }
         renderWidgets()
+        for ((index, id) in dock.withIndex()) {
+            val info = byId[id] ?: continue
+            val tile = makeTile(info)
+            val x = (index + 0.5f) * canvas.width / dockSlots - iconWidth() / 2f
+            val y = canvas.height - (140 * dp)
+            addHomeTile(tile, id, x, y) { startApp(info) }
+        }
         renderChrome()
         requestPublish()
+    }
+
+    private fun addHomeTile(tile: View, id: String, x: Float, y: Float,
+                            onLaunch: () -> Unit) {
+        canvas.addView(tile, FrameLayout.LayoutParams(iconWidth(), iconHeight()))
+        tile.x = x
+        tile.y = y
+        views[id] = tile
+        tile.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+            if (v.parent === canvas) requestPublish()
+        }
+        attachTouch(tile, id, onLaunch)
+    }
+
+    private fun makeFolderTile(folder: PlacedFolder,
+                               known: Map<String, LauncherActivityInfo>): View {
+        val vertical = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+        }
+        val preview = GridLayout(this).apply {
+            rowCount = 2
+            columnCount = 2
+            background = GradientDrawable().apply {
+                cornerRadius = 13 * dp
+                setColor(Color.argb(140, 235, 245, 246))
+            }
+        }
+        val mini = (21 * dp).roundToInt()
+        for (member in folder.members.take(4)) {
+            val icon = ImageView(this).apply {
+                setImageDrawable(known[member]?.getIcon(0))
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }
+            preview.addView(icon, GridLayout.LayoutParams().apply {
+                width = mini
+                height = mini
+                setMargins(1, 1, 1, 1)
+            })
+        }
+        vertical.addView(preview)
+        val label = TextView(this).apply {
+            text = folder.name
+            gravity = Gravity.CENTER
+            textSize = 11f
+            maxLines = 1
+            setTextColor(Color.WHITE)
+            setShadowLayer(3.5f, 0f, 1f, Color.BLACK)
+        }
+        vertical.addView(label, LinearLayout.LayoutParams(-1, -2))
+        vertical.contentDescription = "${folder.name}, ${getString(R.string.auto_home_folder)}"
+        vertical.isClickable = true
+        vertical.isFocusable = true
+        vertical.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        return vertical
     }
 
     private fun makeTile(info: LauncherActivityInfo): View {
@@ -327,7 +464,7 @@ class AdaptiveHomeActivity : Activity() {
         return vertical
     }
 
-    private fun attachTouch(view: View, id: String, info: LauncherActivityInfo) {
+    private fun attachTouch(view: View, id: String, onLaunch: () -> Unit) {
         var downRawX = 0f
         var downRawY = 0f
         var startLeft = 0f
@@ -342,7 +479,7 @@ class AdaptiveHomeActivity : Activity() {
                 view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             }
         }
-        view.setOnClickListener { startApp(info) }
+        view.setOnClickListener { onLaunch() }
         view.setOnTouchListener { v, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -380,9 +517,11 @@ class AdaptiveHomeActivity : Activity() {
                         snapToNearestCell(id, v)
                         draggingId = null
                         saveLayout()
-                        renderHome()
-                    } else if (!cancelledByGesture) {
-                        // Supports TalkBack and keyboard activation through click semantics.
+                        renderHomeNextFrame()
+                    } else if (!armed && !cancelledByGesture) {
+                        // A stationary long press must never launch an app.
+                        // Only a short, non-drag tap triggers the app click.
+                        // Supports TalkBack and keyboard activation via performClick.
                         v.performClick()
                     }
                     true
@@ -390,7 +529,7 @@ class AdaptiveHomeActivity : Activity() {
                 MotionEvent.ACTION_CANCEL -> {
                     handler.removeCallbacks(armDrag)
                     draggingId = null
-                    renderHome()
+                    renderHomeNextFrame()
                     true
                 }
                 else -> true
@@ -399,17 +538,63 @@ class AdaptiveHomeActivity : Activity() {
     }
 
     private fun snapToNearestCell(id: String, icon: View) {
-        val centerX = (icon.x + icon.width / 2f) / canvas.width
-        val centerY = (icon.y + icon.height / 2f) / canvas.height
+        val centerX = ((icon.x + icon.width / 2f) / canvas.width).coerceIn(0f, 1f)
+        val centerY = ((icon.y + icon.height / 2f) / canvas.height).coerceIn(0f, 1f)
+        val source = placed.firstOrNull { it.id == id }
+        val sourceFolder = folders.firstOrNull { it.id == id }
+        val fromDock = dock.indexOf(id)
+        if (centerY >= 1f - (170 * dp / canvas.height)) {
+            // A true fixed dock: same apps remain visible across Home pages.
+            if (sourceFolder != null) return  // folder in dock deferred
+            if (fromDock >= 0) {
+                val to = (centerX * dock.size).toInt().coerceIn(0, dock.size - 1)
+                dock.removeAt(fromDock)
+                dock.add(to, id)
+            } else if (source != null && dock.size < dockSlots) {
+                placed.remove(source)
+                dock.add((centerX * (dock.size + 1)).toInt()
+                    .coerceIn(0, dock.size), id)
+            }
+            return
+        }
         val col = (centerX * columns).toInt().coerceIn(0, columns - 1)
         val row = ((centerY - topFraction) / spanFraction * rows)
             .toInt().coerceIn(0, rows - 1)
         val dest = currentPage * pageSlots + row * columns + col
-        val moving = placed.firstOrNull { it.id == id } ?: return
-        val previousCell = moving.cell
-        val occupant = placed.firstOrNull { it.id != id && it.cell == dest }
-        if (occupant != null) occupant.cell = previousCell
-        moving.cell = dest
+        if (placedWidgets.any { dest in widgetCells(it) }) return
+        if (source?.cell == dest || sourceFolder?.cell == dest) return
+        val targetFolder = folders.firstOrNull { it.id != id && it.cell == dest }
+        if (targetFolder != null && source != null && targetFolder.members.size < 24) {
+            placed.remove(source)
+            targetFolder.members.add(id)
+            return
+        }
+        val targetIcon = placed.firstOrNull { it.id != id && it.cell == dest }
+        if (targetIcon != null && source != null) {
+            // Drag app on app -> real editable folder, not a simulated icon.
+            placed.remove(source)
+            placed.remove(targetIcon)
+            folders.add(PlacedFolder("folder:" + UUID.randomUUID().toString(),
+                getString(R.string.auto_home_folder), dest,
+                mutableListOf(targetIcon.id, source.id)))
+            return
+        }
+        val previous = source?.cell ?: sourceFolder?.cell
+        val destinationHolder = targetIcon ?: folders.firstOrNull {
+            it.id != id && it.cell == dest
+        }
+        if (destinationHolder != null && previous == null) return
+        if (destinationHolder is PlacedIcon && previous != null) {
+            destinationHolder.cell = previous
+        } else if (destinationHolder is PlacedFolder && previous != null) {
+            destinationHolder.cell = previous
+        }
+        if (source != null) source.cell = dest
+        if (sourceFolder != null) sourceFolder.cell = dest
+        if (fromDock >= 0 && targetIcon == null && targetFolder == null) {
+            dock.removeAt(fromDock)
+            placed.add(PlacedIcon(id, dest))
+        }
     }
 
     private fun startApp(info: LauncherActivityInfo) {
@@ -450,6 +635,7 @@ class AdaptiveHomeActivity : Activity() {
 
     private fun freeCell(cell: Int): Boolean =
         placed.none { it.cell == cell } &&
+            folders.none { it.cell == cell } &&
             placedWidgets.none { cell in widgetCells(it) }
 
     private fun canPlaceWidget(
@@ -463,6 +649,7 @@ class AdaptiveHomeActivity : Activity() {
         val proposal = PlacedWidget(ignoringWidgetId, cell, spanX, spanY)
         val occupied = widgetCells(proposal)
         return placed.none { it.cell in occupied } &&
+            folders.none { it.cell in occupied } &&
             placedWidgets.none {
                 it.widgetId != ignoringWidgetId && widgetCells(it).any(occupied::contains)
             }
@@ -523,6 +710,9 @@ class AdaptiveHomeActivity : Activity() {
                     (width / dp).roundToInt(), (height / dp).roundToInt(),
                     (width / dp).roundToInt(), (height / dp).roundToInt())
                 widgetViews[item.widgetId] = tile
+                tile.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+                    if (v.parent === canvas) requestPublish()
+                }
             } catch (_: RuntimeException) {
                 // A broken provider cannot take down the whole launcher.
             }
@@ -695,6 +885,282 @@ class AdaptiveHomeActivity : Activity() {
             .show()
     }
 
+
+    private fun chooseInstalledApp(
+        title: String, choices: List<LauncherActivityInfo>,
+        onChosen: (LauncherActivityInfo) -> Unit
+    ) {
+        if (choices.isEmpty()) {
+            Toast.makeText(this, R.string.auto_home_no_space, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((12 * dp).roundToInt(), (6 * dp).roundToInt(),
+                (12 * dp).roundToInt(), 0)
+        }
+        val search = SearchView(this).apply {
+            queryHint = getString(R.string.auto_home_search)
+            isIconified = false
+        }
+        val list = ListView(this)
+        val matches = choices.toMutableList()
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1,
+            matches.map { it.label.toString() }.toMutableList())
+        list.adapter = adapter
+        layout.addView(search)
+        layout.addView(list, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, (360 * dp).roundToInt()))
+        val dialog = AlertDialog.Builder(this).setTitle(title).setView(layout)
+            .setNegativeButton(android.R.string.cancel, null).create()
+        list.setOnItemClickListener { _, _, index, _ ->
+            val chosen = matches.getOrNull(index) ?: return@setOnItemClickListener
+            dialog.dismiss()
+            onChosen(chosen)
+        }
+        search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean = true
+            override fun onQueryTextChange(query: String?): Boolean {
+                val value = query.orEmpty().trim()
+                matches.clear()
+                matches.addAll(choices.filter {
+                    value.isEmpty() || it.label.contains(value, ignoreCase = true)
+                })
+                adapter.clear()
+                adapter.addAll(matches.map { it.label.toString() })
+                adapter.notifyDataSetChanged()
+                return true
+            }
+        })
+        dialog.show()
+    }
+
+    private fun appId(info: LauncherActivityInfo) = info.componentName.flattenToString()
+
+    private fun availableForFolder(): List<LauncherActivityInfo> {
+        val alreadyGrouped = folders.flatMap { it.members }.toSet()
+        return available.filter { appId(it) !in alreadyGrouped }
+    }
+
+    private fun createFolder() {
+        val candidates = availableForFolder()
+        if (candidates.size < 2) {
+            Toast.makeText(this, R.string.auto_home_folder_two, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val selected = LinkedHashSet<String>()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_folder_create)
+            .setMultiChoiceItems(candidates.map { it.label.toString() }.toTypedArray(),
+                BooleanArray(candidates.size)) { _, index, checked ->
+                if (checked) selected.add(appId(candidates[index]))
+                else selected.remove(appId(candidates[index]))
+            }
+            .setPositiveButton(R.string.auto_home_folder_create) { _, _ ->
+                if (selected.size < 2) {
+                    Toast.makeText(this, R.string.auto_home_folder_two,
+                        Toast.LENGTH_SHORT).show()
+                } else {
+                    val cell = (currentPage * pageSlots until (currentPage + 1) * pageSlots)
+                        .firstOrNull { freeCell(it) } ?: placed
+                            .firstOrNull { it.id in selected &&
+                                it.cell / pageSlots == currentPage }?.cell
+                    if (cell == null) {
+                        Toast.makeText(this, R.string.auto_home_no_space,
+                            Toast.LENGTH_SHORT).show()
+                    } else {
+                        // Do not overwrite an unrelated icon: choose the
+                        // source cell only if that source is joining the folder.
+                        val target = if (freeCell(cell)) cell else placed
+                            .firstOrNull { it.cell == cell && it.id in selected }?.cell
+                        if (target == null) {
+                            Toast.makeText(this, R.string.auto_home_no_space,
+                                Toast.LENGTH_SHORT).show()
+                        } else requestFolderName(getString(R.string.auto_home_folder)) { name ->
+                            placed.removeAll { it.id in selected }
+                            dock.removeAll { it in selected }
+                            folders.add(PlacedFolder("folder:" + UUID.randomUUID().toString(),
+                                name, target, selected.toMutableList()))
+                            saveLayout()
+                            renderHomeNextFrame()
+                        }
+                    }
+                }
+            }.setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    private fun requestFolderName(initial: String, onName: (String) -> Unit) {
+        val input = EditText(this).apply {
+            setSingleLine(true)
+            setText(initial)
+            setSelection(text.length)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_folder_name)
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                onName(input.text.toString().trim().take(48).ifBlank {
+                    getString(R.string.auto_home_folder)
+                })
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showFolderManager() {
+        val options = arrayOf(getString(R.string.auto_home_folder_create),
+            getString(R.string.auto_home_folder_manage))
+        AlertDialog.Builder(this).setTitle(R.string.auto_home_folder)
+            .setItems(options) { _, which ->
+                if (which == 0) createFolder()
+                else {
+                    if (folders.isEmpty()) {
+                        Toast.makeText(this, R.string.auto_home_folder_empty,
+                            Toast.LENGTH_SHORT).show()
+                    } else AlertDialog.Builder(this)
+                        .setTitle(R.string.auto_home_folder_manage)
+                        .setItems(folders.map { it.name }.toTypedArray()) { _, index ->
+                            showFolderActions(folders[index])
+                        }.setNegativeButton(android.R.string.cancel, null).show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    private fun openFolder(folder: PlacedFolder) {
+        val found = available.associateBy(::appId)
+        val members = folder.members.mapNotNull { found[it] }
+        AlertDialog.Builder(this)
+            .setTitle(folder.name)
+            .setItems(members.map { it.label.toString() }.toTypedArray()) { _, index ->
+                startApp(members[index])
+            }
+            .setPositiveButton(R.string.auto_home_folder_manage) { _, _ ->
+                showFolderActions(folder)
+            }
+            .setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    private fun showFolderActions(folder: PlacedFolder) {
+        val actions = arrayOf(
+            getString(R.string.auto_home_folder_rename),
+            getString(R.string.auto_home_folder_add),
+            getString(R.string.auto_home_folder_remove),
+            getString(R.string.auto_home_folder_unpack)
+        )
+        AlertDialog.Builder(this).setTitle(folder.name)
+            .setItems(actions) { _, which ->
+                when (which) {
+                    0 -> requestFolderName(folder.name) { folder.name = it
+                        saveLayout(); renderHomeNextFrame() }
+                    1 -> {
+                        val alreadyGrouped = folders.flatMap { it.members }.toSet()
+                        val options = available.filter {
+                            appId(it) !in alreadyGrouped && appId(it) !in folder.members
+                        }
+                        chooseInstalledApp(getString(R.string.auto_home_folder_add),
+                            options) { info ->
+                            if (folder.members.size >= 24) {
+                                Toast.makeText(this, R.string.auto_home_folder_full,
+                                    Toast.LENGTH_SHORT).show()
+                            } else {
+                                val id = appId(info)
+                                placed.removeAll { it.id == id }
+                                dock.remove(id)
+                                folder.members.add(id)
+                                saveLayout(); renderHomeNextFrame()
+                            }
+                        }
+                    }
+                    2 -> {
+                        val known = available.associateBy(::appId)
+                        AlertDialog.Builder(this)
+                            .setTitle(R.string.auto_home_folder_remove)
+                            .setItems(folder.members.map { known[it]?.label?.toString() ?: it }
+                                .toTypedArray()) { _, index ->
+                                folder.members.removeAt(index)
+                                if (folder.members.isEmpty()) folders.remove(folder)
+                                saveLayout(); renderHomeNextFrame()
+                            }.setNegativeButton(android.R.string.cancel, null).show()
+                    }
+                    3 -> {
+                        folders.remove(folder)
+                        // Reclaim the folder cell first, then fill free
+                        // positions. Extras remain available in the app drawer.
+                        for ((index, member) in folder.members.withIndex()) {
+                            val cell = if (index == 0 && freeCell(folder.cell)) folder.cell
+                                else (folder.cell / pageSlots * pageSlots until
+                                    (folder.cell / pageSlots + 1) * pageSlots)
+                                    .firstOrNull { freeCell(it) }
+                            if (cell != null) placed.add(PlacedIcon(member, cell))
+                        }
+                        saveLayout(); renderHomeNextFrame()
+                    }
+                }
+            }.setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    private fun showDockManager() {
+        val actions = arrayOf(getString(R.string.auto_home_dock_add),
+            getString(R.string.auto_home_dock_remove))
+        AlertDialog.Builder(this).setTitle(R.string.auto_home_dock)
+            .setItems(actions) { _, which ->
+                if (which == 0) {
+                    if (dock.size >= dockSlots) {
+                        Toast.makeText(this, R.string.auto_home_dock_full,
+                            Toast.LENGTH_SHORT).show()
+                    } else {
+                        val grouped = folders.flatMap { it.members }.toSet()
+                        chooseInstalledApp(getString(R.string.auto_home_dock_add),
+                            available.filter { appId(it) !in dock && appId(it) !in grouped }
+                        ) { info ->
+                            val id = appId(info)
+                            placed.removeAll { it.id == id }
+                            dock.add(id)
+                            saveLayout(); renderHomeNextFrame()
+                        }
+                    }
+                } else {
+                    val known = available.associateBy(::appId)
+                    AlertDialog.Builder(this).setTitle(R.string.auto_home_dock_remove)
+                        .setItems(dock.map { known[it]?.label?.toString() ?: it }
+                            .toTypedArray()) { _, index ->
+                            dock.removeAt(index)
+                            saveLayout(); renderHomeNextFrame()
+                        }.setNegativeButton(android.R.string.cancel, null).show()
+                }
+            }.setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    private fun resetHomeWithConfirmation() {
+        AlertDialog.Builder(this).setTitle(R.string.auto_home_reset_title)
+            .setMessage(R.string.auto_home_reset_warning)
+            .setPositiveButton(R.string.auto_home_reset_confirm) { _, _ ->
+                // Only pinned apps, folders and dock. Widgets / wallpaper /
+                // manually calibrated profiles remain untouched.
+                placed.clear()
+                folders.clear()
+                dock.clear()
+                saveLayout()
+                renderHomeNextFrame()
+            }
+            .setNegativeButton(android.R.string.cancel, null).show()
+    }
+
+    private fun showHomeOrganizer() {
+        val options = arrayOf(getString(R.string.auto_home_folder_manage),
+            getString(R.string.auto_home_dock),
+            getString(R.string.auto_home_reset_title))
+        AlertDialog.Builder(this).setTitle(R.string.auto_home_organize)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> showFolderManager()
+                    1 -> showDockManager()
+                    else -> resetHomeWithConfirmation()
+                }
+            }.setNegativeButton(android.R.string.cancel, null).show()
+    }
+
     private fun showAppDrawer() {
         if (available.isEmpty()) {
             Toast.makeText(this, R.string.auto_home_no_space, Toast.LENGTH_SHORT).show()
@@ -726,6 +1192,27 @@ class AdaptiveHomeActivity : Activity() {
             matches.getOrNull(position)?.let { startApp(it) }
             dialog.dismiss()
         }
+        list.setOnItemLongClickListener { _, _, position, _ ->
+            val info = matches.getOrNull(position) ?: return@setOnItemLongClickListener false
+            dialog.dismiss()
+            val actions = arrayOf(getString(R.string.auto_home_add),
+                getString(R.string.auto_home_dock_add))
+            AlertDialog.Builder(this).setTitle(info.label)
+                .setItems(actions) { _, option ->
+                    val id = appId(info)
+                    if (option == 0) pinAppToCurrentPage(id)
+                    else {
+                        if (id !in dock && dock.size < dockSlots &&
+                            folders.none { id in it.members }) {
+                            placed.removeAll { it.id == id }
+                            dock.add(id)
+                            saveLayout(); renderHomeNextFrame()
+                        } else Toast.makeText(this, R.string.auto_home_no_space,
+                            Toast.LENGTH_SHORT).show()
+                    }
+                }.show()
+            true
+        }
         search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean = true
             override fun onQueryTextChange(query: String?): Boolean {
@@ -752,7 +1239,10 @@ class AdaptiveHomeActivity : Activity() {
             setShadowLayer(3.5f, 0f, 1f, Color.BLACK)
             setPadding((9 * dp).roundToInt(), (8 * dp).roundToInt(),
                 (9 * dp).roundToInt(), (8 * dp).roundToInt())
-            setBackgroundColor(Color.argb(118, 13, 47, 54))
+            background = GradientDrawable().apply {
+                cornerRadius = 12 * dp
+                setColor(Color.argb(146, 13, 47, 54))
+            }
             setOnClickListener { action() }
         }
 
@@ -767,7 +1257,11 @@ class AdaptiveHomeActivity : Activity() {
                 topMargin = (40 * dp).roundToInt()
             })
         val top = chromeButton(getString(R.string.auto_home_caption)) {
-            startActivity(Intent(this, MainActivity::class.java))
+            // Settings is a separate Flutter app task. Never put the editor
+            // on top of the HOME task or the Home key may resurrect settings.
+            startActivity(Intent(this, MainActivity::class.java).addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
         }
         canvas.addView(top, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT, (40 * dp).roundToInt(),
@@ -781,7 +1275,7 @@ class AdaptiveHomeActivity : Activity() {
         canvas.addView(pageButton, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT, (38 * dp).roundToInt(),
             Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
-                bottomMargin = (96 * dp).roundToInt()
+                bottomMargin = (170 * dp).roundToInt()
             })
         if (isDefault && !hasAdaptiveWallpaper()) {
             val help = chromeButton(getString(R.string.auto_home_wallpaper_needed)) {
@@ -790,7 +1284,7 @@ class AdaptiveHomeActivity : Activity() {
             canvas.addView(help, FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT, (45 * dp).roundToInt(),
                 Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
-                    bottomMargin = (140 * dp).roundToInt()
+                    bottomMargin = (220 * dp).roundToInt()
                 })
         }
         val bottom = LinearLayout(this).apply {
@@ -801,11 +1295,15 @@ class AdaptiveHomeActivity : Activity() {
             R.string.auto_home_apps to { showAppDrawer() },
             R.string.auto_home_add to { showAppPicker() },
             R.string.auto_home_manage to { showRemovePicker() },
-            R.string.auto_home_wallpaper to { selectWallpaper() }
+            R.string.auto_home_folder to { showFolderManager() },
+            R.string.auto_home_dock to { showDockManager() },
+            R.string.auto_home_organize to { showHomeOrganizer() }
         )
         for ((label, action) in actions) {
-            bottom.addView(chromeButton(getString(label), action),
-                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+            bottom.addView(chromeButton(getString(label), action).apply {
+                textSize = 10f
+                setPadding((2 * dp).roundToInt(), 0, (2 * dp).roundToInt(), 0)
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
         }
         val switchHome = chromeButton(getString(R.string.auto_home_change_home)) {
             openHomeSettings()
@@ -817,7 +1315,20 @@ class AdaptiveHomeActivity : Activity() {
             })
         canvas.addView(bottom, FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT, (54 * dp).roundToInt(),
-            Gravity.BOTTOM).apply { bottomMargin = (36 * dp).roundToInt() })
+            Gravity.BOTTOM).apply { bottomMargin = (22 * dp).roundToInt() })
+        if (views.isEmpty() && placedWidgets.none { it.cell / pageSlots == currentPage }) {
+            val empty = chromeButton(getString(R.string.auto_home_first_run)) {
+                showAppPicker()
+            }.apply {
+                textSize = 15f
+                setPadding((14 * dp).roundToInt(), (14 * dp).roundToInt(),
+                    (14 * dp).roundToInt(), (14 * dp).roundToInt())
+            }
+            canvas.addView(empty, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER))
+        }
         if (!isDefault) {
             val warning = chromeButton(getString(R.string.auto_home_not_default)) {
                 openHomeSettings()
@@ -828,28 +1339,33 @@ class AdaptiveHomeActivity : Activity() {
         }
     }
 
-    private fun showAppPicker() {
-        val present = placed.map { it.id }.toSet()
-        val options = available.filter {
-            it.componentName.flattenToString() !in present
-        }
-        if (options.isEmpty() || placed.size >= maxSlots) {
-            Toast.makeText(this, R.string.auto_home_no_space, Toast.LENGTH_SHORT).show()
+    private fun pinAppToCurrentPage(id: String) {
+        if (placed.any { it.id == id } || folders.any { id in it.members }) {
+            Toast.makeText(this, R.string.auto_home_already_pinned,
+                Toast.LENGTH_SHORT).show()
             return
         }
-        AlertDialog.Builder(this)
-            .setTitle(R.string.auto_home_add)
-            .setItems(options.map { it.label.toString() }.toTypedArray()) { _, index ->
-                val free = (currentPage * pageSlots until (currentPage + 1) * pageSlots)
-                    .firstOrNull { freeCell(it) }
-                if (free != null) {
-                    placed.add(PlacedIcon(options[index].componentName.flattenToString(), free))
-                    saveLayout()
-                    renderHome()
-                }
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+        val free = (currentPage * pageSlots until (currentPage + 1) * pageSlots)
+            .firstOrNull { freeCell(it) }
+        if (free == null) {
+            // Never remove a dock app unless the destination can accept it.
+            Toast.makeText(this, R.string.auto_home_no_space,
+                Toast.LENGTH_SHORT).show()
+            return
+        }
+        dock.remove(id)
+        placed.add(PlacedIcon(id, free))
+        saveLayout()
+        renderHomeNextFrame()
+    }
+
+    private fun showAppPicker() {
+        val pinned = placed.map { it.id }.toSet() +
+            dock.toSet() + folders.flatMap { it.members }.toSet()
+        chooseInstalledApp(getString(R.string.auto_home_add),
+            available.filter { appId(it) !in pinned }) { chosen ->
+            pinAppToCurrentPage(appId(chosen))
+        }
     }
 
     private fun showRemovePicker() {
@@ -939,6 +1455,7 @@ class AdaptiveHomeActivity : Activity() {
             prefs.edit()
                 .putString("auto_home_config_v1", next)
                 .putBoolean("auto_home_active_v1", true)
+                .putLong("auto_home_revision_v1", SystemClock.uptimeMillis())
                 .apply()
         }
     }

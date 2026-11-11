@@ -87,8 +87,17 @@
   "qaSnapshotCopy": "Copia riepilogo collaudo fisico",
   "qaSnapshotHint": "Copia soltanto impostazioni della scena e stato del renderer; nessuno screenshot, identificativo del dispositivo o nome delle app installate.",
   "qaSnapshotCopied": "Riepilogo collaudo copiato negli appunti",
-  "adaptiveHomeTitle": "Home adattiva (sperimentale)",
+  "adaptiveHomeTitle": "Home adattiva",
   "adaptiveHomeExplanation": "Nella Home di Deskland la sabbia segue le posizioni reali delle icone e cambia mentre le trascini. Gli sfondi animati Android non possono leggere le posizioni delle icone del launcher attuale.",
-  "adaptiveHomeButton": "Prova la Home adattiva",
-  "adaptiveHomeNoImport": "Devi scegliere Deskland come Home predefinita. La disposizione delle icone nella Home Xiaomi/Samsung non si può importare automaticamente: Deskland organizza inizialmente alcune app. Widget, cartelle e profili lavoro non sono ancora supportati. Puoi tornare al launcher precedente dalle impostazioni Android."
+  "adaptiveHomeButton": "Configura Home Deskland",
+  "adaptiveHomeNoImport": "Seleziona Deskland come Home predefinita e conferma separatamente lo sfondo animato. La disposizione Xiaomi/Samsung non può essere letta: scegli le tue app installate dal menu con ricerca, organizzale su più pagine, crea cartelle e dock, aggiungi widget. Puoi sempre tornare alla Home precedente dalle impostazioni Android.",
+  "autoHomeStatusTitle": "Stato sabbia automatica",
+  "autoHomeStatusNotHome": "Deskland non è la Home predefinita: le icone della Home originale non possono essere rilevate.",
+  "autoHomeStatusNoWallpaper": "Lo sfondo animato Deskland non è selezionato. Impostalo separatamente dalla Home.",
+  "autoHomeStatusNoZones": "Deskland Home non ha ancora pubblicato icone visibili. Apri la Home e aggiungi un'app.",
+  "autoHomeStatusNotRendered": "Il renderer non ha ancora confermato le posizioni aggiornate. Apri la Home, poi torna qui e aggiorna.",
+  "autoHomeStatusDataReady": "Posizioni ricevute dal renderer",
+  "autoHomeStatusDisclaimer": "Questo stato conferma lo scambio dati, non la presenza visiva della sabbia. Le cartelle non sono ancora supportate.",
+  "autoHomeStatusRefresh": "Aggiorna diagnosi",
+  "autoHomeStatusOpenHome": "Apri la Home Deskland"
 }

@@ -1,5 +1,5 @@
 <resources>
-    <string name="auto_home_caption">Adaptive Startseite — experimentell</string>
+    <string name="auto_home_caption">Adaptive Startseite</string>
     <string name="auto_home_add">App hinzufügen</string>
     <string name="auto_home_manage">App entfernen</string>
     <string name="auto_home_wallpaper">Live-Hintergrund wählen</string>
@@ -20,4 +20,25 @@
     <string name="auto_home_widget_move">Zur nächsten Seite verschieben</string>
     <string name="auto_home_widget_resize">Größe erhöhen</string>
     <string name="auto_home_widget_remove">Widget entfernen</string>
+    <string name="auto_home_folder">Ordner</string>
+    <string name="auto_home_folder_create">Ordner erstellen</string>
+    <string name="auto_home_folder_manage">Ordner verwalten</string>
+    <string name="auto_home_folder_empty">Noch keine Ordner</string>
+    <string name="auto_home_folder_name">Ordnername</string>
+    <string name="auto_home_folder_rename">Ordner umbenennen</string>
+    <string name="auto_home_folder_add">App zum Ordner hinzufügen</string>
+    <string name="auto_home_folder_remove">App aus Ordner entfernen</string>
+    <string name="auto_home_folder_unpack">Ordner auflösen</string>
+    <string name="auto_home_folder_full">Ordner ist voll</string>
+    <string name="auto_home_folder_two">Mindestens zwei Apps auswählen</string>
+    <string name="auto_home_dock">Dock</string>
+    <string name="auto_home_dock_add">App zum Dock hinzufügen</string>
+    <string name="auto_home_dock_remove">Aus Dock entfernen</string>
+    <string name="auto_home_dock_full">Dock hat vier Apps</string>
+    <string name="auto_home_organize">Anordnen</string>
+    <string name="auto_home_reset_title">Startseite zurücksetzen</string>
+    <string name="auto_home_reset_warning">Nur Apps, Ordner und Dock von Deskland leeren? Installierte Apps, Widgets und bisherige Startseite bleiben unverändert.</string>
+    <string name="auto_home_reset_confirm">Deskland leeren</string>
+    <string name="auto_home_already_pinned">App bereits auf Startseite oder im Ordner</string>
+    <string name="auto_home_first_run">Das ist deine Deskland-Startseite. Tippe hier und wähle deine Apps.</string>
 </resources>

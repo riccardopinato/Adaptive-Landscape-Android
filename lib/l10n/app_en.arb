@@ -87,8 +87,17 @@
   "qaSnapshotCopy": "Copy physical QA summary",
   "qaSnapshotHint": "Copies only scene settings and renderer status; no screenshots, personal device identifiers or installed app names.",
   "qaSnapshotCopied": "QA summary copied to clipboard",
-  "adaptiveHomeTitle": "Adaptive Home (experimental)",
+  "adaptiveHomeTitle": "Adaptive Home",
   "adaptiveHomeExplanation": "Inside Deskland Home, the beach follows the real positions of icons and updates as you drag them. Android does not share icon locations from your current launcher with ordinary live wallpapers.",
-  "adaptiveHomeButton": "Use adaptive Home",
-  "adaptiveHomeNoImport": "You must choose Deskland as the default Home. Your existing Xiaomi/Samsung Home layout cannot be imported automatically; Deskland initially arranges some apps itself. Widgets, folders and work profiles are not supported in this prototype. You can switch back in Android settings."
+  "adaptiveHomeButton": "Configure Adaptive Home",
+  "adaptiveHomeNoImport": "Choose Deskland as your default Home and confirm its live wallpaper separately. Your old Xiaomi/Samsung layout cannot be read: pick your own installed apps in the searchable drawer, arrange them across pages, create folders and a dock, and add widgets. You can always switch back in Android settings.",
+  "autoHomeStatusTitle": "Automatic sand status",
+  "autoHomeStatusNotHome": "Deskland is not your default Home. Icons in your existing launcher cannot be detected.",
+  "autoHomeStatusNoWallpaper": "Deskland live wallpaper is not selected. Set it separately from the Home launcher.",
+  "autoHomeStatusNoZones": "Deskland Home has not published visible app icons yet. Open Home and add an app.",
+  "autoHomeStatusNotRendered": "The renderer has not confirmed the latest positions. Open Home, return here and refresh.",
+  "autoHomeStatusDataReady": "Positions received by renderer",
+  "autoHomeStatusDisclaimer": "This confirms data routing, not visible sand pixels. Folders are not supported yet.",
+  "autoHomeStatusRefresh": "Refresh diagnostic",
+  "autoHomeStatusOpenHome": "Open Deskland Home"
 }

@@ -2,12 +2,23 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class WallpaperConfig {
-  const WallpaperConfig({this.scene = 'meadow', this.occupied = '', this.configJson, this.nativeBackend, this.oceanPhotoEnabled = false});
+  const WallpaperConfig({this.scene = 'meadow', this.occupied = '', this.configJson, this.nativeBackend, this.oceanPhotoEnabled = false,
+    this.desklandHomeSelected = false, this.desklandWallpaperSelected = false,
+    this.autoHomeActive = false, this.autoHomeZones = 0, this.autoHomeRevision = 0,
+    this.renderSource = 'not_rendered', this.renderZones = 0, this.renderRevision = -1});
   final String scene;
   final String occupied;
   final String? configJson;
   final String? nativeBackend;
   final bool oceanPhotoEnabled;
+  final bool desklandHomeSelected;
+  final bool desklandWallpaperSelected;
+  final bool autoHomeActive;
+  final int autoHomeZones;
+  final int autoHomeRevision;
+  final String renderSource;
+  final int renderZones;
+  final int renderRevision;
 }
 
 class WallpaperChannel {
@@ -23,6 +34,14 @@ class WallpaperChannel {
       configJson: data?['config'] is String ? data!['config'] as String : null,
       nativeBackend: data?['backend'] is String ? data!['backend'] as String : null,
       oceanPhotoEnabled: data?['oceanPhoto'] == true,
+      desklandHomeSelected: data?['desklandHomeSelected'] == true,
+      desklandWallpaperSelected: data?['desklandWallpaperSelected'] == true,
+      autoHomeActive: data?['autoHomeActive'] == true,
+      autoHomeZones: data?['autoHomeZones'] is int ? data!['autoHomeZones'] as int : 0,
+      autoHomeRevision: data?['autoHomeRevision'] is int ? data!['autoHomeRevision'] as int : 0,
+      renderSource: data?['renderSource'] is String ? data!['renderSource'] as String : 'not_rendered',
+      renderZones: data?['renderZones'] is int ? data!['renderZones'] as int : 0,
+      renderRevision: data?['renderRevision'] is int ? data!['renderRevision'] as int : -1,
     );
   }
 
@@ -57,6 +76,12 @@ class WallpaperChannel {
   Future<bool> requestAdaptiveHome() async {
     if (!supported) return false;
     return await _channel.invokeMethod<bool>('requestAdaptiveHome') ?? false;
+  }
+
+  /// Opens the selected system HOME role, never an in-editor simulation.
+  Future<void> openAdaptiveHome() async {
+    if (!supported) return;
+    await _channel.invokeMethod<void>('openAdaptiveHome');
   }
 
   Future<void> openLiveWallpaperPicker() async {

@@ -1,0 +1,68 @@
+# Deskland Android — Maxi-step 1 runtime handoff
+
+Factory baseline: ee72dbb1b0de2cd71bc4aac42c350853c6915159 (Master v27 / Index v29).
+Frozen candidate: Draft PR #26 at 6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd.
+Source CI: https://github.com/riccardopinato/Adaptive-Landscape-Android/actions/runs/42947060839 (PASS).
+Existing debug APK artifact: adaptive-landscape-android-debug, ID 13822384905. Signing is internal/debug only; no Play certification.
+
+## Emulator gate (not physical QA)
+The workflow builds a fresh debug APK from the QA branch using pinned Flutter and source, then, records SHA-256, installs it on a disposable Android 35 emulator, temporarily assigns the Home role using shell test privileges, observes actual Home UI and source-app preferences, checks empty page, add/remove/move app icons, process restart, then restores the original Home role. Evidence contains only named checks and hashes. It refuses to run on real devices.
+It is a non-production test. It does not bypass actual user consent to change wallpaper, modify user phone settings, capture photos, or copy GPL assets.
+
+## Physical follow-up (NOT RUN)
+1. On a spare phone, record package, exact APK SHA-256, signing certificate, OS/API and renderer backend. Export existing profiles first; debug-signing differences can prevent update-in-place.
+2. Open editor, set Beach, clear manual icon occupancy. Explicitly select Deskland live wallpaper in Android dialog and separately select Deskland Home with the system role picker.
+3. Verify empty Home is only ocean; place one app and observe sand; long-press move and check continuous coastline; remove app and check sea returns. Repeat at motion=0.
+4. Check page changes, app launch/back, widgets, force-stop/restart/reboot and restoration of original OEM launcher without losing its layout.
+5. Inspect genuine native photo texture at 0/3/6/9/12 seconds and battery/thermal. User must approve visual quality.
+6. Record PASS/FAIL/NOT RUN per scenario with exact APK and device evidence. Main merge/Play remain NO-GO until all relevant gates pass.
+
+| Gate | Initial status |
+|---|---|
+| Flutter/Android source CI for PR #26 | PASS |
+| Android emulator runtime | NOT RUN until workflow concludes |
+| Human live wallpaper & launcher consent | NOT RUN |
+| GPU visual realism, motion=0, OEM, battery | NOT RUN |
+| Production merge / signed release | BLOCKED |
+
+This experimental PR adds a bounded native Home layout-update correction and QA harness; it does not change Flutter, Android wallpaper renderer, config schema, or main.
+
+## Observed runtime defect and bounded correction
+Earlier emulator runs installed original PR #26 APK. They passed Home role selection, 6 visible icon zones, and empty page with zero zones; when returning to page 1 the UI and stored page indicated 1/3 but the published coastline count did not recover. Cause in source: `renderHome` publishes before new child tiles have measured bounds, and existing global layout callback reacts only to canvas size changes. This PR uses child `addOnLayoutChangeListener` on icons and widgets so final bounds cause a debounced republish. The fix MUST be verified against a freshly compiled APK from this branch. CI green does not certify physical reality.
+
+## M1 incremental QA — stationary long-press guard and reproducible artifact
+- A source-level defect was found in `AdaptiveHomeActivity.attachTouch`: `ACTION_UP` could call `performClick()` after an armed long press without movement. This must not start an application, so the app-launch condition is now `!armed && !cancelledByGesture`.
+- Disposable emulator test now verifies a stationary 900ms long-press does not navigate away before the one-process `input touchscreen draganddrop` trial. This distinguishes a click leak from a true drag failure.
+- The workflow now checks out the exact PR head commit rather than the synthetic merge commit and uploads its matching debug APK (`deskland-m1-qa-debug-NOT-PLAY-SIGNED`) for human testing, with SHA-256 in job logs and JSON. APK artifact is unverified until CI actually completes.
+- If CI fails, read the `SAFE_DIAG` role holder, foreground activity, process-alive and zone-count fields. Never label a failed drag as PASS.
+
+## Diagnostics: drag may terminate Home process
+Run 43013339785 passed stationary long press but failed the following drag: role still held by Deskland while `pidof` returned empty and the foreground switched to Pixel Launcher. The QA harness must now collect AndroidRuntime/DEBUG/ActivityManager crash and process-exit evidence from the **disposable emulator only**; do not infer root cause without a trace.
+For this test-only change, the CI reuses artifact `deskland-m1-qa-debug-NOT-PLAY-SIGNED` produced by 43013339785 (APK SHA256 `598230629bbdd3638ee9dc017f1a0416f4630f50827f4136cc043ae3b95fe074`) and rejects any source-native blob mismatch. Full rebuild is mandatory again after the next product/native change. This is diagnostic reuse, not a release certification.
+
+## Confirmed emulator crash and bounded native repair
+AOSP runtime trace from run 43014930409: `ApplicationExitInfo` reason 4 `APP CRASH(EXCEPTION)` during drag, `NullPointerException` at `android.widget.FrameLayout.onMeasure(FrameLayout.java:193)`. Long-press without movement passed. This is a real Home process crash, not solely an input-simulator error. Suspected trigger is immediate `renderHome()` / child removal while a drag or global layout traversal is in progress. To prevent view-tree mutation in these paths, drag ACTION_UP/CANCEL and the global-layout reflow schedule `renderHomeNextFrame()` via `canvas.postOnAnimation` instead. The change requires a fresh complete APK build and emulator rerun; no PASS is implied by static inspection.
+
+## Physical failure after successful emulator M1 (2026-11-11)
+Owner feedback: on the Android phone the wallpaper stays sea-only; existing app icons and folders, including when moved, did not create sand. This is **FAIL** for the intended product UX. Previous emulator M1 verified source/Home coordinates and process recovery but did not install the live wallpaper or inspect a rendered coastline. Do not conflate that CI with user acceptance.
+
+Strict source boundaries: a wallpaper cannot read or follow Xiaomi/Pixel/Samsung launcher icon/folder positions; automatic geometry is only produced by **Deskland's own selected Home**. This prototype does not host folders. For an existing OEM Home, manual grid/zone calibration is required, and movement in the OEM launcher cannot update sand automatically.
+
+New diagnostic protocol: native MainActivity reports independently (a) selected Deskland Home role, (b) active Deskland live wallpaper, (c) count and revision of published Deskland Home zones, (d) source/count/revision observed by a real WallpaperService render call. A matching revision proves source routing, **not** visible coastline pixels; a zero/stale result is a concrete defect. The status appears in the Flutter editor (6 locales) without scraping app labels, screenshots or remote telemetry.
+
+Human release gate remains blocked until physical evidence confirms **actual sand pixels** for icon add/drag/remove and wallpaper running as selected; folders remain unsupported and cannot be marketed as implemented.
+
+## Physical activation gap — guided Home + wallpaper setup
+Owner reports the adaptive icon/sand scene responds to dragging but remains a virtual/trial-looking screen; diagnostics specifically show `desklandHomeSelected=true` and `desklandWallpaperSelected=false`. Android's HOME role selection is not live-wallpaper installation. Until the system's wallpaper confirmation is accepted for the *Home screen*, visible native sand is not guaranteed.
+
+The `requestAdaptiveHome` journey now opens the **Android system live-wallpaper confirmation** after a successful HOME role assignment if the wallpaper is not installed (or opens real Home if it is). A visible diagnostic CTA offers the native wallpaper chooser when the role is selected but wallpaper is missing; once both are selected it can explicitly open the resolved Android Home, not the Flutter editor. All choices remain user-confirmed; no hidden wallpaper/default launcher mutation.
+
+CI verifies compilation and existing icon-position smoke only. This new two-stage activation must be tested on the owner's phone: set both via OS confirmation, press Home, add/move icon and confirm sand actually changes; return to editor to verify renderer revision. OEM launcher folders still cannot be sensed and Deskland folders remain unsupported. Do not merge as certified without physical evidence.
+
+## Physical HOME-button misrouting — task isolation fix (2026-11-11)
+Owner reports pressing the phone's Home key lands in Deskland's **Flutter settings editor** instead of the native icon launcher, even while the sand preview responds to drag. Code inspection confirms `AdaptiveHomeActivity.renderChrome()` started `MainActivity` without `FLAG_ACTIVITY_NEW_TASK`; both activities previously shared the same task affinity. The editor could therefore sit on top of the HOME task. This is a concrete navigation defect; not proof of any particular OEM's final behavior.
+
+Fix: give `AdaptiveHomeActivity` its own stable task affinity, `singleTask` launch mode and remove it from Recents; launch Flutter settings explicitly into a separate task with NEW_TASK/CLEAR_TOP/SINGLE_TOP; when returning from setup launch native Home into its dedicated task. Emulator script now opens editor via the real Home chrome button, sends KEYCODE_HOME, and requires `AdaptiveHomeActivity` to be top resumed; checking only stored icon-zone count does **not** suffice. The wallpaper must still be separately accepted through the Android system UI, and tests without physical phone cannot certify OEM gestures/launcher role behavior.
+
+## Default Home revocation guard
+The emulator regression for Home → Flutter settings → Home passed at SHA 4876f30, but after a shell-only role change back to Pixel Launcher the old Deskland activity remained foreground despite role revocation. Native HOME now finishes itself on resume or a new HOME intent when it no longer owns the role. This is a bounded safety guard; a user-confirmed OEM launcher return must still be tested on a physical phone. Never treat the role holder string alone as visual evidence.

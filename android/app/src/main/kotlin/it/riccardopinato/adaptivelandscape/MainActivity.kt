@@ -13,6 +13,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
+import it.riccardopinato.adaptive_landscape.R
 
 /** Android-only bridge: no launcher usage, screenshots, or sensitive permissions. */
 class MainActivity : FlutterActivity() {
@@ -33,8 +34,8 @@ class MainActivity : FlutterActivity() {
             val callback = autoHomeResult
             autoHomeResult = null
             if (resultCode == Activity.RESULT_OK) {
-                startActivity(Intent(this, AdaptiveHomeActivity::class.java))
                 callback?.success(true)
+                continueAdaptiveHomeSetup()
             } else callback?.success(false)
             return
         }
@@ -83,6 +84,52 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun isDesklandHomeSelected(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roles = getSystemService(Context.ROLE_SERVICE) as? RoleManager
+            return roles?.isRoleHeld(RoleManager.ROLE_HOME) == true
+        }
+        val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        return packageManager.resolveActivity(home, 0)?.activityInfo?.packageName == packageName
+    }
+
+    private fun isDesklandWallpaperSelected(): Boolean = try {
+        val active = WallpaperManager.getInstance(this).wallpaperInfo
+        active?.packageName == packageName &&
+            active.serviceName == AdaptiveWallpaperService::class.java.name
+    } catch (_: Exception) { false }
+
+    /**
+     * HOME is an Android role, not a wallpaper installation. Both require
+     * separate user confirmation; the system wallpaper preview must be
+     * accepted before sand can appear behind the actual launcher.
+     */
+    private fun openDesklandWallpaperSetup() {
+        val component = ComponentName(this, AdaptiveWallpaperService::class.java)
+        try {
+            startActivity(Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
+                .putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, component))
+        } catch (_: Exception) {
+            startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER))
+        }
+    }
+
+    private fun continueAdaptiveHomeSetup() {
+        if (!isDesklandHomeSelected()) return
+        if (isDesklandWallpaperSelected()) {
+            startActivity(Intent(this, AdaptiveHomeActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))
+        } else {
+            try {
+                // Opens system preview only; nothing is set silently.
+                openDesklandWallpaperSetup()
+            } catch (_: Exception) {
+                android.widget.Toast.makeText(this,
+                    R.string.auto_home_wallpaper_failed, android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "adaptive_landscape/wallpaper")
@@ -95,6 +142,17 @@ class MainActivity : FlutterActivity() {
                         "config" to prefs.getString("config_v2", null),
                         "backend" to prefs.getString("render_backend_v1", "not_started"),
                         "oceanPhoto" to OceanPhotoStore.exists(this),
+                        "desklandHomeSelected" to isDesklandHomeSelected(),
+                        "desklandWallpaperSelected" to isDesklandWallpaperSelected(),
+                        "autoHomeActive" to prefs.getBoolean("auto_home_active_v1", false),
+                        "autoHomeZones" to runCatching {
+                            JSONObject(prefs.getString("auto_home_config_v1", "{}") ?: "{}")
+                                .optJSONArray("zones")?.length() ?: 0
+                        }.getOrDefault(0),
+                        "autoHomeRevision" to prefs.getLong("auto_home_revision_v1", 0L),
+                        "renderSource" to prefs.getString("render_source_v1", "not_rendered"),
+                        "renderZones" to prefs.getInt("render_zone_count_v1", 0),
+                        "renderRevision" to prefs.getLong("render_auto_home_revision_v1", -1L),
                     ))
                     "save" -> {
                         val scene = call.argument<String>("scene")
@@ -177,8 +235,8 @@ class MainActivity : FlutterActivity() {
                                 if (!roles.isRoleAvailable(RoleManager.ROLE_HOME)) {
                                     result.error("HOME_ROLE_UNAVAILABLE", "This Android device has no Home role", null)
                                 } else if (roles.isRoleHeld(RoleManager.ROLE_HOME)) {
-                                    startActivity(Intent(this, AdaptiveHomeActivity::class.java))
                                     result.success(true)
+                                    continueAdaptiveHomeSetup()
                                 } else {
                                     autoHomeResult = result
                                     startActivityForResult(
@@ -197,16 +255,26 @@ class MainActivity : FlutterActivity() {
                     }
                     "openPicker" -> {
                         try {
-                            val component = ComponentName(this, AdaptiveWallpaperService::class.java)
-                            startActivity(Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
-                                .putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, component))
+                            openDesklandWallpaperSetup()
                             result.success(null)
-                        } catch (_: Exception) {
+                        } catch (error: Exception) {
+                            result.error("PICKER_UNAVAILABLE", error.message, null)
+                        }
+                    }
+                    "openAdaptiveHome" -> {
+                        if (!isDesklandHomeSelected()) {
+                            result.error("NOT_DEFAULT_HOME",
+                                "Choose Deskland as the default Home in Android settings.", null)
+                        } else {
                             try {
-                                startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER))
+                                // Resolve Android HOME through the system role, not an
+                                // editor preview or a forced component substitution.
+                                startActivity(Intent(Intent.ACTION_MAIN)
+                                    .addCategory(Intent.CATEGORY_HOME)
+                                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                                 result.success(null)
-                            } catch (fallback: Exception) {
-                                result.error("PICKER_UNAVAILABLE", fallback.message, null)
+                            } catch (error: Exception) {
+                                result.error("HOME_LAUNCH_FAILED", error.message, null)
                             }
                         }
                     }
