@@ -8,4 +8,7 @@
     <string name="auto_home_no_space">Home piena o nessuna app disponibile</string>
     <string name="auto_home_wallpaper_failed">Impossibile aprire le impostazioni dello sfondo</string>
     <string name="auto_home_role_failed">Impossibile aprire le impostazioni Home</string>
+    <string name="auto_home_apps">App</string>
+    <string name="auto_home_search">Cerca app</string>
+    <string name="auto_home_change_home">Cambia launcher</string>
 </resources>
