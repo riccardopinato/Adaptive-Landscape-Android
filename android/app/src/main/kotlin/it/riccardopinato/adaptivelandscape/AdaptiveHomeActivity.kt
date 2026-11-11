@@ -16,14 +16,19 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
+import android.os.UserHandle
 import android.os.SystemClock
 import android.provider.Settings
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.ArrayAdapter
+import android.widget.ListView
+import android.widget.SearchView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -65,6 +70,26 @@ class AdaptiveHomeActivity : Activity() {
     private val publishPending = Runnable { publishHomePositions() }
     private var lastWidth = 0
     private var lastHeight = 0
+    private var callbackRegistered = false
+    private val packageCallback = object : LauncherApps.Callback() {
+        override fun onPackageAdded(packageName: String, user: UserHandle) = refreshPackages()
+        override fun onPackageRemoved(packageName: String, user: UserHandle) = refreshPackages()
+        override fun onPackageChanged(packageName: String, user: UserHandle) = refreshPackages()
+        override fun onPackagesAvailable(names: Array<out String>, user: UserHandle,
+                                         replacing: Boolean) = refreshPackages()
+        override fun onPackagesUnavailable(names: Array<out String>, user: UserHandle,
+                                           replacing: Boolean) = refreshPackages()
+    }
+
+    private fun refreshPackages() {
+        handler.post {
+            if (!isFinishing && !isDestroyed) {
+                loadLaunchableApps()
+                restoreSavedLayout()
+                renderHome()
+            }
+        }
+    }
 
     private val columns = 5
     private val rows = 8
@@ -89,6 +114,13 @@ class AdaptiveHomeActivity : Activity() {
             clipToPadding = false
         }
         setContentView(canvas)
+        // Subscribe to launcher package changes; do not poll installed apps.
+        try {
+            launcherApps.registerCallback(packageCallback, handler)
+            callbackRegistered = true
+        } catch (_: RuntimeException) {
+            // A refresh on resume still supports a functioning Home.
+        }
         canvas.viewTreeObserver.addOnGlobalLayoutListener {
             if (canvas.width > 0 && canvas.height > 0 &&
                 (canvas.width != lastWidth || canvas.height != lastHeight)) {
@@ -114,6 +146,7 @@ class AdaptiveHomeActivity : Activity() {
 
     override fun onDestroy() {
         handler.removeCallbacks(publishPending)
+        if (callbackRegistered) launcherApps.unregisterCallback(packageCallback)
         super.onDestroy()
     }
 
@@ -128,7 +161,10 @@ class AdaptiveHomeActivity : Activity() {
 
     private fun loadLaunchableApps() {
         available = try {
-            launcherApps.getActivityList(null, Process.myUserHandle())
+            launcherApps.profiles.flatMap { user ->
+                try { launcherApps.getActivityList(null, user) }
+                catch (_: SecurityException) { emptyList() }
+            }
                 .filter { it.componentName.packageName != packageName }
                 .distinctBy { it.componentName.flattenToString() }
                 .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.label.toString() })
@@ -236,6 +272,9 @@ class AdaptiveHomeActivity : Activity() {
         }
         vertical.addView(label, LinearLayout.LayoutParams(-1, -2))
         vertical.contentDescription = info.label
+        vertical.isClickable = true
+        vertical.isFocusable = true
+        vertical.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         return vertical
     }
 
@@ -307,7 +346,7 @@ class AdaptiveHomeActivity : Activity() {
 
     private fun startApp(info: LauncherActivityInfo) {
         try {
-            launcherApps.startMainActivity(info.componentName, Process.myUserHandle(),
+            launcherApps.startMainActivity(info.componentName, info.user,
                 null, null)
         } catch (_: Exception) {
             Toast.makeText(this, R.string.auto_home_cannot_open, Toast.LENGTH_SHORT).show()
