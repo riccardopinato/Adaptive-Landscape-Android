@@ -79,7 +79,12 @@ def main():
     ok("editor_start")
     original=adb("shell","cmd","role","get-role-holders",ROLE)
     holders=re.findall(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+",original)
-    assert holders and PKG not in holders,"Original launcher role not identifiable"
+    if PKG in holders:
+        raise AssertionError("Deskland unexpectedly owns Home before assignment")
+    if not holders:
+        steps["original_launcher_role"]="NOT VERIFIED: system had no original role holder"
+    else:
+        ok("original_launcher_role_present")
     adb("shell","cmd","role","add-role-holder",ROLE,PKG)
     wait("role holder",lambda:PKG in adb("shell","cmd","role","get-role-holders",ROLE))
     ok("shell_home_role","Test privilege; not real consent dialog")
@@ -123,12 +128,17 @@ def main():
     wait("Home after process kill",lambda:node_text("Add app"))
     wait("geometry after process kill",lambda:n_zones(base))
     ok("process_restart")
-    adb("shell","cmd","role","add-role-holder",ROLE,holders[0])
-    wait("original Home restored",lambda:holders[0] in adb("shell","cmd","role","get-role-holders",ROLE))
+    if holders:
+        adb("shell","cmd","role","add-role-holder",ROLE,holders[0])
+        wait("original Home restored",lambda:holders[0] in adb("shell","cmd","role","get-role-holders",ROLE))
+        ok("original_home_role_restored")
+    else:
+        adb("shell","cmd","role","remove-role-holder",ROLE,PKG)
+        steps["original_home_role_restored"]="NOT VERIFIED: emulator initially had no role holder"
     assert PKG not in adb("shell","cmd","role","get-role-holders",ROLE)
     adb("shell","input","keyevent","KEYCODE_HOME")
     assert node_text("Add app") is None
-    ok("original_home_rollback")
+    ok("deskland_role_revoked")
     for key in ("live_wallpaper_consent","physical_device","aesthetic_quality","battery_thermal"):
         steps[key]="NOT VERIFIED"
 try: main()
