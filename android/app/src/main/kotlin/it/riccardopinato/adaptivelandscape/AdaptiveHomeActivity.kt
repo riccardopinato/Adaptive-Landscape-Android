@@ -14,6 +14,7 @@ import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -29,6 +30,8 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.GridLayout
+import android.widget.EditText
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.SearchView
@@ -37,6 +40,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import kotlin.math.ceil
+import java.util.UUID
 import org.json.JSONArray
 import org.json.JSONObject
 import it.riccardopinato.adaptive_landscape.R
@@ -44,18 +48,23 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * EXPERIMENTAL, user-chosen Home/launcher, not a background icon scanner.
+ * User-chosen native Android Home, not a background icon scanner.
  *
  * Android only exposes precise icon positions to the launcher that owns those
  * views. This Activity owns its displayed icons and publishes their positions
  * to the existing WallpaperService via a separate, volatile scene contract.
  *
- * Limitations: no migration from MIUI/Pixel/Samsung launcher grids, and no
- * widgets/folders/work-profile support yet. NEVER replace the default Home
- * without the user's explicit system RoleManager consent.
+ * Limitations: no automatic migration from other launcher layouts or OEM
+ * shortcuts. Widget hosting, user-curated folders and dock are locally owned;
+ * work/private profile behavior still requires per-device verification.
+ * NEVER replace the default Home without explicit Android system consent.
  */
 class AdaptiveHomeActivity : Activity() {
     private data class PlacedIcon(val id: String, var cell: Int)
+    private data class PlacedFolder(
+        val id: String, var name: String, var cell: Int,
+        val members: MutableList<String>
+    )
     private data class PlacedWidget(
         val widgetId: Int, var cell: Int, var spanX: Int, var spanY: Int
     )
@@ -75,6 +84,9 @@ class AdaptiveHomeActivity : Activity() {
     private val handler = Handler(Looper.getMainLooper())
     private val dp by lazy { resources.displayMetrics.density }
     private val placed = ArrayList<PlacedIcon>()
+    private val folders = ArrayList<PlacedFolder>()
+    // Dock order is independent of every page and never auto-seeded.
+    private val dock = ArrayList<String>()
     private val views = LinkedHashMap<String, View>()
     private val widgetViews = LinkedHashMap<Int, View>()
     private val placedWidgets = ArrayList<PlacedWidget>()
@@ -120,8 +132,11 @@ class AdaptiveHomeActivity : Activity() {
 
     private val columns = 5
     private val rows = 8
-    private val topFraction = 0.115
-    private val spanFraction = 0.765
+    // Reserve the bottom band for an actual user-curated dock and controls.
+    // Cell numbers remain 5x8 for non-destructive v1 layout migration.
+    private val topFraction = 0.085
+    private val spanFraction = 0.605
+    private val dockSlots = 4
     private val pageSlots = columns * rows
     private val maxPages = 3
     private val maxSlots = pageSlots * maxPages
@@ -247,39 +262,70 @@ class AdaptiveHomeActivity : Activity() {
     private fun restoreSavedLayout() {
         val known = available.associateBy { it.componentName.flattenToString() }
         placed.clear()
-        val saved = prefs.getString("auto_home_icons_v1", null)
-        if (saved == null) {
-            // Initial layout is automatic but cannot import another launcher's
-            // personalized icon order. Users can move icons on this Home.
-            for ((i, item) in available.take(12).withIndex()) {
-                placed.add(PlacedIcon(item.componentName.flattenToString(), i + 5))
-            }
-            saveLayout()
-            return
-        }
+        folders.clear()
+        dock.clear()
+        val usedApps = HashSet<String>()
+        val usedCells = HashSet<Int>()
+        // Existing auto_home_icons_v1 is read unchanged. Older users never
+        // lose the layout previously saved on their device.
         try {
-            val array = JSONArray(saved)
-            val used = HashSet<Int>()
-            for (i in 0 until minOf(array.length(), maxSlots)) {
-                val item = array.optJSONObject(i) ?: continue
+            val saved = JSONArray(prefs.getString("auto_home_icons_v1", "[]") ?: "[]")
+            for (i in 0 until minOf(saved.length(), maxSlots)) {
+                val item = saved.optJSONObject(i) ?: continue
                 val id = item.optString("id")
                 val cell = item.optInt("cell", -1)
                 if (known.containsKey(id) && cell in 0 until maxSlots &&
-                    used.add(cell) && placed.none { it.id == id }) {
+                    cell !in usedCells && placedWidgets.none { cell in widgetCells(it) } &&
+                    usedApps.add(id)) {
+                    usedCells.add(cell)
                     placed.add(PlacedIcon(id, cell))
                 }
             }
-        } catch (_: Exception) {
-            // Invalid local JSON must not crash the selected Home.
-        }
+        } catch (_: Exception) { /* A malformed legacy layout stays local. */ }
+        try {
+            val raw = JSONArray(prefs.getString("auto_home_folders_v1", "[]") ?: "[]")
+            for (i in 0 until minOf(raw.length(), 60)) {
+                val o = raw.optJSONObject(i) ?: continue
+                val id = o.optString("id").takeIf { it.startsWith("folder:") } ?: continue
+                val cell = o.optInt("cell", -1)
+                if (cell !in 0 until maxSlots || !usedCells.add(cell) ||
+                    placedWidgets.any { cell in widgetCells(it) } ||
+                    folders.any { it.id == id }) continue
+                val members = mutableListOf<String>()
+                val items = o.optJSONArray("members") ?: JSONArray()
+                for (j in 0 until minOf(items.length(), 24)) {
+                    val member = items.optString(j)
+                    if (known.containsKey(member) && usedApps.add(member)) members.add(member)
+                }
+                if (members.isNotEmpty()) {
+                    folders.add(PlacedFolder(id, o.optString("name").take(48)
+                        .ifBlank { getString(R.string.auto_home_folder) }, cell, members))
+                } else usedCells.remove(cell)
+            }
+        } catch (_: Exception) { /* Never discard other valid sections. */ }
+        try {
+            val raw = JSONArray(prefs.getString("auto_home_dock_v1", "[]") ?: "[]")
+            for (i in 0 until minOf(raw.length(), dockSlots)) {
+                val id = raw.optString(i)
+                if (known.containsKey(id) && usedApps.add(id)) dock.add(id)
+            }
+        } catch (_: Exception) { /* Dock is optional. */ }
     }
 
     private fun saveLayout() {
-        val array = JSONArray()
-        for (item in placed) {
-            array.put(JSONObject().put("id", item.id).put("cell", item.cell))
-        }
-        prefs.edit().putString("auto_home_icons_v1", array.toString()).apply()
+        val icons = JSONArray()
+        for (item in placed) icons.put(JSONObject()
+            .put("id", item.id).put("cell", item.cell))
+        val groups = JSONArray()
+        for (folder in folders) groups.put(JSONObject()
+            .put("id", folder.id).put("name", folder.name)
+            .put("cell", folder.cell).put("members", JSONArray(folder.members)))
+        // Save every Home section together to avoid partial drag/folder state.
+        prefs.edit()
+            .putString("auto_home_icons_v1", icons.toString())
+            .putString("auto_home_folders_v1", groups.toString())
+            .putString("auto_home_dock_v1", JSONArray(dock).toString())
+            .apply()
     }
 
     private fun cellCenter(cell: Int): Pair<Float, Float> {
@@ -310,20 +356,82 @@ class AdaptiveHomeActivity : Activity() {
             if (item.cell / pageSlots != currentPage) continue
             val info = byId[item.id] ?: continue
             val tile = makeTile(info)
-            canvas.addView(tile, FrameLayout.LayoutParams(iconWidth(), iconHeight()))
-            tile.x = leftFor(item.cell)
-            tile.y = topFor(item.cell)
-            views[item.id] = tile
-            // Child views are measured after renderHome(). Republish their live
-            // geometry after layout, or a page round-trip can leave zero zones.
-            tile.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
-                if (v.parent === canvas) requestPublish()
+            addHomeTile(tile, item.id, leftFor(item.cell), topFor(item.cell)) {
+                startApp(info)
             }
-            attachTouch(tile, item.id, info)
+        }
+        for (folder in folders) {
+            if (folder.cell / pageSlots != currentPage) continue
+            val tile = makeFolderTile(folder, byId)
+            addHomeTile(tile, folder.id, leftFor(folder.cell), topFor(folder.cell)) {
+                openFolder(folder)
+            }
         }
         renderWidgets()
+        for ((index, id) in dock.withIndex()) {
+            val info = byId[id] ?: continue
+            val tile = makeTile(info)
+            val x = (index + 0.5f) * canvas.width / dockSlots - iconWidth() / 2f
+            val y = canvas.height - (140 * dp)
+            addHomeTile(tile, id, x, y) { startApp(info) }
+        }
         renderChrome()
         requestPublish()
+    }
+
+    private fun addHomeTile(tile: View, id: String, x: Float, y: Float,
+                            onLaunch: () -> Unit) {
+        canvas.addView(tile, FrameLayout.LayoutParams(iconWidth(), iconHeight()))
+        tile.x = x
+        tile.y = y
+        views[id] = tile
+        tile.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+            if (v.parent === canvas) requestPublish()
+        }
+        attachTouch(tile, id, onLaunch)
+    }
+
+    private fun makeFolderTile(folder: PlacedFolder,
+                               known: Map<String, LauncherActivityInfo>): View {
+        val vertical = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+        }
+        val preview = GridLayout(this).apply {
+            rowCount = 2
+            columnCount = 2
+            background = GradientDrawable().apply {
+                cornerRadius = 13 * dp
+                setColor(Color.argb(140, 235, 245, 246))
+            }
+        }
+        val mini = (21 * dp).roundToInt()
+        for (member in folder.members.take(4)) {
+            val icon = ImageView(this).apply {
+                setImageDrawable(known[member]?.getIcon(0))
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }
+            preview.addView(icon, GridLayout.LayoutParams().apply {
+                width = mini
+                height = mini
+                setMargins(1, 1, 1, 1)
+            })
+        }
+        vertical.addView(preview)
+        val label = TextView(this).apply {
+            text = folder.name
+            gravity = Gravity.CENTER
+            textSize = 11f
+            maxLines = 1
+            setTextColor(Color.WHITE)
+            setShadowLayer(3.5f, 0f, 1f, Color.BLACK)
+        }
+        vertical.addView(label, LinearLayout.LayoutParams(-1, -2))
+        vertical.contentDescription = "${folder.name}, ${getString(R.string.auto_home_folder)}"
+        vertical.isClickable = true
+        vertical.isFocusable = true
+        vertical.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        return vertical
     }
 
     private fun makeTile(info: LauncherActivityInfo): View {
@@ -356,7 +464,7 @@ class AdaptiveHomeActivity : Activity() {
         return vertical
     }
 
-    private fun attachTouch(view: View, id: String, info: LauncherActivityInfo) {
+    private fun attachTouch(view: View, id: String, onLaunch: () -> Unit) {
         var downRawX = 0f
         var downRawY = 0f
         var startLeft = 0f
@@ -371,7 +479,7 @@ class AdaptiveHomeActivity : Activity() {
                 view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
             }
         }
-        view.setOnClickListener { startApp(info) }
+        view.setOnClickListener { onLaunch() }
         view.setOnTouchListener { v, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -430,17 +538,63 @@ class AdaptiveHomeActivity : Activity() {
     }
 
     private fun snapToNearestCell(id: String, icon: View) {
-        val centerX = (icon.x + icon.width / 2f) / canvas.width
-        val centerY = (icon.y + icon.height / 2f) / canvas.height
+        val centerX = ((icon.x + icon.width / 2f) / canvas.width).coerceIn(0f, 1f)
+        val centerY = ((icon.y + icon.height / 2f) / canvas.height).coerceIn(0f, 1f)
+        val source = placed.firstOrNull { it.id == id }
+        val sourceFolder = folders.firstOrNull { it.id == id }
+        val fromDock = dock.indexOf(id)
+        if (centerY >= 1f - (170 * dp / canvas.height)) {
+            // A true fixed dock: same apps remain visible across Home pages.
+            if (sourceFolder != null) return  // folder in dock deferred
+            if (fromDock >= 0) {
+                val to = (centerX * dock.size).toInt().coerceIn(0, dock.size - 1)
+                dock.removeAt(fromDock)
+                dock.add(to, id)
+            } else if (source != null && dock.size < dockSlots) {
+                placed.remove(source)
+                dock.add((centerX * (dock.size + 1)).toInt()
+                    .coerceIn(0, dock.size), id)
+            }
+            return
+        }
         val col = (centerX * columns).toInt().coerceIn(0, columns - 1)
         val row = ((centerY - topFraction) / spanFraction * rows)
             .toInt().coerceIn(0, rows - 1)
         val dest = currentPage * pageSlots + row * columns + col
-        val moving = placed.firstOrNull { it.id == id } ?: return
-        val previousCell = moving.cell
-        val occupant = placed.firstOrNull { it.id != id && it.cell == dest }
-        if (occupant != null) occupant.cell = previousCell
-        moving.cell = dest
+        if (placedWidgets.any { dest in widgetCells(it) }) return
+        if (source?.cell == dest || sourceFolder?.cell == dest) return
+        val targetFolder = folders.firstOrNull { it.id != id && it.cell == dest }
+        if (targetFolder != null && source != null && targetFolder.members.size < 24) {
+            placed.remove(source)
+            targetFolder.members.add(id)
+            return
+        }
+        val targetIcon = placed.firstOrNull { it.id != id && it.cell == dest }
+        if (targetIcon != null && source != null) {
+            // Drag app on app -> real editable folder, not a simulated icon.
+            placed.remove(source)
+            placed.remove(targetIcon)
+            folders.add(PlacedFolder("folder:" + UUID.randomUUID().toString(),
+                getString(R.string.auto_home_folder), dest,
+                mutableListOf(targetIcon.id, source.id)))
+            return
+        }
+        val previous = source?.cell ?: sourceFolder?.cell
+        val destinationHolder = targetIcon ?: folders.firstOrNull {
+            it.id != id && it.cell == dest
+        }
+        if (destinationHolder != null && previous == null) return
+        if (destinationHolder is PlacedIcon && previous != null) {
+            destinationHolder.cell = previous
+        } else if (destinationHolder is PlacedFolder && previous != null) {
+            destinationHolder.cell = previous
+        }
+        if (source != null) source.cell = dest
+        if (sourceFolder != null) sourceFolder.cell = dest
+        if (fromDock >= 0 && targetIcon == null && targetFolder == null) {
+            dock.removeAt(fromDock)
+            placed.add(PlacedIcon(id, dest))
+        }
     }
 
     private fun startApp(info: LauncherActivityInfo) {
@@ -481,6 +635,7 @@ class AdaptiveHomeActivity : Activity() {
 
     private fun freeCell(cell: Int): Boolean =
         placed.none { it.cell == cell } &&
+            folders.none { it.cell == cell } &&
             placedWidgets.none { cell in widgetCells(it) }
 
     private fun canPlaceWidget(
@@ -494,6 +649,7 @@ class AdaptiveHomeActivity : Activity() {
         val proposal = PlacedWidget(ignoringWidgetId, cell, spanX, spanY)
         val occupied = widgetCells(proposal)
         return placed.none { it.cell in occupied } &&
+            folders.none { it.cell in occupied } &&
             placedWidgets.none {
                 it.widgetId != ignoringWidgetId && widgetCells(it).any(occupied::contains)
             }
