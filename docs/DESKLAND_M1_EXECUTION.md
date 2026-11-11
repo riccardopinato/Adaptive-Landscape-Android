@@ -35,3 +35,7 @@ Earlier emulator runs installed original PR #26 APK. They passed Home role selec
 - Disposable emulator test now verifies a stationary 900ms long-press does not navigate away before the one-process `input touchscreen draganddrop` trial. This distinguishes a click leak from a true drag failure.
 - The workflow now checks out the exact PR head commit rather than the synthetic merge commit and uploads its matching debug APK (`deskland-m1-qa-debug-NOT-PLAY-SIGNED`) for human testing, with SHA-256 in job logs and JSON. APK artifact is unverified until CI actually completes.
 - If CI fails, read the `SAFE_DIAG` role holder, foreground activity, process-alive and zone-count fields. Never label a failed drag as PASS.
+
+## Diagnostics: drag may terminate Home process
+Run 43013339785 passed stationary long press but failed the following drag: role still held by Deskland while `pidof` returned empty and the foreground switched to Pixel Launcher. The QA harness must now collect AndroidRuntime/DEBUG/ActivityManager crash and process-exit evidence from the **disposable emulator only**; do not infer root cause without a trace.
+For this test-only change, the CI reuses artifact `deskland-m1-qa-debug-NOT-PLAY-SIGNED` produced by 43013339785 (APK SHA256 `598230629bbdd3638ee9dc017f1a0416f4630f50827f4136cc043ae3b95fe074`) and rejects any source-native blob mismatch. Full rebuild is mandatory again after the next product/native change. This is diagnostic reuse, not a release certification.

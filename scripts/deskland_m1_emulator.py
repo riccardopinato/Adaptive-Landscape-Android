@@ -135,7 +135,17 @@ def main():
     # throughout DOWN -> long press -> MOVE -> UP. Separate adb motionevent
     # invocations do NOT reliably maintain the pointer across processes.
     # The 1250ms duration exceeds ViewConfiguration.longPressTimeout.
+    # Only disposable emulator logs are cleared; no personal device is used.
+    adb("shell","logcat","-c",strict=False)
     adb("shell","input","touchscreen","draganddrop",str(x),str(y),str(destination),str(y),"1250")
+    time.sleep(2)
+    alive=bool(adb("shell","pidof",PKG,strict=False))
+    role_held=PKG in adb("shell","cmd","role","get-role-holders",ROLE,strict=False)
+    if not alive:
+        crash=adb("shell","logcat","-d","-v","brief","-t","500","AndroidRuntime:E","DEBUG:E","ActivityManager:I","*:S",strict=False)
+        exit_info=adb("shell","dumpsys","activity","exit-info",PKG,strict=False)
+        print("DRAG_PROCESS_EXIT",json.dumps({"role_held":role_held,"exit_info":exit_info[-2400:],"crash_log":crash[-6500:]}),flush=True)
+        raise AssertionError("Deskland process terminated during long-press drag")
     wait("Home retained after drag",lambda:node_text("Add app"))
     assert PKG in adb("shell","cmd","role","get-role-holders",ROLE),"Deskland lost HOME role"
     wait("drag writes new layout",lambda:pref().get("auto_home_icons_v1")!=saved)
@@ -180,5 +190,5 @@ finally:
                 steps["teardown_home_role"]="attempted (ephemeral emulator)"
         except Exception as err:
             steps["teardown_home_role"]="FAILED: "+type(err).__name__
-    OUT.write_text(json.dumps({"base_candidate":"6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd","built_source_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
+    OUT.write_text(json.dumps({"base_candidate":"6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd","built_source_sha":"1810bc3a948c86fa00476e502f232d7c3ad49162","test_harness_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
     print("Evidence record:",OUT,flush=True)
