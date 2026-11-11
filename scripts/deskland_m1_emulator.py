@@ -109,7 +109,7 @@ def main():
     ok("home_visible")
     # Regression from real phone: Settings opened from native launcher must
     # NEVER become the Activity returned by pressing the Android Home button.
-    tap(wait("Home settings entry",lambda:node_text("Adaptive Home — experimental")))
+    tap(wait("Home settings entry",lambda:node_text("Adaptive Home")))
     wait("Flutter editor activity opened",lambda:foreground_is("MainActivity"))
     ok("editor_launches_in_separate_task")
     adb("shell","input","keyevent","KEYCODE_HOME")
