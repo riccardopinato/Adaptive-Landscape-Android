@@ -90,5 +90,13 @@
   "adaptiveHomeTitle": "Accueil adaptatif (expérimental)",
   "adaptiveHomeExplanation": "Dans l'accueil Deskland, le sable suit les positions réelles des icônes et évolue lorsque vous les déplacez. Un fond animé ne peut pas lire la disposition du lanceur actuel.",
   "adaptiveHomeButton": "Essayer l'accueil adaptatif",
-  "adaptiveHomeNoImport": "Vous devez choisir Deskland comme écran d'accueil par défaut. La disposition du lanceur Xiaomi/Samsung n'est pas importable : Deskland place d'abord quelques applications. Les widgets, dossiers et profils professionnels ne sont pas encore pris en charge. Vous pouvez revenir au lanceur précédent dans les réglages."
+  "adaptiveHomeNoImport": "Vous devez choisir Deskland comme écran d'accueil par défaut. La disposition du lanceur Xiaomi/Samsung n'est pas importable : Deskland place d'abord quelques applications. Les widgets, dossiers et profils professionnels ne sont pas encore pris en charge. Vous pouvez revenir au lanceur précédent dans les réglages.",
+  "autoHomeStatusTitle": "État du sable automatique",
+  "autoHomeStatusNotHome": "Deskland n'est pas l'accueil par défaut. Les icônes de l'ancien lanceur ne sont pas détectables.",
+  "autoHomeStatusNoWallpaper": "Le fond d'écran animé Deskland n'est pas sélectionné. Activez-le séparément.",
+  "autoHomeStatusNoZones": "Deskland n'a encore publié aucune icône visible. Ouvrez l'accueil et ajoutez une application.",
+  "autoHomeStatusNotRendered": "Le moteur graphique n'a pas confirmé les positions récentes. Revenez ici et actualisez.",
+  "autoHomeStatusDataReady": "Positions reçues par le moteur graphique",
+  "autoHomeStatusDisclaimer": "Cela confirme les données, pas les pixels de sable. Les dossiers ne sont pas encore pris en charge.",
+  "autoHomeStatusRefresh": "Actualiser le diagnostic"
 }

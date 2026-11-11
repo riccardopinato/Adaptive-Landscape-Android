@@ -90,5 +90,13 @@
   "adaptiveHomeTitle": "Início adaptativo (experimental)",
   "adaptiveHomeExplanation": "Na página inicial Deskland, a areia segue as posições reais dos ícones e atualiza-se ao arrastá-los. Um wallpaper animado não pode ler o layout do launcher atual.",
   "adaptiveHomeButton": "Experimentar início adaptativo",
-  "adaptiveHomeNoImport": "É necessário escolher Deskland como início predefinido. O layout Xiaomi/Samsung não pode ser importado; a Deskland dispõe inicialmente algumas apps. Widgets, pastas e perfis de trabalho ainda não são suportados. Pode voltar ao launcher anterior nas definições Android."
+  "adaptiveHomeNoImport": "É necessário escolher Deskland como início predefinido. O layout Xiaomi/Samsung não pode ser importado; a Deskland dispõe inicialmente algumas apps. Widgets, pastas e perfis de trabalho ainda não são suportados. Pode voltar ao launcher anterior nas definições Android.",
+  "autoHomeStatusTitle": "Estado da areia automática",
+  "autoHomeStatusNotHome": "Deskland não é o ecrã inicial predefinido. Não consegue detetar os ícones do launcher anterior.",
+  "autoHomeStatusNoWallpaper": "O papel de parede animado Deskland não está selecionado. Ative-o separadamente.",
+  "autoHomeStatusNoZones": "Deskland ainda não publicou ícones visíveis. Abra o início e adicione uma app.",
+  "autoHomeStatusNotRendered": "O renderizador ainda não confirmou as posições recentes. Abra o início e atualize aqui.",
+  "autoHomeStatusDataReady": "Posições recebidas pelo renderizador",
+  "autoHomeStatusDisclaimer": "Isto confirma os dados, não a areia visível. As pastas ainda não são suportadas.",
+  "autoHomeStatusRefresh": "Atualizar diagnóstico"
 }

@@ -83,6 +83,21 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun isDesklandHomeSelected(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val roles = getSystemService(Context.ROLE_SERVICE) as? RoleManager
+            return roles?.isRoleHeld(RoleManager.ROLE_HOME) == true
+        }
+        val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        return packageManager.resolveActivity(home, 0)?.activityInfo?.packageName == packageName
+    }
+
+    private fun isDesklandWallpaperSelected(): Boolean = try {
+        val active = WallpaperManager.getInstance(this).wallpaperInfo
+        active?.packageName == packageName &&
+            active.serviceName == AdaptiveWallpaperService::class.java.name
+    } catch (_: Exception) { false }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "adaptive_landscape/wallpaper")
@@ -95,6 +110,17 @@ class MainActivity : FlutterActivity() {
                         "config" to prefs.getString("config_v2", null),
                         "backend" to prefs.getString("render_backend_v1", "not_started"),
                         "oceanPhoto" to OceanPhotoStore.exists(this),
+                        "desklandHomeSelected" to isDesklandHomeSelected(),
+                        "desklandWallpaperSelected" to isDesklandWallpaperSelected(),
+                        "autoHomeActive" to prefs.getBoolean("auto_home_active_v1", false),
+                        "autoHomeZones" to runCatching {
+                            JSONObject(prefs.getString("auto_home_config_v1", "{}") ?: "{}")
+                                .optJSONArray("zones")?.length() ?: 0
+                        }.getOrDefault(0),
+                        "autoHomeRevision" to prefs.getLong("auto_home_revision_v1", 0L),
+                        "renderSource" to prefs.getString("render_source_v1", "not_rendered"),
+                        "renderZones" to prefs.getInt("render_zone_count_v1", 0),
+                        "renderRevision" to prefs.getLong("render_auto_home_revision_v1", -1L),
                     ))
                     "save" -> {
                         val scene = call.argument<String>("scene")

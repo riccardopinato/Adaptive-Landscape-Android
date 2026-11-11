@@ -957,6 +957,7 @@ class AdaptiveHomeActivity : Activity() {
             prefs.edit()
                 .putString("auto_home_config_v1", next)
                 .putBoolean("auto_home_active_v1", true)
+                .putLong("auto_home_revision_v1", SystemClock.uptimeMillis())
                 .apply()
         }
     }

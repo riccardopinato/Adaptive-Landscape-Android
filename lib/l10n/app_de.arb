@@ -90,5 +90,13 @@
   "adaptiveHomeTitle": "Adaptive Startseite (experimentell)",
   "adaptiveHomeExplanation": "Innerhalb der Deskland-Startseite folgt der Sand den tatsächlichen Symbolpositionen und verändert sich beim Ziehen. Live-Hintergründe können das Layout anderer Launcher nicht auslesen.",
   "adaptiveHomeButton": "Adaptive Startseite testen",
-  "adaptiveHomeNoImport": "Deskland muss als Standard-Startseite ausgewählt werden. Das Xiaomi/Samsung-Layout kann nicht importiert werden; Deskland ordnet einige Apps zunächst automatisch an. Widgets, Ordner und Arbeitsprofile fehlen noch. In Android-Einstellungen kann der bisherige Launcher wieder ausgewählt werden."
+  "adaptiveHomeNoImport": "Deskland muss als Standard-Startseite ausgewählt werden. Das Xiaomi/Samsung-Layout kann nicht importiert werden; Deskland ordnet einige Apps zunächst automatisch an. Widgets, Ordner und Arbeitsprofile fehlen noch. In Android-Einstellungen kann der bisherige Launcher wieder ausgewählt werden.",
+  "autoHomeStatusTitle": "Status des automatischen Sands",
+  "autoHomeStatusNotHome": "Deskland ist nicht der Standard-Launcher. Symbole des bisherigen Launchers können nicht erkannt werden.",
+  "autoHomeStatusNoWallpaper": "Das Deskland-Live-Hintergrundbild ist nicht ausgewählt. Aktiviere es zusätzlich zum Launcher.",
+  "autoHomeStatusNoZones": "Deskland hat noch keine sichtbaren App-Symbole gemeldet. Öffne Home und füge eine App hinzu.",
+  "autoHomeStatusNotRendered": "Der Renderer hat die neuen Positionen nicht bestätigt. Öffne Home und aktualisiere danach hier.",
+  "autoHomeStatusDataReady": "Positionen vom Renderer empfangen",
+  "autoHomeStatusDisclaimer": "Dies bestätigt die Datenübertragung, nicht sichtbare Sandpixel. Ordner werden noch nicht unterstützt.",
+  "autoHomeStatusRefresh": "Diagnose aktualisieren"
 }

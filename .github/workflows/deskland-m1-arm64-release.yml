@@ -4,6 +4,12 @@ on:
     branches: [feat/deskland-android-widget-host-v049]
     paths:
       - .github/workflows/deskland-m1-arm64-release.yml
+      - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/MainActivity.kt
+      - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveWallpaperService.kt
+      - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveHomeActivity.kt
+      - lib/main.dart
+      - lib/platform/wallpaper_channel.dart
+      - lib/l10n/*.arb
   workflow_dispatch:
 permissions:
   contents: read

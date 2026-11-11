@@ -90,5 +90,13 @@
   "adaptiveHomeTitle": "Inicio adaptable (experimental)",
   "adaptiveHomeExplanation": "Dentro del inicio de Deskland, la arena sigue la posición real de los iconos y se actualiza cuando los arrastras. Un fondo animado no puede leer el diseño de tu launcher actual.",
   "adaptiveHomeButton": "Probar inicio adaptable",
-  "adaptiveHomeNoImport": "Debes elegir Deskland como inicio predeterminado. No se puede importar el diseño de Xiaomi/Samsung: Deskland dispone algunas apps al principio. Los widgets, carpetas y perfiles de trabajo aún no están disponibles. Puedes volver a tu launcher anterior desde ajustes."
+  "adaptiveHomeNoImport": "Debes elegir Deskland como inicio predeterminado. No se puede importar el diseño de Xiaomi/Samsung: Deskland dispone algunas apps al principio. Los widgets, carpetas y perfiles de trabajo aún no están disponibles. Puedes volver a tu launcher anterior desde ajustes.",
+  "autoHomeStatusTitle": "Estado de arena automática",
+  "autoHomeStatusNotHome": "Deskland no es la pantalla de inicio predeterminada. No puede detectar los iconos del launcher original.",
+  "autoHomeStatusNoWallpaper": "El fondo animado de Deskland no está seleccionado. Configúralo además del launcher.",
+  "autoHomeStatusNoZones": "Deskland aún no ha publicado iconos visibles. Abre Inicio y añade una app.",
+  "autoHomeStatusNotRendered": "El renderizador no ha confirmado las últimas posiciones. Abre Inicio y actualiza aquí.",
+  "autoHomeStatusDataReady": "Posiciones recibidas por el renderizador",
+  "autoHomeStatusDisclaimer": "Solo confirma el intercambio de datos, no que se vea arena. Las carpetas aún no funcionan.",
+  "autoHomeStatusRefresh": "Actualizar diagnóstico"
 }

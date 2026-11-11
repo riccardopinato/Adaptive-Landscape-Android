@@ -90,5 +90,13 @@
   "adaptiveHomeTitle": "Adaptive Home (experimental)",
   "adaptiveHomeExplanation": "Inside Deskland Home, the beach follows the real positions of icons and updates as you drag them. Android does not share icon locations from your current launcher with ordinary live wallpapers.",
   "adaptiveHomeButton": "Use adaptive Home",
-  "adaptiveHomeNoImport": "You must choose Deskland as the default Home. Your existing Xiaomi/Samsung Home layout cannot be imported automatically; Deskland initially arranges some apps itself. Widgets, folders and work profiles are not supported in this prototype. You can switch back in Android settings."
+  "adaptiveHomeNoImport": "You must choose Deskland as the default Home. Your existing Xiaomi/Samsung Home layout cannot be imported automatically; Deskland initially arranges some apps itself. Widgets, folders and work profiles are not supported in this prototype. You can switch back in Android settings.",
+  "autoHomeStatusTitle": "Automatic sand status",
+  "autoHomeStatusNotHome": "Deskland is not your default Home. Icons in your existing launcher cannot be detected.",
+  "autoHomeStatusNoWallpaper": "Deskland live wallpaper is not selected. Set it separately from the Home launcher.",
+  "autoHomeStatusNoZones": "Deskland Home has not published visible app icons yet. Open Home and add an app.",
+  "autoHomeStatusNotRendered": "The renderer has not confirmed the latest positions. Open Home, return here and refresh.",
+  "autoHomeStatusDataReady": "Positions received by renderer",
+  "autoHomeStatusDisclaimer": "This confirms data routing, not visible sand pixels. Folders are not supported yet.",
+  "autoHomeStatusRefresh": "Refresh diagnostic"
 }

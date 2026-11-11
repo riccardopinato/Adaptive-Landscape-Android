@@ -42,3 +42,12 @@ For this test-only change, the CI reuses artifact `deskland-m1-qa-debug-NOT-PLAY
 
 ## Confirmed emulator crash and bounded native repair
 AOSP runtime trace from run 43014930409: `ApplicationExitInfo` reason 4 `APP CRASH(EXCEPTION)` during drag, `NullPointerException` at `android.widget.FrameLayout.onMeasure(FrameLayout.java:193)`. Long-press without movement passed. This is a real Home process crash, not solely an input-simulator error. Suspected trigger is immediate `renderHome()` / child removal while a drag or global layout traversal is in progress. To prevent view-tree mutation in these paths, drag ACTION_UP/CANCEL and the global-layout reflow schedule `renderHomeNextFrame()` via `canvas.postOnAnimation` instead. The change requires a fresh complete APK build and emulator rerun; no PASS is implied by static inspection.
+
+## Physical failure after successful emulator M1 (2026-11-11)
+Owner feedback: on the Android phone the wallpaper stays sea-only; existing app icons and folders, including when moved, did not create sand. This is **FAIL** for the intended product UX. Previous emulator M1 verified source/Home coordinates and process recovery but did not install the live wallpaper or inspect a rendered coastline. Do not conflate that CI with user acceptance.
+
+Strict source boundaries: a wallpaper cannot read or follow Xiaomi/Pixel/Samsung launcher icon/folder positions; automatic geometry is only produced by **Deskland's own selected Home**. This prototype does not host folders. For an existing OEM Home, manual grid/zone calibration is required, and movement in the OEM launcher cannot update sand automatically.
+
+New diagnostic protocol: native MainActivity reports independently (a) selected Deskland Home role, (b) active Deskland live wallpaper, (c) count and revision of published Deskland Home zones, (d) source/count/revision observed by a real WallpaperService render call. A matching revision proves source routing, **not** visible coastline pixels; a zero/stale result is a concrete defect. The status appears in the Flutter editor (6 locales) without scraping app labels, screenshots or remote telemetry.
+
+Human release gate remains blocked until physical evidence confirms **actual sand pixels** for icon add/drag/remove and wallpaper running as selected; folders remain unsupported and cannot be marketed as implemented.

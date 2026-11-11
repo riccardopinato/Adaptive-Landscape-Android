@@ -30,6 +30,7 @@ class AdaptiveWallpaperService : WallpaperService() {
         private val coastalBeach = CoastalBeachRenderer()
         private val gpuOcean = GpuOceanRenderer()
         private var backendStatus = ""
+        private var renderEvidence = ""
         private var visible = false
         private var settings = WallpaperState()
         private var offset = 0.5f
@@ -77,9 +78,22 @@ class AdaptiveWallpaperService : WallpaperService() {
         }
 
         private fun reportBackend(name: String) {
-            if (name == backendStatus) return
+            val automatic = isAdaptiveHomeSelected()
+            val source = if (automatic) "auto_home" else "manual"
+            val zones = settings.occupied.size + settings.zones.size
+            val revision = if (automatic) prefs.getLong("auto_home_revision_v1", 0L) else -1L
+            val next = "$name/$source/$zones/$revision"
+            if (next == renderEvidence) return
+            renderEvidence = next
             backendStatus = name
-            prefs.edit().putString("render_backend_v1", name).apply()
+            // This records the state passed to an actual render attempt.
+            // It is NOT pixel proof. Never collect app labels or icon IDs.
+            prefs.edit()
+                .putString("render_backend_v1", name)
+                .putString("render_source_v1", source)
+                .putInt("render_zone_count_v1", zones)
+                .putLong("render_auto_home_revision_v1", revision)
+                .apply()
         }
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
