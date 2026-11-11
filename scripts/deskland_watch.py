@@ -86,7 +86,7 @@ def investigate(repo: str):
             "this is an inactivity warning, not proof a ChatGPT session failed."
         )
     summary = (
-        f"Checked PR #{primary['number']} at \\u0060{sha}\\u0060. "
+        f"Checked PR #{primary['number']} at `{sha}`. "
         f"Last commit: {committed_at.isoformat()}. "
         f"Latest CI: {runs[0]['status'] if runs else 'none'}. "
         "The 13 audit issues remain open until individually tested, "
@@ -103,11 +103,11 @@ def main():
                      if issue.get("title") == ISSUE_TITLE
                      and "pull_request" not in issue), None)
     if problems:
-        message = "\\n".join("- " + item for item in problems)
+        message = "\n".join("- " + item for item in problems)
         body = (
-            MARKER + "\\n" + "### Monitoring detected a development blocker\\n"
-            + message + "\\n\\n" + summary
-            + "\\n\\nThe monitor only checks GitHub commits/CI. It cannot restart "
+            MARKER + "\n" + "### Monitoring detected a development blocker\n"
+            + message + "\n\n" + summary
+            + "\n\nThe monitor only checks GitHub commits/CI. It cannot restart "
               "an interrupted ChatGPT or PC session, and it must not merge unverified changes."
         )
         if existing:
