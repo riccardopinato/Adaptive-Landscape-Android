@@ -494,6 +494,18 @@ class _WallpaperEditorState extends State<WallpaperEditor>
     }
   }
 
+  Future<void> _requestAdaptiveHome() async {
+    if (!WallpaperChannel.supported) return;
+    setState(() => _busy = true);
+    try {
+      await _channel.requestAdaptiveHome();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _openPicker() async {
     setState(() => _busy = true);
     try {
@@ -645,6 +657,18 @@ class _WallpaperEditorState extends State<WallpaperEditor>
         Text(l.oceanPhotoHint, style: style.bodySmall),
         const SizedBox(height: 5),
         Text(l.oceanPhotoAndroidOnly, style: style.bodySmall),
+      ],
+      if (WallpaperChannel.supported) ...[
+        section(l.adaptiveHomeTitle),
+        Text(l.adaptiveHomeExplanation, style: style.bodyMedium),
+        const SizedBox(height: 8),
+        FilledButton.tonalIcon(
+          key: const Key('al-auto-home-opt-in'),
+          onPressed: _busy ? null : _requestAdaptiveHome,
+          icon: const Icon(Icons.auto_awesome_mosaic_outlined),
+          label: Text(l.adaptiveHomeButton),
+        ),
+        Text(l.adaptiveHomeNoImport, style: style.bodySmall),
       ],
       section(l.selectIcons),
       OutlinedButton.icon(
