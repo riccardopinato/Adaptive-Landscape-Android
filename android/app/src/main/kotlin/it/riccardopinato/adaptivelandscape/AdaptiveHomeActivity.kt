@@ -95,10 +95,14 @@ class AdaptiveHomeActivity : Activity() {
     private val rows = 8
     private val topFraction = 0.115
     private val spanFraction = 0.765
-    private val maxSlots = columns * rows
+    private val pageSlots = columns * rows
+    private val maxPages = 3
+    private val maxSlots = pageSlots * maxPages
+    private var currentPage = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        currentPage = prefs.getInt("auto_home_page_v1", 0).coerceIn(0, maxPages - 1)
         window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         window.statusBarColor = Color.TRANSPARENT
@@ -114,6 +118,23 @@ class AdaptiveHomeActivity : Activity() {
             clipToPadding = false
         }
         setContentView(canvas)
+        var swipeStartX = 0f
+        canvas.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    swipeStartX = event.x
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    val change = event.x - swipeStartX
+                    if (abs(change) > 72 * dp) {
+                        switchPage(currentPage + if (change < 0) 1 else -1)
+                    }
+                    true
+                }
+                else -> true
+            }
+        }
         // Subscribe to launcher package changes; do not poll installed apps.
         try {
             launcherApps.registerCallback(packageCallback, handler)
@@ -215,8 +236,9 @@ class AdaptiveHomeActivity : Activity() {
     }
 
     private fun cellCenter(cell: Int): Pair<Float, Float> {
-        val col = cell % columns
-        val row = cell / columns
+        val localCell = cell % pageSlots
+        val col = localCell % columns
+        val row = localCell / columns
         return Pair((col + 0.5f) / columns,
             (topFraction + (row + 0.5) * spanFraction / rows).toFloat())
     }
@@ -237,6 +259,7 @@ class AdaptiveHomeActivity : Activity() {
         views.clear()
         val byId = available.associateBy { it.componentName.flattenToString() }
         for (item in placed) {
+            if (item.cell / pageSlots != currentPage) continue
             val info = byId[item.id] ?: continue
             val tile = makeTile(info)
             canvas.addView(tile, FrameLayout.LayoutParams(iconWidth(), iconHeight()))
@@ -356,7 +379,7 @@ class AdaptiveHomeActivity : Activity() {
         val col = (centerX * columns).toInt().coerceIn(0, columns - 1)
         val row = ((centerY - topFraction) / spanFraction * rows)
             .toInt().coerceIn(0, rows - 1)
-        val dest = row * columns + col
+        val dest = currentPage * pageSlots + row * columns + col
         val moving = placed.firstOrNull { it.id == id } ?: return
         val previousCell = moving.cell
         val occupant = placed.firstOrNull { it.id != id && it.cell == dest }
@@ -371,6 +394,22 @@ class AdaptiveHomeActivity : Activity() {
         } catch (_: Exception) {
             Toast.makeText(this, R.string.auto_home_cannot_open, Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun switchPage(target: Int) {
+        val next = target.coerceIn(0, maxPages - 1)
+        if (next == currentPage) return
+        currentPage = next
+        prefs.edit().putInt("auto_home_page_v1", currentPage).apply()
+        renderHome()
+    }
+
+    private fun hasAdaptiveWallpaper(): Boolean = try {
+        val current = WallpaperManager.getInstance(this).wallpaperInfo
+        current?.packageName == packageName &&
+            current.serviceName == AdaptiveWallpaperService::class.java.name
+    } catch (_: Exception) {
+        false
     }
 
     private fun showAppDrawer() {
@@ -444,6 +483,25 @@ class AdaptiveHomeActivity : Activity() {
             Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
                 topMargin = (40 * dp).roundToInt()
             })
+        val pageButton = chromeButton(
+            getString(R.string.auto_home_page, currentPage + 1, maxPages)) {
+            switchPage((currentPage + 1) % maxPages)
+        }
+        canvas.addView(pageButton, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT, (38 * dp).roundToInt(),
+            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+                bottomMargin = (96 * dp).roundToInt()
+            })
+        if (isDefault && !hasAdaptiveWallpaper()) {
+            val help = chromeButton(getString(R.string.auto_home_wallpaper_needed)) {
+                selectWallpaper()
+            }
+            canvas.addView(help, FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, (45 * dp).roundToInt(),
+                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+                    bottomMargin = (140 * dp).roundToInt()
+                })
+        }
         val bottom = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
@@ -492,7 +550,8 @@ class AdaptiveHomeActivity : Activity() {
             .setTitle(R.string.auto_home_add)
             .setItems(options.map { it.label.toString() }.toTypedArray()) { _, index ->
                 val used = placed.map { it.cell }.toSet()
-                val free = (0 until maxSlots).firstOrNull { it !in used }
+                val free = (currentPage * pageSlots until (currentPage + 1) * pageSlots)
+                    .firstOrNull { it !in used }
                 if (free != null) {
                     placed.add(PlacedIcon(options[index].componentName.flattenToString(), free))
                     saveLayout()
