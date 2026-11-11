@@ -1,6 +1,9 @@
 package it.riccardopinato.adaptivelandscape
 
 import android.app.Activity
+import android.appwidget.AppWidgetHost
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProviderInfo
 import android.app.AlertDialog
 import android.app.WallpaperManager
 import android.app.role.RoleManager
@@ -33,6 +36,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import kotlin.math.ceil
 import org.json.JSONArray
 import org.json.JSONObject
 import it.riccardopinato.adaptive_landscape.R
@@ -52,6 +56,15 @@ import kotlin.math.roundToInt
  */
 class AdaptiveHomeActivity : Activity() {
     private data class PlacedIcon(val id: String, var cell: Int)
+    private data class PlacedWidget(
+        val widgetId: Int, var cell: Int, var spanX: Int, var spanY: Int
+    )
+    private companion object {
+        const val APP_WIDGET_HOST_ID = 1453
+        const val REQUEST_BIND_WIDGET = 1454
+        const val REQUEST_CONFIGURE_WIDGET = 1455
+    }
+
 
     private val prefs by lazy {
         getSharedPreferences("adaptive_landscape", Context.MODE_PRIVATE)
@@ -63,6 +76,12 @@ class AdaptiveHomeActivity : Activity() {
     private val dp by lazy { resources.displayMetrics.density }
     private val placed = ArrayList<PlacedIcon>()
     private val views = LinkedHashMap<String, View>()
+    private val widgetViews = LinkedHashMap<Int, View>()
+    private val placedWidgets = ArrayList<PlacedWidget>()
+    private val widgetManager by lazy { AppWidgetManager.getInstance(this) }
+    private val widgetHost by lazy { AppWidgetHost(this, APP_WIDGET_HOST_ID) }
+    private var pendingWidget: PlacedWidget? = null
+    private var pendingInfo: AppWidgetProviderInfo? = null
     private var available: List<LauncherActivityInfo> = emptyList()
     private lateinit var canvas: FrameLayout
     private var draggingId: String? = null
@@ -103,6 +122,7 @@ class AdaptiveHomeActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         currentPage = prefs.getInt("auto_home_page_v1", 0).coerceIn(0, maxPages - 1)
+        restoreWidgets()
         window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         window.statusBarColor = Color.TRANSPARENT
@@ -154,6 +174,8 @@ class AdaptiveHomeActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        try { widgetHost.startListening() } catch (_: RuntimeException) { }
+        restoreWidgets()
         loadLaunchableApps()
         restoreSavedLayout()
         canvas.post { renderHome() }
@@ -162,6 +184,7 @@ class AdaptiveHomeActivity : Activity() {
     override fun onPause() {
         handler.removeCallbacks(publishPending)
         if (isSelectedHome()) publishHomePositions()
+        try { widgetHost.stopListening() } catch (_: RuntimeException) { }
         super.onPause()
     }
 
@@ -257,6 +280,7 @@ class AdaptiveHomeActivity : Activity() {
         if (!::canvas.isInitialized || canvas.width < 100 || canvas.height < 100) return
         canvas.removeAllViews()
         views.clear()
+        widgetViews.clear()
         val byId = available.associateBy { it.componentName.flattenToString() }
         for (item in placed) {
             if (item.cell / pageSlots != currentPage) continue
@@ -268,6 +292,7 @@ class AdaptiveHomeActivity : Activity() {
             views[item.id] = tile
             attachTouch(tile, item.id, info)
         }
+        renderWidgets()
         renderChrome()
         requestPublish()
     }
@@ -475,6 +500,14 @@ class AdaptiveHomeActivity : Activity() {
 
     private fun renderChrome() {
         val isDefault = isSelectedHome()
+        val widgetControl = chromeButton(getString(R.string.auto_home_widgets)) {
+            showWidgetActions()
+        }
+        canvas.addView(widgetControl, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT, (40 * dp).roundToInt(),
+            Gravity.TOP or Gravity.START).apply {
+                topMargin = (40 * dp).roundToInt()
+            })
         val top = chromeButton(getString(R.string.auto_home_caption)) {
             startActivity(Intent(this, MainActivity::class.java))
         }
@@ -549,9 +582,8 @@ class AdaptiveHomeActivity : Activity() {
         AlertDialog.Builder(this)
             .setTitle(R.string.auto_home_add)
             .setItems(options.map { it.label.toString() }.toTypedArray()) { _, index ->
-                val used = placed.map { it.cell }.toSet()
                 val free = (currentPage * pageSlots until (currentPage + 1) * pageSlots)
-                    .firstOrNull { it !in used }
+                    .firstOrNull { freeCell(it) }
                 if (free != null) {
                     placed.add(PlacedIcon(options[index].componentName.flattenToString(), free))
                     saveLayout()
@@ -621,6 +653,18 @@ class AdaptiveHomeActivity : Activity() {
                 .put("width", (tile.width / canvasW * 0.60).coerceIn(0.03, 0.22))
                 .put("height", (tile.height / canvasH * 0.60).coerceIn(0.03, 0.16))
                 .put("kind", "icon"))
+        }
+        // A hosted widget owns its live on-screen rectangle, just like an app.
+        // Only normalized geometry is published to the wallpaper; no content.
+        for ((_, tile) in widgetViews) {
+            if (tile.width <= 0 || tile.height <= 0) continue
+            val x = ((tile.x + tile.width * 0.5) / canvasW).coerceIn(0.0, 1.0)
+            val y = ((tile.y + tile.height * 0.5) / canvasH).coerceIn(0.0, 1.0)
+            zones.put(JSONObject()
+                .put("x", x).put("y", y)
+                .put("width", (tile.width / canvasW).coerceIn(0.03, 0.95))
+                .put("height", (tile.height / canvasH).coerceIn(0.03, 0.95))
+                .put("kind", "widget"))
         }
         val base = try {
             JSONObject(prefs.getString("config_v2", null) ?: "{}")
