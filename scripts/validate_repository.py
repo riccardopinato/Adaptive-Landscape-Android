@@ -168,3 +168,17 @@ for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'valu
     assert (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').is_file()
 assert '0.4.7+14' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
 print('PASS: experimental opt-in native Auto Home source; NOT physical tested')
+
+# Desktop-behavior parity requires a temporal transition, not instantaneous
+# mesh/raster jumps. This is source inspection, NOT a GLES device runtime test.
+gpu = (base / 'GpuOceanRenderer.kt').read_text(encoding='utf-8')
+home = (base / 'AdaptiveHomeActivity.kt').read_text(encoding='utf-8')
+assert 'uMaskPrevious' in gpu and 'uMaskMix' in gpu
+assert 'blendCurrentMask' in gpu and 'maskMorphDurationMs' in gpu
+assert 'ByteBuffer.allocateDirect(bytes.size)' in gpu
+assert 'maskFromHasLand && mixAmount < 1f' in gpu
+assert 'publishHomePositions()' in home
+assert 'isEmpty() || placed.size' in home
+assert (root / 'test/auto_home_zone_contract_test.dart').is_file()
+assert (root / 'docs/PC_TO_MOBILE_BEHAVIOR_PARITY.md').is_file()
+print('PASS: auto Home dual-mask smooth interpolation and drag publisher source gates')
