@@ -182,11 +182,27 @@ class AdaptiveHomeActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        if (!isSelectedHome()) {
+            // When the system selects another Home, this Activity must no
+            // longer be shown as an obsolete launcher task.
+            finish()
+            return
+        }
         try { widgetHost.startListening() } catch (_: RuntimeException) { }
         restoreWidgets()
         loadLaunchableApps()
         restoreSavedLayout()
         canvas.post { renderHome() }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (!isSelectedHome()) {
+            finish()
+            return
+        }
+        renderHomeNextFrame()
     }
 
     override fun onPause() {
