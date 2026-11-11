@@ -161,7 +161,8 @@ class AdaptiveHomeActivity : Activity() {
 
     private fun loadLaunchableApps() {
         available = try {
-            launcherApps.profiles.flatMap { user ->
+            (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                launcherApps.profiles else listOf(Process.myUserHandle())).flatMap { user ->
                 try { launcherApps.getActivityList(null, user) }
                 catch (_: SecurityException) { emptyList() }
             }
