@@ -498,7 +498,9 @@ internal class GpuOceanRenderer {
             GLES20.glUniform2f(GLES20.glGetUniformLocation(shaderProgram, "uPhotoScale"),
                 minOf(1f, screenAspect / photographAspect),
                 minOf(1f, photographAspect / screenAspect))
-            val mixAmount = if (state.reduceMotion) 1f else
+            // Static scenes must display the latest coast immediately: no pending frames
+            // will advance a transition when motion is set to zero.
+            val mixAmount = if (state.staticScene) 1f else
                 maskMix(SystemClock.uptimeMillis())
             f("uMaskMix", mixAmount)
             f("uHasLand", if (maskToHasLand ||
