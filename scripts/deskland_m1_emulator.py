@@ -54,6 +54,7 @@ def pref():
     d={}
     for n in root:
         if n.tag=="string": d[n.get("name")]=n.text or ""
+        elif n.tag in ("int","long"): d[n.get("name")]=int(n.get("value"))
     return d
 def zones():
     j=json.loads(pref()["auto_home_config_v1"])
@@ -97,7 +98,7 @@ def main():
     press("Page 1/3"); wait("second page",lambda:node_text("Page 2/3"))
     wait("page two clears sand",lambda:n_zones(0)); ok("empty_page_zero_sand")
     press("Page 2/3"); wait("third page",lambda:node_text("Page 3/3"))
-    press("Page 3/3"); wait("first page",lambda:node_text("Page 1/3"))
+    press("Page 3/3"); wait("first page persisted",lambda:pref().get("auto_home_page_v1")==0)
     wait("page1 recovered",lambda:n_zones(base)); ok("page_roundtrip")
     # An emulator may have only six launchable packages: remove first, then re-add.
     press("Remove app"); tap(wait("remove picker",first_row))
