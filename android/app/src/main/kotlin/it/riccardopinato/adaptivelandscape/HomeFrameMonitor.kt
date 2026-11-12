@@ -129,7 +129,8 @@ internal class HomeFrameMonitor(private val onSustainedJank: () -> Unit) :
             p95Ms = p95,
             slowFrames = slowIntervals,
             severeFrames = severeIntervals,
-            durationMs = (SystemClock.uptimeMillis() - startedAtMs).coerceAtLeast(0L),
+            durationMs = if (startedAtMs == 0L) 0L else
+                (SystemClock.uptimeMillis() - startedAtMs).coerceAtLeast(0L),
         )
     }
 
