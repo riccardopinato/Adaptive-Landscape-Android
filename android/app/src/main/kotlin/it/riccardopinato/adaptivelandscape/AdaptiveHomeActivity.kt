@@ -439,7 +439,7 @@ class AdaptiveHomeActivity : Activity() {
             }
         }
         // Remaining apps (if more than 120 slots) always remain in the drawer.
-        saveLayout(automaticallyArranged = true)
+        saveLayout(automaticallyArranged = onlyIfEmpty)
         renderHomeNextFrame()
     }
 
