@@ -497,10 +497,64 @@ class _WallpaperEditorState extends State<WallpaperEditor>
   }
 
   Future<void> _requestAdaptiveHome() async {
-    if (!WallpaperChannel.supported) return;
+    if (!WallpaperChannel.supported || _busy) return;
+    // Xiaomi may force system navigation buttons after taking the HOME role.
+    // Explain that BEFORE the Android consent dialog, never after.
+    if (_runtimeStatus.xiaomiGestureRestrictionPossible &&
+        !_runtimeStatus.desklandHomeSelected) {
+      final l = AppLocalizations.of(context)!;
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l.xiaomiGesturesWarningTitle),
+          content: Text(l.xiaomiGesturesWarningBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(MaterialLocalizations.of(dialogContext).cancelButtonLabel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l.xiaomiGesturesContinue),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true || !mounted) return;
+    }
     setState(() => _busy = true);
     try {
       await _channel.requestAdaptiveHome();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _openSystemHomeSettings() async {
+    if (!WallpaperChannel.supported || _busy) return;
+    setState(() => _busy = true);
+    try {
+      await _channel.openSystemHomeSettings();
+    } catch (error) {
+      if (mounted) setState(() => _error = error.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _openSystemNavigationSettings() async {
+    if (!WallpaperChannel.supported || _busy) return;
+    setState(() => _busy = true);
+    try {
+      final direct = await _channel.openSystemNavigationSettings();
+      if (!direct && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(
+              AppLocalizations.of(context)!.xiaomiGesturesSettingsFallback)),
+        );
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } finally {
@@ -673,6 +727,50 @@ class _WallpaperEditorState extends State<WallpaperEditor>
       ],
       if (WallpaperChannel.supported) ...[
         section(l.adaptiveHomeTitle),
+        if (_runtimeStatus.xiaomiGestureRestrictionPossible) Card(
+          key: const Key('al-xiaomi-native-gestures'),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                const Icon(Icons.swipe, size: 21),
+                const SizedBox(width: 8),
+                Expanded(child: Text(l.xiaomiGesturesTitle,
+                    style: style.titleMedium)),
+              ]),
+              const SizedBox(height: 8),
+              Text(l.xiaomiGesturesExplanation, style: style.bodyMedium),
+              const SizedBox(height: 8),
+              Text(_runtimeStatus.desklandHomeSelected
+                  ? l.xiaomiGesturesModeDeskland
+                  : l.xiaomiGesturesModeOther,
+                  style: style.bodySmall),
+              const SizedBox(height: 10),
+              Wrap(spacing: 8, runSpacing: 6, children: [
+                OutlinedButton.icon(
+                  key: const Key('al-xiaomi-wallpaper-mode'),
+                  onPressed: _busy ? null : _openPicker,
+                  icon: const Icon(Icons.wallpaper_outlined),
+                  label: Text(l.xiaomiGesturesStepWallpaper),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('al-xiaomi-home-settings'),
+                  onPressed: _busy ? null : _openSystemHomeSettings,
+                  icon: const Icon(Icons.home_outlined),
+                  label: Text(l.xiaomiGesturesStepHome),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('al-xiaomi-gesture-settings'),
+                  onPressed: _busy ? null : _openSystemNavigationSettings,
+                  icon: const Icon(Icons.swipe),
+                  label: Text(l.xiaomiGesturesStepNavigation),
+                ),
+              ]),
+              const SizedBox(height: 6),
+              Text(l.xiaomiGesturesNote, style: style.bodySmall),
+            ]),
+          ),
+        ),
         Text(l.adaptiveHomeExplanation, style: style.bodyMedium),
         const SizedBox(height: 8),
         FilledButton.tonalIcon(
