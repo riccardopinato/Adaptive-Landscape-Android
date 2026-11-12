@@ -190,6 +190,13 @@ def main():
          pref().get("auto_home_perf_qa_v1")=="PASS")
     ok("home_incremental_noop_redraw",
        "duplicate redraw requests skipped; dock view retained across pages")
+    adb("shell","am","start","-n",PKG+
+        "/it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity",
+        "--ez","deskland_qa_frame_monitor_v1","true")
+    wait("Home frame pacing probe synthetic contract",lambda:
+         pref().get("auto_home_frame_monitor_qa_v1")=="PASS")
+    ok("home_frame_monitor_synthetic",
+       "Choreographer pacing thresholds, catalog initialized, UI present")
 
     wait("visible installed app icons",lambda:(v if len(v:=icon_nodes())>=2 else None))
     assert not any(node_text(x) is not None for x in
