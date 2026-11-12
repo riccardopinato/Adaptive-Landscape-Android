@@ -178,6 +178,36 @@ internal object HomeScreenshotMatcher {
         return 1f - diff.toFloat() / (offsets.size * offsets.size * 3 * 255)
     }
 
+    /**
+     * Deterministic synthetic fixture for the emulator smoke test. The tested
+     * screenshot is generated entirely in RAM from two installed app icons;
+     * this does not read the real device screen or private user content.
+     */
+    fun syntheticSelfTest(apps: List<LauncherActivityInfo>): Boolean {
+        val distinct = apps.distinctBy { it.componentName.flattenToString() }
+        if (distinct.size < 2) return false
+        val example = distinct.take(2)
+        val bitmap = Bitmap.createBitmap(360, 760, Bitmap.Config.ARGB_8888)
+        try {
+            val canvas = Canvas(bitmap)
+            canvas.drawColor(Color.rgb(15, 111, 139))
+            val positions = listOf(.3f to .28f, .7f to .56f)
+            for (i in example.indices) {
+                val drawable = example[i].getIcon(0).constantState?.newDrawable()
+                    ?: example[i].getIcon(0)
+                val x = (positions[i].first * bitmap.width).toInt()
+                val y = (positions[i].second * bitmap.height).toInt()
+                val r = 24
+                drawable.setBounds(x-r, y-r, x+r, y+r)
+                drawable.draw(canvas)
+            }
+            val result = find(bitmap, example)
+            return example.all { original ->
+                result.matches.any { it.id == original.componentName.flattenToString() }
+            } && result.matches.size == 2
+        } finally { bitmap.recycle() }
+    }
+
     /** Produces a local-only annotated thumbnail for user review. */
     fun preview(source: Bitmap, matches: List<Match>): Bitmap {
         val width = min(360, source.width)
