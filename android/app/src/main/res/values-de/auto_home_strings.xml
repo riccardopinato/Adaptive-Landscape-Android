@@ -58,4 +58,6 @@
     <string name="auto_home_import_confirm">Verknüpfungen dieser Seite werden ersetzt und passende Apps von anderen Seiten verschoben. Ordner und Widgets bleiben erhalten. Import kann rückgängig gemacht werden.</string>
     <string name="auto_home_import_applied">%1$d Verknüpfungen importiert</string>
     <string name="auto_home_import_undo">Letzten Import rückgängig machen</string>
+    <string name="auto_home_import_review_auto">Grüne Kreise zeigen geschätzte Positionen. Beim Import werden die automatisch angeordneten Apps durch erkannte Verknüpfungen ersetzt; alle anderen bleiben im App-Drawer.</string>
+    <string name="auto_home_import_confirm_auto">Automatische Deskland-Verknüpfungen durch erkannte Apps ersetzen? Alle anderen Apps bleiben im Drawer, Ordner und Widgets bleiben erhalten. Der Import ist rückgängig zu machen.</string>
 </resources>
