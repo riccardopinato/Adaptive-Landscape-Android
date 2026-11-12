@@ -167,7 +167,7 @@ assert 'auto_home_icons_v1' in home and 'requestPublish()' in home
 assert 'gridInset' in (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
 for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'values-pt'):
     assert (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').is_file()
-assert '0.5.1+16' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert '0.5.2+17' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
 print('PASS: experimental opt-in native Auto Home source; NOT physical tested')
 
 # Desktop-behavior parity requires a temporal transition, not instantaneous
@@ -197,3 +197,18 @@ assert 'GLES20.glTexSubImage2D' in gpu
 assert 'maskUploadScratch.clear()' in gpu
 assert 'ByteBuffer.allocateDirect(bytes.size)' not in gpu
 print('PASS: v0.5.1 serialized wallpaper renderer thread and reusable coast GPU storage')
+
+# v0.5.2: ordinary Home must be free of full-screen diagnostic controls.
+# First-run placement is local-only and never claims OEM position access.
+home = (base / 'AdaptiveHomeActivity.kt').read_text(encoding='utf-8')
+assert 'showHomeMenu()' in home and 'showAppDrawer()' in home
+assert 'GestureDetector(' in home and 'onLongPress(e: MotionEvent)' in home
+assert 'fillHomeFromInstalledApps(onlyIfEmpty = true)' in home
+assert 'auto_home_auto_arranged_v1' in home
+assert 'renderPageDots()' in home and 'renderChrome()' not in home
+assert 'auto_home_fill_explanation' in home
+for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'values-pt'):
+    strings = (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').read_text(encoding='utf-8')
+    assert 'name="auto_home_fill"' in strings
+    assert 'name="auto_home_settings"' in strings
+print('PASS: v0.5.2 clean wallpaper Home, gesture controls and privacy-safe auto app fill')
