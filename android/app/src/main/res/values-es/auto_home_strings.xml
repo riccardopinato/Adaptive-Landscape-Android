@@ -60,4 +60,6 @@
     <string name="auto_home_import_undo">Deshacer última importación</string>
     <string name="auto_home_import_review_auto">Los círculos verdes son posiciones estimadas. La importación sustituirá la distribución automática por las apps reconocidas; las demás seguirán en el cajón.</string>
     <string name="auto_home_import_confirm_auto">¿Sustituir los accesos automáticos por los reconocidos? Las demás apps seguirán en el cajón. Las carpetas y widgets se conservan. Puedes deshacer.</string>
+    <string name="auto_home_xiaomi_gestures">Gestos Xiaomi: conservar inicio del sistema</string>
+    <string name="auto_home_xiaomi_gestures_help">HyperOS puede forzar tres botones con Deskland como inicio. Para conservar los gestos reales, configura el fondo animado Deskland, elige Xiaomi Home como inicio y activa Gestos en los ajustes de navegación Xiaomi. Deskland no puede leer las posiciones de los iconos Xiaomi en este modo. Nada se cambia automáticamente.</string>
 </resources>
