@@ -305,6 +305,7 @@ class AdaptiveHomeActivity : Activity() {
         }
         runScreenshotMatcherQaIfRequested(intent)
         runCuratedScreenshotQaIfRequested(intent)
+        runHomePerformanceQaIfRequested(intent)
         renderHomeNextFrame()
     }
 
@@ -430,6 +431,37 @@ class AdaptiveHomeActivity : Activity() {
         }
         prefs.edit().putString("auto_home_curated_import_qa_v1",
             if (result) "PASS" else "FAIL").apply()
+    }
+
+    /** Disposable emulator-only check: no duplicate rebuild or widget churn. */
+    private fun runHomePerformanceQaIfRequested(intent: Intent?) {
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0 ||
+            intent?.getBooleanExtra("deskland_qa_home_perf_v1", false) != true) return
+        canvas.post {
+            if (isFinishing || isDestroyed) return@post
+            val result = runCatching {
+                renderHome()
+                val initialRebuilds = homeRebuildCount
+                val initialNoOps = homeNoOpCount
+                val stableDockId = dock.firstOrNull()
+                val dockTile = stableDockId?.let { views[it] }
+                repeat(4) { renderHome() }
+                val noOp = homeRebuildCount == initialRebuilds &&
+                    homeNoOpCount >= initialNoOps + 4
+                val oldPage = currentPage
+                currentPage = (oldPage + 1) % maxPages
+                renderHome()
+                val dockPreserved = stableDockId == null ||
+                    views[stableDockId] === dockTile
+                currentPage = oldPage
+                renderHome()
+                val dockPreservedOnReturn = stableDockId == null ||
+                    views[stableDockId] === dockTile
+                noOp && dockPreserved && dockPreservedOnReturn
+            }.getOrDefault(false)
+            prefs.edit().putString("auto_home_perf_qa_v1",
+                if (result) "PASS" else "FAIL").apply()
+        }
     }
 
     private fun isSelectedHome(): Boolean {
@@ -902,7 +934,7 @@ class AdaptiveHomeActivity : Activity() {
             val params = tile.layoutParams as? FrameLayout.LayoutParams
             val w = iconWidth()
             val h = iconHeight()
-            if (params?.width != w || params.height != h)
+            if (params?.width != w || params?.height != h)
                 tile.layoutParams = FrameLayout.LayoutParams(w, h)
             if (tile.x != x) tile.x = x
             if (tile.y != y) tile.y = y
