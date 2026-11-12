@@ -163,6 +163,15 @@ def main():
     wait("native synthetic icon-matching fixture",lambda:
          pref().get("auto_home_screenshot_qa_v1")=="PASS")
     ok("offline_screenshot_icon_matching","synthetic in-RAM icon artwork")
+    saved_before_import=pref().get("auto_home_icons_v1","")
+    adb("shell","am","start","-n",PKG+
+        "/it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity",
+        "--ez","deskland_qa_migration_undo_v1","true")
+    wait("screenshot layout import and atomic undo",lambda:
+         pref().get("auto_home_import_undo_qa_v1")=="PASS")
+    assert pref().get("auto_home_icons_v1","")==saved_before_import, (
+        "Original icons lost after screenshot migration roundtrip")
+    ok("screenshot_import_atomic_undo","no layout loss after simulated import")
 
     wait("visible installed app icons",lambda:(v if len(v:=icon_nodes())>=2 else None))
     assert not any(node_text(x) is not None for x in
