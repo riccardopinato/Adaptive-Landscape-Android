@@ -105,6 +105,25 @@ class AdaptiveHomeActivity : Activity() {
     private var drawerHandleView: View? = null
     private var homeRebuildCount = 0
     private var homeNoOpCount = 0
+    private var catalogLoaded = false
+    private var catalogLoadMs = 0L
+    private var resumeWorkMs = 0L
+    private var lastJankBudgetWrittenAt = 0L
+    // No sampling or data writes while Deskland Home is paused.
+    private val frameMonitor by lazy {
+        HomeFrameMonitor {
+            if (!isFinishing && !isDestroyed && draggingId == null &&
+                prefs.getBoolean("auto_home_active_v1", false)) {
+                val now = System.currentTimeMillis()
+                if (now - lastJankBudgetWrittenAt >= 3_000L) {
+                    lastJankBudgetWrittenAt = now
+                    prefs.edit()
+                        .putLong("auto_home_jank_budget_until_v1", now + 5_000L)
+                        .apply()
+                }
+            }
+        }
+    }
     private val widgetViews = LinkedHashMap<Int, View>()
     private val placedWidgets = ArrayList<PlacedWidget>()
     private val widgetManager by lazy { AppWidgetManager.getInstance(this) }
@@ -142,7 +161,10 @@ class AdaptiveHomeActivity : Activity() {
     private fun refreshPackages() {
         handler.post {
             if (!isFinishing && !isDestroyed) {
+                val started = SystemClock.uptimeMillis()
                 loadLaunchableApps()
+                catalogLoaded = true
+                catalogLoadMs = SystemClock.uptimeMillis() - started
                 iconStates.clear()
                 tileSignatures.clear()
                 lastRenderedHomeKey = null
@@ -167,7 +189,6 @@ class AdaptiveHomeActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         currentPage = prefs.getInt("auto_home_page_v1", 0).coerceIn(0, maxPages - 1)
-        restoreWidgets()
         window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         window.statusBarColor = Color.TRANSPARENT
@@ -258,12 +279,24 @@ class AdaptiveHomeActivity : Activity() {
             finish()
             return
         }
+        val resumeStarted = SystemClock.uptimeMillis()
         endHomeDragBudget()
         try { widgetHost.startListening() } catch (_: RuntimeException) { }
-        restoreWidgets()
-        loadLaunchableApps()
+        // Android HOME returns are frequent. LauncherApps activity enumeration
+        // sorts and resolves hundreds of labels; it must NOT run every time
+        // an app closes. Registered package callbacks handle catalog changes.
+        // If callback registration failed, refresh on each resume for safety.
+        if (!catalogLoaded || !callbackRegistered) {
+            restoreWidgets()
+            val started = SystemClock.uptimeMillis()
+            loadLaunchableApps()
+            catalogLoadMs = SystemClock.uptimeMillis() - started
+            catalogLoaded = true
+            restoreSavedLayout()
+        }
         runScreenshotMatcherQaIfRequested(intent)
-        restoreSavedLayout()
+        resumeWorkMs = SystemClock.uptimeMillis() - resumeStarted
+        frameMonitor.start(canvas.display?.refreshRate ?: 60f)
         val fresh = !prefs.contains("auto_home_icons_v1") &&
             !prefs.contains("auto_home_folders_v1") &&
             !prefs.contains("auto_home_dock_v1")
@@ -307,10 +340,20 @@ class AdaptiveHomeActivity : Activity() {
         runScreenshotMatcherQaIfRequested(intent)
         runCuratedScreenshotQaIfRequested(intent)
         runHomePerformanceQaIfRequested(intent)
+        runFrameMonitorQaIfRequested(intent)
         renderHomeNextFrame()
     }
 
     override fun onPause() {
+        val metrics = frameMonitor.stop().toJson()
+            .put("catalog_load_ms", catalogLoadMs)
+            .put("resume_work_ms", resumeWorkMs)
+            .put("home_layout_rebuilds", homeRebuildCount)
+            .put("home_layout_skipped", homeNoOpCount)
+        // Aggregate device-local timings only: no app names or navigation
+        // history, screenshot, serial, analytics SDK or network.
+        prefs.edit().putString("auto_home_perf_last_session_v1",
+            metrics.toString()).apply()
         handler.removeCallbacks(publishPending)
         // A gesture interrupted by Home/background transitions must not leave
         // the wallpaper in its lower-priority interaction profile.
@@ -463,6 +506,15 @@ class AdaptiveHomeActivity : Activity() {
             prefs.edit().putString("auto_home_perf_qa_v1",
                 if (result) "PASS" else "FAIL").apply()
         }
+    }
+
+    private fun runFrameMonitorQaIfRequested(intent: Intent?) {
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0 ||
+            intent?.getBooleanExtra("deskland_qa_frame_monitor_v1", false) != true) return
+        val ok = HomeFrameMonitor.syntheticSelfTest() &&
+            catalogLoaded && canvas.childCount > 0
+        prefs.edit().putString("auto_home_frame_monitor_qa_v1",
+            if (ok) "PASS" else "FAIL").apply()
     }
 
     private fun isSelectedHome(): Boolean {
