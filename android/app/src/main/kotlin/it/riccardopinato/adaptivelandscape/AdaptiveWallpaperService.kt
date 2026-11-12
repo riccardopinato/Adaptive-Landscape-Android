@@ -36,6 +36,9 @@ class AdaptiveWallpaperService : WallpaperService() {
         ).apply { start() }
         private val renderHandler = Handler(renderThread.looper)
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val powerManager by lazy {
+            getSystemService(Context.POWER_SERVICE) as PowerManager
+        }
         private val coastalBeach = CoastalBeachRenderer()
         private val gpuOcean = GpuOceanRenderer()
         private var backendStatus = ""
@@ -65,7 +68,6 @@ class AdaptiveWallpaperService : WallpaperService() {
         }
 
         private fun frameDelay(): Long {
-            val power = getSystemService(Context.POWER_SERVICE) as PowerManager
             val target = when (settings.renderQuality) {
                 "balanced" -> 83L  // about 12fps cap
                 "high" -> 63L      // about 16fps cap
@@ -78,8 +80,16 @@ class AdaptiveWallpaperService : WallpaperService() {
             val now = System.currentTimeMillis()
             val deadline = prefs.getLong("auto_home_interaction_until_v1", 0L)
             val interacting = deadline > now && deadline - now <= 30_000L
-            return if (power.isPowerSaveMode || interacting) maxOf(125L, target)
-                else target
+            val pressureDeadline = prefs.getLong("auto_home_jank_budget_until_v1", 0L)
+            // This is an ephemeral adaptive ceiling, never a change to the
+            // user's persisted renderQuality setting.
+            val underPressure = pressureDeadline > now &&
+                pressureDeadline - now <= 5_000L && isAdaptiveHomeSelected()
+            return when {
+                powerManager.isPowerSaveMode || interacting -> maxOf(125L, target)
+                underPressure -> maxOf(100L, target)
+                else -> target
+            }
             // Delay is a ceiling target, not measured FPS; CPU/GPU time is extra.
         }
 
@@ -96,11 +106,16 @@ class AdaptiveWallpaperService : WallpaperService() {
         }
 
         private fun reload() {
-            settings = WallpaperState.fromPrefs(prefs, isAdaptiveHomeSelected())
+            val fresh = WallpaperState.fromPrefs(prefs, isAdaptiveHomeSelected())
+            if (fresh == settings) return // Ignore identical role/resume state.
+            settings = fresh
             renderHandler.post {
                 if (destroyed) return@post
                 coastalBeach.invalidate()
-                gpuOcean.invalidateLayout()
+                // GPU renderer compares WallpaperState and rebuilds the mask
+                // only when geometry actually changed. Do NOT reset its
+                // double-buffered coast on a repeated Home resume or a
+                // palette-only update.
             }
         }
 
