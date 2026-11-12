@@ -30,6 +30,15 @@ In v0.5.3 a voluntary screenshot provides a *visual approximation* of a previous
   only selected page icons and duplicated icons on other pages change.
 - Existing folders, their membership, widgets and manual wallpaper profile
   `config_v2` are left intact. Conflicts with widget/folder cells are skipped.
+- When the page was manually curated, unmatched shortcuts on that same page
+  are preserved and proposed icon matches cannot overwrite a different
+  manually placed shortcut. A curated dock keeps its existing order, adding
+  only recognized entries that fit into free slots.
+- Manual drag, folder, dock and other explicit Home edits atomically clear the
+  auto-arranged marker; only first-time automatic population retains it.
+- Returning from first-run screenshot selection now continues to the separate
+  Android wallpaper permission step after preview dismissal, cancellation or
+  decode failure, rather than abandoning the setup path.
 - One atomic `SharedPreferences.Editor` changes all affected layout sections
   and writes a full pre-import recovery snapshot, including folder/dock data.
   «Undo last screenshot import» restores it without touching other launchers.
@@ -58,11 +67,11 @@ In v0.5.3 a voluntary screenshot provides a *visual approximation* of a previous
 |---|---|
 | Kotlin + Flutter APK build | PENDING |
 | Source and 6 native locales | PENDING |
-| Local synthetic icon matcher on Android emulator | PENDING |
+| Local synthetic icon matcher on Android emulator | CI PASS on previous SHA; latest changes require rerun |
 | Screenshot file picker / review/confirm with actual user image | NOT VERIFIED |
 | Exact OEM screenshot positions | NOT POSSIBLE as a general guarantee |
 | Undo, crash/restart, widgets unaffected | STATIC GUARDED; PHYSICAL NOT VERIFIED |
-| Android 35 Home smoke on new source | PENDING |
+| Android 35 Home smoke on new source | CI PASS on previous SHA; latest changes require rerun |
 | Physical Xiaomi/Redmi install + layout import | NOT VERIFIED |
 | Actual sea/sand photo realism | NOT VERIFIED |
 | Signed APK URL/HTTP download and update in-place | NOT VERIFIED |
