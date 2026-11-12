@@ -99,5 +99,17 @@
   "autoHomeStatusDataReady": "Positionen vom Renderer empfangen",
   "autoHomeStatusDisclaimer": "Dies bestätigt die Datenübertragung, nicht sichtbare Sandpixel. Ordner werden noch nicht unterstützt.",
   "autoHomeStatusRefresh": "Diagnose aktualisieren",
-  "autoHomeStatusOpenHome": "Deskland-Startseite öffnen"
+  "autoHomeStatusOpenHome": "Deskland-Startseite öffnen",
+  "xiaomiGesturesTitle": "Xiaomi/HyperOS: Systemgesten behalten",
+  "xiaomiGesturesExplanation": "Einige HyperOS-Versionen erzwingen drei Navigationstasten, wenn Deskland der Standard-Launcher wird. Ein normaler Launcher kann Xiaomi-Systemgesten nicht wieder aktivieren. Für echte Zurück-, Home- und Letzte-Apps-Gesten Xiaomi Home als Standard und Deskland als Live-Hintergrund wählen. Mit Xiaomi Home kann der Sand Icons nicht automatisch folgen: manuelle Kalibrierung verwenden.",
+  "xiaomiGesturesModeDeskland": "Aktueller Startbildschirm: Deskland. Xiaomi zeigt möglicherweise Navigationstasten.",
+  "xiaomiGesturesModeOther": "Aktueller Startbildschirm: anderer Launcher. Xiaomi Home für Systemgesten auswählen.",
+  "xiaomiGesturesStepWallpaper": "1. Deskland-Live-Hintergrund einstellen",
+  "xiaomiGesturesStepHome": "2. Xiaomi Home in Einstellungen wählen",
+  "xiaomiGesturesStepNavigation": "3. Systemgesten aktivieren",
+  "xiaomiGesturesSettingsFallback": "Direkte Navigationseinstellungen nicht verfügbar. In Xiaomi: Einstellungen > Startbildschirm > Systemnavigation > Gesten.",
+  "xiaomiGesturesWarningTitle": "Xiaomi könnte Systemgesten deaktivieren",
+  "xiaomiGesturesWarningBody": "Deskland als Standard-Launcher kann unter HyperOS drei Tasten erzwingen. Deskland kann diese Systemsperre nicht umgehen. Für Gesten Xiaomi Home mit Deskland-Hintergrund nutzen. Trotzdem fortfahren?",
+  "xiaomiGesturesContinue": "Deskland Home trotzdem verwenden",
+  "xiaomiGesturesNote": "Diese Schaltflächen öffnen nur Android-Einstellungen. Kein automatischer Wechsel und keine Löschung gespeicherter Layouts."
 }
