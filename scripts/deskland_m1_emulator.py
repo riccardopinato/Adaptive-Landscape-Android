@@ -137,8 +137,8 @@ def main():
     assert len(initial)<=120 and len({x["id"] for x in initial})==len(initial)
     assert len(icon_nodes())>=2, "No visible installed apps on Home"
     assert not any(node_text(x) for x in
-        ("Add app","Remove app","Change Home launcher","Adaptive Home","Page 1/3")),
-        "Debug controls or page-number text visible on everyday Home"
+        ("Add app","Remove app","Change Home launcher","Adaptive Home","Page 1/3")), (
+        "Debug controls or page-number text visible on everyday Home")
     ok("clean_home_no_debug_chrome")
     ok("auto_populate_installed_apps",str(len(initial))+" real app shortcuts")
     wait("first page icon geometry",lambda:n_zones(min(40,len(initial))))
