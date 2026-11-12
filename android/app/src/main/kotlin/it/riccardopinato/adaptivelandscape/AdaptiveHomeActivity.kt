@@ -287,6 +287,7 @@ class AdaptiveHomeActivity : Activity() {
             return
         }
         runScreenshotMatcherQaIfRequested(intent)
+        runCuratedScreenshotQaIfRequested(intent)
         renderHomeNextFrame()
     }
 
@@ -341,6 +342,69 @@ class AdaptiveHomeActivity : Activity() {
             prefs.edit().putString("auto_home_import_undo_qa_v1",
                 if (success) "PASS" else "FAIL").apply()
         }
+    }
+
+    /** Debug-only, disposable-emulator acceptance for curated layout survival. */
+    private fun runCuratedScreenshotQaIfRequested(intent: Intent?) {
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0 ||
+            intent?.getBooleanExtra("deskland_qa_curated_layout_v1", false) != true) return
+        val apps = available.take(2)
+        val beforeIcons = prefs.getString("auto_home_icons_v1", "[]")
+        val beforeFolders = prefs.getString("auto_home_folders_v1", "[]")
+        val beforeDock = prefs.getString("auto_home_dock_v1", "[]")
+        val beforeAuto = prefs.getBoolean("auto_home_auto_arranged_v1", false)
+        val beforeUndo = prefs.getString("auto_home_migration_undo_v1", null)
+        val result = try {
+            require(apps.size == 2)
+            val first = appId(apps[0])
+            val second = appId(apps[1])
+            val baseCell = currentPage * pageSlots
+            val testIcons = JSONArray()
+                .put(JSONObject().put("id", first).put("cell", baseCell))
+                .put(JSONObject().put("id", second).put("cell", baseCell + 6))
+                .toString()
+            prefs.edit()
+                .putString("auto_home_icons_v1", testIcons)
+                .putString("auto_home_folders_v1", "[]")
+                .putString("auto_home_dock_v1", "[]")
+                .putBoolean("auto_home_auto_arranged_v1", false)
+                .remove("auto_home_migration_undo_v1")
+                .commit()
+            restoreSavedLayout()
+            // First match moves to a free cell. The other tries to overwrite
+            // an occupied manual cell and must be skipped.
+            val proposed = listOf(
+                HomeScreenshotMatcher.Match(second, apps[1].label.toString(),
+                    .7f, .45f, .98f, false, 7),
+                HomeScreenshotMatcher.Match(first, apps[0].label.toString(),
+                    .5f, .38f, .91f, false, 6)
+            )
+            val count = applyScreenshotImport(proposed, currentPage)
+            val updated = JSONArray(prefs.getString("auto_home_icons_v1", "[]"))
+            val remaining = (0 until updated.length()).map { updated.getJSONObject(it) }
+                .associate { it.getString("id") to it.getInt("cell") }
+            val safe = count == 1 && remaining.size == 2 &&
+                remaining[first] == baseCell && remaining[second] == baseCell + 7 &&
+                !prefs.getBoolean("auto_home_auto_arranged_v1", true)
+            undoLastScreenshotImport()
+            safe && prefs.getString("auto_home_icons_v1", "") == testIcons &&
+                !prefs.contains("auto_home_migration_undo_v1")
+        } catch (_: Exception) {
+            false
+        } finally {
+            val editor = prefs.edit()
+                .putString("auto_home_icons_v1", beforeIcons)
+                .putString("auto_home_folders_v1", beforeFolders)
+                .putString("auto_home_dock_v1", beforeDock)
+                .putBoolean("auto_home_auto_arranged_v1", beforeAuto)
+            if (beforeUndo == null) editor.remove("auto_home_migration_undo_v1")
+            else editor.putString("auto_home_migration_undo_v1", beforeUndo)
+            editor.commit()
+            restoreSavedLayout()
+            renderHomeNextFrame()
+        }
+        prefs.edit().putString("auto_home_curated_import_qa_v1",
+            if (result) "PASS" else "FAIL").apply()
     }
 
     private fun isSelectedHome(): Boolean {
