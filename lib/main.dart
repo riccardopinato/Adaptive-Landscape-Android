@@ -498,32 +498,37 @@ class _WallpaperEditorState extends State<WallpaperEditor>
 
   Future<void> _requestAdaptiveHome() async {
     if (!WallpaperChannel.supported || _busy) return;
-    // Xiaomi may force system navigation buttons after taking the HOME role.
-    // Explain that BEFORE the Android consent dialog, never after.
-    if (_runtimeStatus.xiaomiGestureRestrictionPossible &&
-        !_runtimeStatus.desklandHomeSelected) {
-      final l = AppLocalizations.of(context)!;
-      final proceed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(l.xiaomiGesturesWarningTitle),
-          content: Text(l.xiaomiGesturesWarningBody),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: Text(MaterialLocalizations.of(dialogContext).cancelButtonLabel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: Text(l.xiaomiGesturesContinue),
-            ),
-          ],
-        ),
-      );
-      if (proceed != true || !mounted) return;
-    }
     setState(() => _busy = true);
     try {
+      // Read the current Android vendor/role immediately before the request.
+      // The cached widget status may still be loading on a fresh launch.
+      // If the native read fails, abort rather than silently skip the warning.
+      final live = await _channel.read();
+      if (!mounted) return;
+      setState(() => _runtimeStatus = live);
+      if (live.xiaomiGestureRestrictionPossible &&
+          !live.desklandHomeSelected) {
+        final l = AppLocalizations.of(context)!;
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: Text(l.xiaomiGesturesWarningTitle),
+            content: Text(l.xiaomiGesturesWarningBody),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text(MaterialLocalizations.of(dialogContext)
+                    .cancelButtonLabel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text(l.xiaomiGesturesContinue),
+              ),
+            ],
+          ),
+        );
+        if (proceed != true || !mounted) return;
+      }
       await _channel.requestAdaptiveHome();
     } catch (error) {
       if (mounted) setState(() => _error = error.toString());
