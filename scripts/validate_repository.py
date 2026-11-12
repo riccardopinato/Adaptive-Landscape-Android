@@ -80,7 +80,8 @@ version_line = next((line.strip() for line in
     if line.startswith('version:')), '')
 assert version_line.startswith(('version: 0.4.', 'version: 0.5.'))
 parts = version_line.split(':', 1)[1].strip().split('+')
-assert len(parts) == 2 and int(parts[0].split('.')[2]) >= 2 and int(parts[1]) >= 9
+release = tuple(int(part) for part in parts[0].split('.'))
+assert len(parts) == 2 and release >= (0, 4, 2) and int(parts[1]) >= 9
 print('PASS: v0.4.2 local photo import, metadata stripping, GPU texture and UI contract')
 
 # v0.4.3: photo preview uses local image sampler and is explicitly ephemeral.
@@ -92,7 +93,7 @@ assert 'uniform float uUsePhoto;' in frag and 'uPhotoAspect' in frag
 assert 'setImageSampler(2, photograph ?? _toneAtlas!' in web
 assert 'FilePicker.pickFile(type: FileType.image)' in editor
 assert 'al-web-before-after' in editor and '_clearWebOceanPhoto' in editor
-assert int(parts[0].split('.')[2]) >= 3 and int(parts[1]) >= 10
+assert release >= (0, 4, 3) and int(parts[1]) >= 10
 print('PASS: v0.4.3 local Web photographic preview and comparison source contract')
 
 # v0.4.4: optical tuning is optional in schema2 and bound on native/Web.
@@ -114,7 +115,7 @@ assert 'gridInset' in cfg and 'gridInset' in native_state
 assert 'field.gridInset' in mask and 'gridInset' in field
 assert 'InteractiveViewer(' in editor and 'al-precision-calibration' in editor
 assert 'al-calibrate-top' in editor and 'al-calibrate-side' in editor
-assert int(parts[0].split('.')[2]) >= 5 and int(parts[1]) >= 12
+assert release >= (0, 4, 5) and int(parts[1]) >= 12
 print('PASS: v0.4.5 normalized Home insets and manual zoom calibration')
 
 # v0.4.6: native photo path skips procedural shading, quality controls image memory and pacing.
@@ -126,7 +127,7 @@ assert 'quality.hashCode().toLong()' in gpu
 assert '"balanced" -> 83L' in engine and '"high" -> 63L' in engine
 assert 'maxOf(125L, target)' in engine
 assert '_framesPerPreviewCycle' in (root / 'lib/main.dart').read_text(encoding='utf-8')
-assert int(parts[0].split('.')[2]) >= 6 and int(parts[1]) >= 13
+assert release >= (0, 4, 6) and int(parts[1]) >= 13
 print('PASS: v0.4.6 photo fast path, tiered GPU texture budget and pacing targets')
 
 # Prephysical QA handoff: source capture is never a physical PASS.
