@@ -41,4 +41,7 @@
     <string name="auto_home_reset_confirm">Clear Deskland Home</string>
     <string name="auto_home_already_pinned">App already on Home or in a folder</string>
     <string name="auto_home_first_run">This is your real Deskland Home. Tap here to choose your own apps.</string>
+    <string name="auto_home_fill">Arrange installed apps on Home</string>
+    <string name="auto_home_fill_explanation">Preserve the current Deskland layout and fill its empty cells with installed apps. Remaining apps are always available in the drawer. Android cannot import exact icon positions from a different launcher.</string>
+    <string name="auto_home_settings">Deskland settings</string>
 </resources>
