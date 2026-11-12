@@ -206,7 +206,12 @@ internal object HomeScreenshotMatcher {
                 drawable.draw(canvas)
             }
             val result = find(bitmap, example)
-            return example.all { original ->
+            val empty = Bitmap.createBitmap(360, 760, Bitmap.Config.ARGB_8888)
+            val noFalseMatches = try {
+                empty.eraseColor(Color.rgb(15, 111, 139))
+                find(empty, example).matches.isEmpty()
+            } finally { empty.recycle() }
+            return noFalseMatches && example.all { original ->
                 result.matches.any { it.id == original.componentName.flattenToString() }
             } && result.matches.size == 2
         } finally { bitmap.recycle() }
