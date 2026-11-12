@@ -258,6 +258,7 @@ class AdaptiveHomeActivity : Activity() {
             finish()
             return
         }
+        endHomeDragBudget()
         try { widgetHost.startListening() } catch (_: RuntimeException) { }
         restoreWidgets()
         loadLaunchableApps()
@@ -1099,7 +1100,7 @@ class AdaptiveHomeActivity : Activity() {
         // One preference write per gesture, not per MotionEvent. The deadline
         // expires after an interrupted/crashed gesture without a cleanup call.
         prefs.edit().putLong("auto_home_interaction_until_v1",
-            SystemClock.uptimeMillis() + 30_000L).apply()
+            System.currentTimeMillis() + 30_000L).apply()
     }
 
     private fun endHomeDragBudget() {
