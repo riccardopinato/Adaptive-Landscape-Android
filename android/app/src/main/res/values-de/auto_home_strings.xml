@@ -41,4 +41,7 @@
     <string name="auto_home_reset_confirm">Deskland leeren</string>
     <string name="auto_home_already_pinned">App bereits auf Startseite oder im Ordner</string>
     <string name="auto_home_first_run">Das ist deine Deskland-Startseite. Tippe hier und wähle deine Apps.</string>
+    <string name="auto_home_fill">Installierte Apps auf Home anordnen</string>
+    <string name="auto_home_fill_explanation">Das bestehende Deskland-Layout bleibt erhalten. Freie Plätze werden mit installierten Apps gefüllt; alle weiteren Apps bleiben in der Übersicht. Android kann die genauen Positionen eines anderen Launchers nicht übernehmen.</string>
+    <string name="auto_home_settings">Deskland-Einstellungen</string>
 </resources>
