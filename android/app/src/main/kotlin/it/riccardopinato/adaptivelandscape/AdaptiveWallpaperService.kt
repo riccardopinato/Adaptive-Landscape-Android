@@ -12,6 +12,7 @@ import android.app.role.RoleManager
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
+import java.util.concurrent.atomic.AtomicBoolean
 import android.os.Process
 import android.os.PowerManager
 import android.os.SystemClock
@@ -30,7 +31,8 @@ class AdaptiveWallpaperService : WallpaperService() {
         // Own all Canvas, EGL, GLES, and renderer-cache mutations on one
         // dedicated thread to keep the HOME gestures responsive.
         private val renderThread = HandlerThread(
-            "DesklandWallpaperRender", Process.THREAD_PRIORITY_DISPLAY
+            // Wallpaper must not out-prioritize Android's Home/touch UI thread.
+            "DesklandWallpaperRender", Process.THREAD_PRIORITY_DEFAULT
         ).apply { start() }
         private val renderHandler = Handler(renderThread.looper)
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -44,9 +46,12 @@ class AdaptiveWallpaperService : WallpaperService() {
         @Volatile private var settings = WallpaperState()
         @Volatile private var offset = 0.5f
         private var startTime = SystemClock.uptimeMillis()
+        private val requestFrameQueued = AtomicBoolean(false)
+        @Volatile private var lastFrameStartedAt = 0L
         private val frame = object : Runnable {
             override fun run() {
                 if (!visible || !surfaceReady || destroyed) return
+                lastFrameStartedAt = SystemClock.uptimeMillis()
                 drawFrame() // only the rendering worker calls EGL/Canvas
                 if (visible && surfaceReady && !destroyed && !settings.staticScene) {
                     renderHandler.postDelayed(this, frameDelay())
@@ -66,7 +71,14 @@ class AdaptiveWallpaperService : WallpaperService() {
                 "high" -> 63L      // about 16fps cap
                 else -> 50L        // up to 20fps cap
             }
-            return if (power.isPowerSaveMode) maxOf(125L, target) else target
+            // When a real launcher icon is being dragged, cap the expensive
+            // full-screen GPU rendering to ~8fps. The wallpaper keeps
+            // animating; Android UI gestures take priority. The gesture
+            // deadline also expires after abrupt app/process termination.
+            val interacting = SystemClock.uptimeMillis() <
+                prefs.getLong("auto_home_interaction_until_v1", 0L)
+            return if (power.isPowerSaveMode || interacting) maxOf(125L, target)
+                else target
             // Delay is a ceiling target, not measured FPS; CPU/GPU time is extra.
         }
 
@@ -92,8 +104,20 @@ class AdaptiveWallpaperService : WallpaperService() {
         }
 
         private fun requestFrame() {
-            renderHandler.removeCallbacks(frame)
-            if (visible && surfaceReady && !destroyed) renderHandler.post(frame)
+            // Source/wallpaper changes can arrive many times per second.
+            // Serialize rescheduling on the render thread and never bypass
+            // the frame-rate limit simply because preferences changed.
+            if (!requestFrameQueued.compareAndSet(false, true)) return
+            renderHandler.post {
+                requestFrameQueued.set(false)
+                renderHandler.removeCallbacks(frame)
+                if (visible && surfaceReady && !destroyed) {
+                    val elapsed = (SystemClock.uptimeMillis() -
+                        lastFrameStartedAt).coerceAtLeast(0L)
+                    renderHandler.postDelayed(frame,
+                        (frameDelay() - elapsed).coerceAtLeast(0L))
+                }
+            }
         }
 
         private fun reportBackend(name: String) {
@@ -155,7 +179,9 @@ class AdaptiveWallpaperService : WallpaperService() {
         override fun onOffsetsChanged(xOffset: Float, yOffset: Float, xOffsetStep: Float,
                                       yOffsetStep: Float, xPixelOffset: Int, yPixelOffset: Int) {
             offset = xOffset.coerceIn(0f, 1f)
-            requestFrame()
+            // Beach doesn't use xOffset; requesting a frame on every
+            // horizontal Home swipe would override frame pacing.
+            if (settings.scene != "beach") requestFrame()
         }
 
         override fun onDestroy() {
