@@ -1,7 +1,7 @@
 name: Deskland M1 frozen APK emulator smoke
 on:
   pull_request:
-    branches: [feat/deskland-android-widget-host-v049, qa/deskland-m1-emulator-source-frozen, perf/deskland-render-worker-coast-v051, feat/deskland-clean-home-bootstrap-v052, feat/deskland-screenshot-layout-migration-v053]
+    branches: [feat/deskland-android-widget-host-v049, qa/deskland-m1-emulator-source-frozen, perf/deskland-render-worker-coast-v051, feat/deskland-clean-home-bootstrap-v052, feat/deskland-screenshot-layout-migration-v053, perf/deskland-home-interaction-v054]
     paths:
       - .github/workflows/deskland-m1-emulator.yml
       - scripts/deskland_m1_emulator.py
