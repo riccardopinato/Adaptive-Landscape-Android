@@ -136,8 +136,8 @@ def main():
     wait("automatic app layout persisted",lambda:len(saved_icons())>=2)
     initial=saved_icons()
     assert len(initial)<=120 and len({x["id"] for x in initial})==len(initial)
-    assert len(icon_nodes())>=2, "No visible installed apps on Home"
-    assert not any(node_text(x) for x in
+    wait("visible installed app icons",lambda:(v if len(v:=icon_nodes())>=2 else None))
+    assert not any(node_text(x) is not None for x in
         ("Add app","Remove app","Change Home launcher","Adaptive Home","Page 1/3")), (
         "Debug controls or page-number text visible on everyday Home")
     ok("clean_home_no_debug_chrome")
@@ -146,6 +146,7 @@ def main():
     ok("wallpaper_geometry_first_page")
     # Home management is intentionally hidden behind a blank-space long press.
     gesture_blank("menu")
+    wait("blank-space manager visible",lambda:node_text("Organize") is not None)
     press("Deskland settings")
     wait("Flutter settings opened separately",lambda:foreground_is("MainActivity"))
     adb("shell","input","keyevent","KEYCODE_HOME")
@@ -154,8 +155,15 @@ def main():
     gesture_blank("drawer")
     wait("installed-app drawer opened",lambda:node_text("Apps") is not None or node_text("Search apps") is not None)
     ok("swipe_up_opens_app_drawer")
-    adb("shell","input","keyevent","KEYCODE_BACK")
-    wait("Home after drawer",lambda:foreground_is("AdaptiveHomeActivity"))
+    # Back once may only close the SearchView keyboard. Close the actual
+    # drawer dialog as well before testing horizontal Home gestures.
+    for _ in range(3):
+        if node_text("Apps") is None and node_text("Search apps") is None: break
+        adb("shell","input","keyevent","KEYCODE_BACK")
+        time.sleep(.6)
+    wait("Home after drawer",lambda:
+         foreground_is("AdaptiveHomeActivity") and
+         node_text("Apps") is None and node_text("Search apps") is None)
     gesture_blank("next")
     wait("page two preference",lambda:pref().get("auto_home_page_v1")==1)
     next_count=sum(1 for x in initial if x["cell"]//40==1)
