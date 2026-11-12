@@ -58,4 +58,6 @@
     <string name="auto_home_import_confirm">Isto substitui os atalhos desta página e move as apps correspondentes de outras páginas. Pastas e widgets permanecem. Podes desfazer a importação.</string>
     <string name="auto_home_import_applied">%1$d atalhos importados</string>
     <string name="auto_home_import_undo">Desfazer última importação</string>
+    <string name="auto_home_import_review_auto">Os círculos verdes indicam posições estimadas. A importação substitui a disposição automática pelos atalhos reconhecidos; as outras aplicações ficam na lista.</string>
+    <string name="auto_home_import_confirm_auto">Substituir os atalhos automáticos pelos identificados na imagem? As outras aplicações permanecem na lista, pastas e widgets ficam intactos. Podes desfazer.</string>
 </resources>
