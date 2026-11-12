@@ -134,6 +134,10 @@ class AdaptiveHomeActivity : Activity() {
     private lateinit var canvas: FrameLayout
     private var draggingId: String? = null
     private var lastPublishedAt = 0L
+    private var profileCacheRaw: String? = null
+    private var profileCacheJson: JSONObject? = null
+    private var firstHomeFrameReported = false
+    private val createdAtMs = SystemClock.uptimeMillis()
     private val publishPending = Runnable { publishHomePositions() }
     private var lastWidth = 0
     private var lastHeight = 0
@@ -1047,6 +1051,16 @@ class AdaptiveHomeActivity : Activity() {
         drawerHandleView?.let { canvas.removeView(it) }
         renderPageDots()
         requestPublish()
+        if (!firstHomeFrameReported && views.isNotEmpty()) {
+            firstHomeFrameReported = true
+            canvas.post {
+                if (!isFinishing && !isDestroyed) {
+                    prefs.edit().putLong("auto_home_first_populated_frame_ms_v1",
+                        SystemClock.uptimeMillis() - createdAtMs).apply()
+                    reportFullyDrawn()
+                }
+            }
+        }
     }
 
     private fun addHomeTile(tile: View, id: String, x: Float, y: Float,
@@ -2125,7 +2139,9 @@ class AdaptiveHomeActivity : Activity() {
         // A moving tile is visually handled by Android view properties. Push
         // geometry to the coast at a lower rate to avoid JSON/GL upload storms.
         val interval = if (draggingId != null) 180L else 90L
-        if (now - lastPublishedAt >= interval) publishHomePositions()
+        // Never perform JSON normalization or SharedPreferences writes
+        // synchronously inside a MotionEvent callback.
+        if (now - lastPublishedAt >= interval) handler.post(publishPending)
         else handler.postDelayed(publishPending, interval - (now - lastPublishedAt))
     }
 
@@ -2159,11 +2175,14 @@ class AdaptiveHomeActivity : Activity() {
                 .put("height", (tile.height / canvasH).coerceIn(0.03, 0.95))
                 .put("kind", "widget"))
         }
-        val base = try {
-            JSONObject(prefs.getString("config_v2", null) ?: "{}")
-        } catch (_: Exception) {
-            JSONObject()
+        val raw = prefs.getString("config_v2", null) ?: "{}"
+        if (raw != profileCacheRaw || profileCacheJson == null) {
+            profileCacheRaw = raw
+            profileCacheJson = try { JSONObject(raw) }
+                catch (_: Exception) { JSONObject() }
         }
+        // The private cached object is only mutated by this UI thread.
+        val base = profileCacheJson ?: JSONObject()
         base.put("schema", 2)
             .put("scene", if (base.optString("scene") == "meadow") "meadow" else "beach")
             .put("occupied", JSONArray())
