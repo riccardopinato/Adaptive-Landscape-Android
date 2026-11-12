@@ -41,4 +41,7 @@
     <string name="auto_home_reset_confirm">Limpar Deskland</string>
     <string name="auto_home_already_pinned">App já no início ou numa pasta</string>
     <string name="auto_home_first_run">Este é o teu ecrã Deskland. Toca para escolher as tuas apps.</string>
+    <string name="auto_home_fill">Organizar aplicações na página inicial</string>
+    <string name="auto_home_fill_explanation">Mantém a disposição atual do Deskland e preenche os espaços livres com aplicações instaladas. As restantes ficam na lista de aplicações. O Android não permite importar as posições exatas de outro lançador.</string>
+    <string name="auto_home_settings">Definições Deskland</string>
 </resources>
