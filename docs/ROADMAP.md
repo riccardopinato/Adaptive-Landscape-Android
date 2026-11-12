@@ -221,3 +221,23 @@ Do not treat the above TODOs as implemented.
   separate follow-on PRs, with provenance and local-only privacy safeguards.
 - [DO NOT MERGE] Feature remains Draft until exact-head tests and human/physical
   acceptance. See `docs/DESKLAND_CLEAN_HOME_V052.md`.
+
+
+## v0.5.3 — Screenshot migration (product roadmap Step 2, candidate)
+
+- [CODED] One-time first-run voluntary screenshot-import offer, separate
+  system wallpaper consent; later available via Home long-press menu.
+- [CODED] Local-only, size-bounded Android document picker; heuristic icon
+  artwork matching, green-ring thumbnail preview, two-stage confirmation.
+- [CODED] Import recognized app coordinates into selected Home page and dock;
+  preserve widgets/folders, old config_v2, and undo last layout import.
+- [CODED] Replace alphabetical auto-fill only after explicit consent; retain
+  curated pages except the selected page and duplicate shortcuts.
+- [CODED] Synthetic in-memory icon matching fixture in debug-only Android
+  smoke suite; 6 native locales. See docs/DESKLAND_SCREENSHOT_MIGRATION_V053.md.
+- [PENDING CI] v0.5.3+18 exact-head native source, runtime, release APK.
+- [NOT VERIFIED] Real Xiaomi/HyperOS screenshot icon matching; custom packs,
+  widgets/folders, multiple snapshots, actual physical layout fidelity.
+- [NOT IMPLEMENTED] Exact OEM Home coordinate read, OEM backup parser or Nova
+  .novabackup adapter; no unsupported private access or AccessibilityService.
+- [DO NOT MERGE] Until CI and physical UX gate; APK stays experimental.
