@@ -23,14 +23,21 @@ def wait(label,pred):
         except (ValueError,RuntimeError,ET.ParseError,KeyError,AssertionError): pass
         time.sleep(1)
     try:
-        ui_labels=[n.get("text") for n in nodes() if n.get("text","").startswith("Page ")]
+        ui=nodes()
+        ui_labels=[n.get("text") for n in ui if n.get("text","").startswith("Page ")]
+        # Disposable emulator only. Print semantic UI (not screenshots, serials,
+        # app private data, passwords or contents) when a widget search stalls.
+        ui_semantics=[{"class":n.get("class"),"text":n.get("text"),
+            "content_desc":n.get("content-desc"),"clickable":n.get("clickable"),
+            "bounds":n.get("bounds")} for n in ui
+            if n.get("text") or n.get("content-desc") or n.get("clickable")=="true"][:45]
         current=ET.fromstring(adb("exec-out","run-as",PKG,"cat","shared_prefs/adaptive_landscape.xml"))
         pages=[n.get("value") for n in current if n.get("name")=="auto_home_page_v1"]
         activity=[l.strip() for l in adb("shell","dumpsys","activity","activities").splitlines() if "topResumedActivity=" in l][-2:]
         current_zones=zones()
         roles=adb("shell","cmd","role","get-role-holders",ROLE,strict=False)
         process=bool(adb("shell","pidof",PKG,strict=False))
-        print("SAFE_DIAG",json.dumps({"test":label,"page_labels":ui_labels,"stored_page":pages,"zones_count":len(current_zones),"role_still_held":PKG in roles,"process_alive":process,"activity":activity}),flush=True)
+        print("SAFE_DIAG",json.dumps({"test":label,"page_labels":ui_labels,"stored_page":pages,"zones_count":len(current_zones),"role_still_held":PKG in roles,"process_alive":process,"activity":activity,"ui_semantics":ui_semantics}),flush=True)
     except Exception as err:
         print("SAFE_DIAG_UNAVAILABLE",type(err).__name__,flush=True)
     raise AssertionError("Timed out: "+label)
@@ -127,12 +134,25 @@ def main():
     wait("native Home activity",lambda:foreground_is("AdaptiveHomeActivity"))
     # Wallpaper consent is intentionally one-time; never make it a permanent
     # opaque Home banner. The emulator does NOT approve system wallpaper here.
-    try:
-        if (node_text("Set live wallpaper") is not None or
-            node_text("Select Deskland live wallpaper to enable adaptive sand.") is not None):
-            adb("shell","input","keyevent","KEYCODE_BACK")
-            time.sleep(.8)
-    except (ValueError,RuntimeError): pass
+    # On this native Activity the first launch can show a one-time AlertDialog.
+    # Read the actual visible dialog controls, not just a single early UI dump
+    # during Activity handoff; dismiss via the explicit negative action.
+    for _ in range(8):
+        try:
+            page=nodes()
+            dialog_texts={n.get("text") for n in page if n.get("text")}
+            if "Set live wallpaper" in dialog_texts or (
+                "Select Deskland live wallpaper to enable adaptive sand." in dialog_texts):
+                cancel=next((n for n in page if n.get("text")=="Cancel"),None)
+                if cancel is not None:
+                    tap(cancel)
+                else:
+                    adb("shell","input","keyevent","KEYCODE_BACK")
+                    time.sleep(.8)
+                break
+            if icon_nodes(): break
+        except (ValueError,RuntimeError): pass
+        time.sleep(.6)
     wait("automatic app layout persisted",lambda:len(saved_icons())>=2)
     initial=saved_icons()
     assert len(initial)<=120 and len({x["id"] for x in initial})==len(initial)
