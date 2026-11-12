@@ -15,7 +15,7 @@ String buildQaSnapshot({
     kinds[zone.kind] = (kinds[zone.kind] ?? 0) + 1;
   }
   return [
-    'Adaptive Landscape v0.5.1+16 - QA snapshot (NOT certification)',
+    'Adaptive Landscape v0.5.2+17 - QA snapshot (NOT certification)',
     'runtime: $runtime',
     'source: $sourceSha',
     'scene: ${config.scene}',
