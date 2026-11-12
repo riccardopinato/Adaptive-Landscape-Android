@@ -44,4 +44,18 @@
     <string name="auto_home_fill">Arrange installed apps on Home</string>
     <string name="auto_home_fill_explanation">Preserve the current Deskland layout and fill its empty cells with installed apps. Remaining apps are always available in the drawer. Android cannot import exact icon positions from a different launcher.</string>
     <string name="auto_home_settings">Deskland settings</string>
+    <string name="auto_home_import_title">Import previous Home screenshot</string>
+    <string name="auto_home_import_explanation">Select a screenshot of your previous Home. Deskland compares icon artwork against installed apps locally on this phone. It never reads another launcher layout. You review every match before changing anything. Folders and widgets cannot be recovered from a screenshot.</string>
+    <string name="auto_home_import_choose">Choose screenshot</string>
+    <string name="auto_home_import_unavailable">Screenshot cannot be read or analyzed. Your Home has not been changed.</string>
+    <string name="auto_home_import_analyzing">Matching installed app icons on device…</string>
+    <string name="auto_home_import_preview">Previous Home with suggested matches</string>
+    <string name="auto_home_import_found">%1$d icon matches (catalog: %2$d apps)</string>
+    <string name="auto_home_import_page">Import to page %1$d</string>
+    <string name="auto_home_import_review">Green circles are estimates. Unmatched icons are never guessed. If the preview is wrong, cancel; your current layout stays unchanged.</string>
+    <string name="auto_home_import_apply">Apply matched positions</string>
+    <string name="auto_home_import_confirm_title">Replace page shortcuts?</string>
+    <string name="auto_home_import_confirm">This replaces the app shortcuts on the selected Deskland page and moves matching shortcuts from other pages. It preserves your existing folders and widgets. Undo is available from the Home menu.</string>
+    <string name="auto_home_import_applied">%1$d shortcuts imported</string>
+    <string name="auto_home_import_undo">Undo last screenshot import</string>
 </resources>
