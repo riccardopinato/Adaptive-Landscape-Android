@@ -1326,6 +1326,7 @@ class AdaptiveHomeActivity : Activity() {
         // These actions are only reachable by long-pressing blank wallpaper;
         // they must never obscure the ordinary Home or cover app icons.
         val options = arrayOf(
+            getString(R.string.auto_home_settings),
             getString(R.string.auto_home_apps),
             getString(R.string.auto_home_widgets),
             getString(R.string.auto_home_add),
@@ -1334,23 +1335,22 @@ class AdaptiveHomeActivity : Activity() {
             getString(R.string.auto_home_dock),
             getString(R.string.auto_home_fill),
             getString(R.string.auto_home_wallpaper),
-            getString(R.string.auto_home_settings),
             getString(R.string.auto_home_change_home)
         )
         AlertDialog.Builder(this).setTitle(R.string.auto_home_organize)
             .setItems(options) { _, choice ->
                 when (choice) {
-                    0 -> showAppDrawer()
-                    1 -> showWidgetActions()
-                    2 -> showAppPicker()
-                    3 -> showRemovePicker()
-                    4 -> showFolderManager()
-                    5 -> showDockManager()
-                    6 -> fillHomeFromInstalledApps(onlyIfEmpty = false)
-                    7 -> selectWallpaper()
-                    8 -> startActivity(Intent(this, MainActivity::class.java).addFlags(
+                    0 -> startActivity(Intent(this, MainActivity::class.java).addFlags(
                         Intent.FLAG_ACTIVITY_NEW_TASK or
                             Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+                    1 -> showAppDrawer()
+                    2 -> showWidgetActions()
+                    3 -> showAppPicker()
+                    4 -> showRemovePicker()
+                    5 -> showFolderManager()
+                    6 -> showDockManager()
+                    7 -> fillHomeFromInstalledApps(onlyIfEmpty = false)
+                    8 -> selectWallpaper()
                     9 -> openHomeSettings()
                 }
             }.setNegativeButton(android.R.string.cancel, null).show()
