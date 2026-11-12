@@ -43,7 +43,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import java.util.Locale
 import kotlin.math.ceil
 import java.util.UUID
 import org.json.JSONArray
@@ -305,17 +304,43 @@ class AdaptiveHomeActivity : Activity() {
     }
 
     private fun runScreenshotMatcherQaIfRequested(intent: Intent?) {
-        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0 ||
-            intent?.getBooleanExtra("deskland_qa_screenshot_matcher_v1", false) != true) return
-        // Only an explicitly requested, debuggable emulator may execute this.
-        // No device screenshot, package contents or personal data are read.
-        val apps = available.toList()
-        Thread {
-            val status = if (runCatching {
-                    HomeScreenshotMatcher.syntheticSelfTest(apps)
-                }.getOrDefault(false)) "PASS" else "FAIL"
-            prefs.edit().putString("auto_home_screenshot_qa_v1", status).apply()
-        }.apply { name = "DesklandSyntheticMatcherQA"; start() }
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0) return
+        if (intent?.getBooleanExtra("deskland_qa_screenshot_matcher_v1", false) == true) {
+            // Synthetic RAM-only screenshot; never accesses a user's screen.
+            val apps = available.toList()
+            Thread {
+                val status = if (runCatching {
+                        HomeScreenshotMatcher.syntheticSelfTest(apps)
+                    }.getOrDefault(false)) "PASS" else "FAIL"
+                prefs.edit().putString("auto_home_screenshot_qa_v1", status).apply()
+            }.apply { name = "DesklandSyntheticMatcherQA"; start() }
+        }
+        if (intent?.getBooleanExtra("deskland_qa_migration_undo_v1", false) == true) {
+            // Emulator-only, single-threaded rollback proof on disposable HOME
+            // state. No real screenshot and no app data outside Deskland.
+            val success = runCatching {
+                val beforeIcons = prefs.getString("auto_home_icons_v1", "[]")
+                val beforeFolders = prefs.getString("auto_home_folders_v1", "[]")
+                val beforeDock = prefs.getString("auto_home_dock_v1", "[]")
+                val beforeAuto = prefs.getBoolean("auto_home_auto_arranged_v1", false)
+                val apps = available.take(2)
+                require(apps.size == 2)
+                val guesses = apps.mapIndexed { i, info ->
+                    HomeScreenshotMatcher.Match(appId(info), info.label.toString(),
+                        .25f + .45f * i, .25f + .28f * i, .96f, false, i * 6)
+                }
+                val imported = applyScreenshotImport(guesses, currentPage)
+                val changed = imported == 2 && prefs.getString("auto_home_icons_v1","") != beforeIcons
+                undoLastScreenshotImport()
+                changed && prefs.getString("auto_home_icons_v1", "[]") == beforeIcons &&
+                    prefs.getString("auto_home_folders_v1", "[]") == beforeFolders &&
+                    prefs.getString("auto_home_dock_v1", "[]") == beforeDock &&
+                    prefs.getBoolean("auto_home_auto_arranged_v1", false) == beforeAuto &&
+                    !prefs.contains("auto_home_migration_undo_v1")
+            }.getOrDefault(false)
+            prefs.edit().putString("auto_home_import_undo_qa_v1",
+                if (success) "PASS" else "FAIL").apply()
+        }
     }
 
     private fun isSelectedHome(): Boolean {
