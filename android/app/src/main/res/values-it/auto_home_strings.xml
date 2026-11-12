@@ -60,4 +60,6 @@
     <string name="auto_home_import_undo">Annulla ultima importazione</string>
     <string name="auto_home_import_review_auto">I cerchi verdi indicano le posizioni stimate. Applicando l’importazione, la disposizione alfabetica automatica sarà sostituita dalle scorciatoie riconosciute. Le altre app resteranno nel cassetto.</string>
     <string name="auto_home_import_confirm_auto">Sostituire le icone disposte automaticamente da Deskland con quelle riconosciute nello screenshot? Le altre app resteranno nel cassetto. Cartelle e widget saranno mantenuti. Puoi annullare l’importazione.</string>
+    <string name="auto_home_xiaomi_gestures">Gesture Xiaomi: mantieni la Home di sistema</string>
+    <string name="auto_home_xiaomi_gestures_help">HyperOS può forzare i pulsanti quando Deskland è la Home predefinita. Per usare le gesture native Indietro, Home e Recenti, imposta lo sfondo animato Deskland, scegli Xiaomi Home originale come launcher predefinito e attiva Gesti nelle impostazioni di navigazione Xiaomi. In questa modalità Deskland non può conoscere le posizioni delle icone Xiaomi. Nessun cambio automatico.</string>
 </resources>
