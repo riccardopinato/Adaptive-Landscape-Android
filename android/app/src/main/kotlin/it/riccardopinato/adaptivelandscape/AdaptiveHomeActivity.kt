@@ -23,6 +23,7 @@ import android.os.Process
 import android.os.UserHandle
 import android.os.SystemClock
 import android.provider.Settings
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -161,22 +162,38 @@ class AdaptiveHomeActivity : Activity() {
             clipToPadding = false
         }
         setContentView(canvas)
-        var swipeStartX = 0f
+        // Home is a real wallpaper-backed surface. Controls are not overlaid:
+        // swipe horizontally between pages, swipe up for the app drawer, and
+        // long-press an EMPTY area to manage widgets, settings and the launcher.
+        var touchStartX = 0f
+        var touchStartY = 0f
+        var menuOpened = false
+        val blankGestures = GestureDetector(this,
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDown(e: MotionEvent): Boolean = true
+                override fun onLongPress(e: MotionEvent) {
+                    menuOpened = true
+                    canvas.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    showHomeMenu()
+                }
+            })
         canvas.setOnTouchListener { _, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    swipeStartX = event.x
-                    true
-                }
-                MotionEvent.ACTION_UP -> {
-                    val change = event.x - swipeStartX
-                    if (abs(change) > 72 * dp) {
-                        switchPage(currentPage + if (change < 0) 1 else -1)
-                    }
-                    true
-                }
-                else -> true
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                touchStartX = event.x
+                touchStartY = event.y
+                menuOpened = false
             }
+            blankGestures.onTouchEvent(event)
+            if (event.actionMasked == MotionEvent.ACTION_UP && !menuOpened) {
+                val dx = event.x - touchStartX
+                val dy = event.y - touchStartY
+                if (dy < -64 * dp && abs(dy) > abs(dx)) {
+                    showAppDrawer()
+                } else if (abs(dx) > 72 * dp && abs(dx) > abs(dy)) {
+                    switchPage(currentPage + if (dx < 0) 1 else -1)
+                }
+            }
+            true
         }
         // Subscribe to launcher package changes; do not poll installed apps.
         try {
@@ -207,7 +224,31 @@ class AdaptiveHomeActivity : Activity() {
         restoreWidgets()
         loadLaunchableApps()
         restoreSavedLayout()
-        canvas.post { renderHome() }
+        val fresh = !prefs.contains("auto_home_icons_v1") &&
+            !prefs.contains("auto_home_folders_v1") &&
+            !prefs.contains("auto_home_dock_v1")
+        if (fresh) fillHomeFromInstalledApps(onlyIfEmpty = true)
+        canvas.post {
+            renderHome()
+            if (!prefs.getBoolean("auto_home_setup_prompt_v2", false)) {
+                prefs.edit().putBoolean("auto_home_setup_prompt_v2", true).apply()
+                if (!fresh && available.isNotEmpty() &&
+                    prefs.getBoolean("auto_home_auto_arranged_v1", false).not()) {
+                    // Existing manual layouts survive intact unless the user
+                    // authorizes non-destructive filling of empty cells.
+                    AlertDialog.Builder(this)
+                        .setTitle(R.string.auto_home_fill)
+                        .setMessage(R.string.auto_home_fill_explanation)
+                        .setPositiveButton(R.string.auto_home_fill) { _, _ ->
+                            fillHomeFromInstalledApps(onlyIfEmpty = false)
+                            offerWallpaperSetup()
+                        }
+                        .setNegativeButton(android.R.string.cancel) { _, _ ->
+                            offerWallpaperSetup()
+                        }.show()
+                } else offerWallpaperSetup()
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -312,6 +353,41 @@ class AdaptiveHomeActivity : Activity() {
         } catch (_: Exception) { /* Dock is optional. */ }
     }
 
+    private fun fillHomeFromInstalledApps(onlyIfEmpty: Boolean) {
+        if (onlyIfEmpty && (placed.isNotEmpty() || folders.isNotEmpty() ||
+                dock.isNotEmpty() || placedWidgets.isNotEmpty())) return
+        if (available.isEmpty()) return
+        val used = (placed.map { it.id } + folders.flatMap { it.members } + dock).toHashSet()
+        // Only installed, user-visible launchable apps. There is no API that
+        // exposes the old Xiaomi/Samsung launcher's private icon placement.
+        // Respect every existing Deskland cell, folder, widget and dock item.
+        val free = (0 until maxSlots).filter(::freeCell).iterator()
+        for (info in available) {
+            val id = appId(info)
+            if (id !in used && free.hasNext()) {
+                placed.add(PlacedIcon(id, free.next()))
+                used.add(id)
+            }
+        }
+        // Remaining apps (if more than 120 slots) always remain in the drawer.
+        prefs.edit().putBoolean("auto_home_auto_arranged_v1", true).apply()
+        saveLayout()
+        renderHomeNextFrame()
+    }
+
+    private fun offerWallpaperSetup() {
+        if (isFinishing || isDestroyed || hasAdaptiveWallpaper()) return
+        // A one-time system-consent wizard, not permanent controls on Home.
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_wallpaper)
+            .setMessage(R.string.auto_home_wallpaper_needed)
+            .setPositiveButton(R.string.auto_home_wallpaper) { _, _ ->
+                selectWallpaper()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
     private fun saveLayout() {
         val icons = JSONArray()
         for (item in placed) icons.put(JSONObject()
@@ -375,7 +451,7 @@ class AdaptiveHomeActivity : Activity() {
             val y = canvas.height - (140 * dp)
             addHomeTile(tile, id, x, y) { startApp(info) }
         }
-        renderChrome()
+        renderPageDots()
         requestPublish()
     }
 
@@ -1230,113 +1306,92 @@ class AdaptiveHomeActivity : Activity() {
         dialog.show()
     }
 
-    private fun chromeButton(title: String, action: () -> Unit): TextView =
-        TextView(this).apply {
-            text = title
-            gravity = Gravity.CENTER
-            textSize = 13f
-            setTextColor(Color.WHITE)
-            setShadowLayer(3.5f, 0f, 1f, Color.BLACK)
-            setPadding((9 * dp).roundToInt(), (8 * dp).roundToInt(),
-                (9 * dp).roundToInt(), (8 * dp).roundToInt())
-            background = GradientDrawable().apply {
-                cornerRadius = 12 * dp
-                setColor(Color.argb(146, 13, 47, 54))
-            }
-            setOnClickListener { action() }
-        }
+    private fun showHomeMenu() {
+        // These actions are only reachable by long-pressing blank wallpaper;
+        // they must never obscure the ordinary Home or cover app icons.
+        val options = arrayOf(
+            getString(R.string.auto_home_apps),
+            getString(R.string.auto_home_widgets),
+            getString(R.string.auto_home_add),
+            getString(R.string.auto_home_manage),
+            getString(R.string.auto_home_folder_manage),
+            getString(R.string.auto_home_dock),
+            getString(R.string.auto_home_fill),
+            getString(R.string.auto_home_wallpaper),
+            getString(R.string.auto_home_settings),
+            getString(R.string.auto_home_change_home)
+        )
+        AlertDialog.Builder(this).setTitle(R.string.auto_home_organize)
+            .setItems(options) { _, choice ->
+                when (choice) {
+                    0 -> showAppDrawer()
+                    1 -> showWidgetActions()
+                    2 -> showAppPicker()
+                    3 -> showRemovePicker()
+                    4 -> showFolderManager()
+                    5 -> showDockManager()
+                    6 -> fillHomeFromInstalledApps(onlyIfEmpty = false)
+                    7 -> selectWallpaper()
+                    8 -> startActivity(Intent(this, MainActivity::class.java).addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+                    9 -> openHomeSettings()
+                }
+            }.setNegativeButton(android.R.string.cancel, null).show()
+    }
 
-    private fun renderChrome() {
-        val isDefault = isSelectedHome()
-        val widgetControl = chromeButton(getString(R.string.auto_home_widgets)) {
-            showWidgetActions()
-        }
-        canvas.addView(widgetControl, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT, (40 * dp).roundToInt(),
-            Gravity.TOP or Gravity.START).apply {
-                topMargin = (40 * dp).roundToInt()
-            })
-        val top = chromeButton(getString(R.string.auto_home_caption)) {
-            // Settings is a separate Flutter app task. Never put the editor
-            // on top of the HOME task or the Home key may resurrect settings.
-            startActivity(Intent(this, MainActivity::class.java).addFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
-        }
-        canvas.addView(top, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT, (40 * dp).roundToInt(),
-            Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
-                topMargin = (40 * dp).roundToInt()
-            })
-        val pageButton = chromeButton(
-            getString(R.string.auto_home_page, currentPage + 1, maxPages)) {
-            switchPage((currentPage + 1) % maxPages)
-        }
-        canvas.addView(pageButton, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT, (38 * dp).roundToInt(),
-            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
-                bottomMargin = (170 * dp).roundToInt()
-            })
-        if (isDefault && !hasAdaptiveWallpaper()) {
-            val help = chromeButton(getString(R.string.auto_home_wallpaper_needed)) {
-                selectWallpaper()
-            }
-            canvas.addView(help, FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT, (45 * dp).roundToInt(),
-                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
-                    bottomMargin = (220 * dp).roundToInt()
-                })
-        }
-        val bottom = LinearLayout(this).apply {
+    private fun renderPageDots() {
+        // Non-interactive, small page dots — no buttons, banner or labels
+        // over the ocean. On-screen icons/widgets are the only sand sources.
+        val dots = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
+            contentDescription = getString(R.string.auto_home_page, currentPage + 1, maxPages)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         }
-        val actions = listOf<Pair<Int, () -> Unit>>(
-            R.string.auto_home_apps to { showAppDrawer() },
-            R.string.auto_home_add to { showAppPicker() },
-            R.string.auto_home_manage to { showRemovePicker() },
-            R.string.auto_home_folder to { showFolderManager() },
-            R.string.auto_home_dock to { showDockManager() },
-            R.string.auto_home_organize to { showHomeOrganizer() }
-        )
-        for ((label, action) in actions) {
-            bottom.addView(chromeButton(getString(label), action).apply {
-                textSize = 10f
-                setPadding((2 * dp).roundToInt(), 0, (2 * dp).roundToInt(), 0)
-            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+        repeat(maxPages) { index ->
+            dots.addView(View(this).apply {
+                background = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(Color.argb(if (index == currentPage) 230 else 85,
+                        255, 255, 255))
+                }
+            }, LinearLayout.LayoutParams((6 * dp).roundToInt(),
+                (6 * dp).roundToInt()).apply {
+                    marginStart = (5 * dp).roundToInt()
+                    marginEnd = (5 * dp).roundToInt()
+                })
         }
-        val switchHome = chromeButton(getString(R.string.auto_home_change_home)) {
-            openHomeSettings()
-        }
-        canvas.addView(switchHome, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT, (40 * dp).roundToInt(),
-            Gravity.TOP or Gravity.END).apply {
-                topMargin = (40 * dp).roundToInt()
+        canvas.addView(dots, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.WRAP_CONTENT, (20 * dp).roundToInt(),
+            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+                bottomMargin = (165 * dp).roundToInt()
             })
-        canvas.addView(bottom, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT, (54 * dp).roundToInt(),
-            Gravity.BOTTOM).apply { bottomMargin = (22 * dp).roundToInt() })
-        if (views.isEmpty() && placedWidgets.none { it.cell / pageSlots == currentPage }) {
-            val empty = chromeButton(getString(R.string.auto_home_first_run)) {
-                showAppPicker()
-            }.apply {
-                textSize = 15f
-                setPadding((14 * dp).roundToInt(), (14 * dp).roundToInt(),
-                    (14 * dp).roundToInt(), (14 * dp).roundToInt())
+        // A small visual affordance for the app drawer; its text is provided
+        // only to accessibility services, never painted across the wallpaper.
+        val handle = View(this).apply {
+            background = GradientDrawable().apply {
+                cornerRadius = 3 * dp
+                setColor(Color.argb(175, 255, 255, 255))
             }
-            canvas.addView(empty, FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-                Gravity.CENTER))
+            contentDescription = getString(R.string.auto_home_apps)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { showAppDrawer() }
         }
-        if (!isDefault) {
-            val warning = chromeButton(getString(R.string.auto_home_not_default)) {
-                openHomeSettings()
-            }
-            canvas.addView(warning, FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.WRAP_CONTENT, (50 * dp).roundToInt(),
+        val hitArea = FrameLayout(this).apply {
+            addView(handle, FrameLayout.LayoutParams(
+                (40 * dp).roundToInt(), (4 * dp).roundToInt(),
                 Gravity.CENTER))
+            isClickable = true
+            contentDescription = getString(R.string.auto_home_apps)
+            setOnClickListener { showAppDrawer() }
         }
+        canvas.addView(hitArea, FrameLayout.LayoutParams(
+            (88 * dp).roundToInt(), (34 * dp).roundToInt(),
+            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+                bottomMargin = (6 * dp).roundToInt()
+            })
     }
 
     private fun pinAppToCurrentPage(id: String) {
