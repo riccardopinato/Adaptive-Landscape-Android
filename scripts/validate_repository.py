@@ -167,7 +167,7 @@ assert 'auto_home_icons_v1' in home and 'requestPublish()' in home
 assert 'gridInset' in (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
 for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'values-pt'):
     assert (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').is_file()
-assert '0.5.3+18' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert '0.5.4+19' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
 print('PASS: experimental opt-in native Auto Home source; NOT physical tested')
 
 # Desktop-behavior parity requires a temporal transition, not instantaneous
@@ -238,3 +238,18 @@ for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'valu
                 'auto_home_import_undo'):
         assert 'name="' + key + '"' in resources, (lang, key)
 print('PASS: v0.5.3 local screenshot migration, explicit preview, atomic undo')
+
+# v0.5.4: avoid recreating the entire launcher on repeated gestures/resume.
+wallpaper = (base / 'AdaptiveWallpaperService.kt').read_text(encoding='utf-8')
+home = (base / 'AdaptiveHomeActivity.kt').read_text(encoding='utf-8')
+assert 'canvas.removeAllViews()' not in home, 'No full Home tree destruction'
+assert 'homeRenderKey()' in home and 'homeNoOpCount++' in home
+assert 'showOrMoveHomeTile(' in home and 'tileSignatures' in home
+assert 'widgetViews[item.widgetId] as? AppWidgetHostView' in home
+assert 'renderQueued = true' in home and 'canvas.postOnAnimation' in home
+assert 'auto_home_interaction_until_v1' in wallpaper and 'auto_home_interaction_until_v1' in home
+assert 'Process.THREAD_PRIORITY_DEFAULT' in wallpaper
+assert 'requestFrameQueued.compareAndSet(false, true)' in wallpaper
+assert 'if (settings.scene != "beach") requestFrame()' in wallpaper
+assert 'deskland_qa_home_perf_v1' in home
+print('PASS: v0.5.4 incremental Home views, dynamic gesture budget, paced wallpaper')
