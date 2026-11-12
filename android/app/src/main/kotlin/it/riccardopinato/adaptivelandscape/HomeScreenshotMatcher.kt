@@ -169,16 +169,27 @@ internal object HomeScreenshotMatcher {
         val iconSize = size * width
         var diff = 0L
         var n = 0
+        var firstColor = 0
+        var localContrast = 0
         for (dy in offsets) for (dx in offsets) {
             val ix = (px + dx * iconSize).toInt()
             val iy = (py + dy * iconSize).toInt()
             if (ix !in 0 until width || iy !in 0 until height) return 0f
             val actual = pixels[iy * width + ix]
+            if (n == 0) firstColor = actual else {
+                localContrast = max(localContrast, max(
+                    abs(Color.red(actual) - Color.red(firstColor)),
+                    max(abs(Color.green(actual) - Color.green(firstColor)),
+                        abs(Color.blue(actual) - Color.blue(firstColor)))))
+            }
             val expected = reference[n++]
             diff += abs(Color.red(actual) - Color.red(expected))
             diff += abs(Color.green(actual) - Color.green(expected))
             diff += abs(Color.blue(actual) - Color.blue(expected))
         }
+        // A uniform wallpaper patch can have a deceptively high color score.
+        // Reject candidates without visible local icon texture.
+        if (localContrast < 48) return 0f
         return 1f - diff.toFloat() / (offsets.size * offsets.size * 3 * 255)
     }
 
