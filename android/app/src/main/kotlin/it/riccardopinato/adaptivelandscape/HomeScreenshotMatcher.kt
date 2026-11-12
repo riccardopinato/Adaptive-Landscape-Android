@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.os.SystemClock
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -88,7 +89,10 @@ internal object HomeScreenshotMatcher {
             // with no assumption that an OEM uses our own 5-column Home grid.
             val sizes = floatArrayOf(.075f, .095f, .115f, .137f, .16f)
             val hits = ArrayList<Hit>(templates.size)
+            val deadline = SystemClock.uptimeMillis() + 12_000L
             for (template in templates) {
+                // Bound runtime on older phones with hundreds of apps.
+                if (SystemClock.uptimeMillis() >= deadline) break
                 var best = 0f
                 var bestX = 0f
                 var bestY = 0f
