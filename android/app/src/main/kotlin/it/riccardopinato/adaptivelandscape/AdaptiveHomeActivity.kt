@@ -547,7 +547,8 @@ class AdaptiveHomeActivity : Activity() {
         outer.addView(scroll, LinearLayout.LayoutParams(-1, (150 * dp).roundToInt()))
         val dialog = AlertDialog.Builder(this)
             .setTitle(getString(R.string.auto_home_import_page, targetPage + 1))
-            .setMessage(R.string.auto_home_import_review)
+            .setMessage(if (prefs.getBoolean("auto_home_auto_arranged_v1", false))
+                R.string.auto_home_import_review_auto else R.string.auto_home_import_review)
             .setView(outer)
             .setPositiveButton(R.string.auto_home_import_apply, null)
             .setNegativeButton(android.R.string.cancel, null)
@@ -564,7 +565,9 @@ class AdaptiveHomeActivity : Activity() {
                 // Explicit confirmation makes the undoable replacement opt-in.
                 AlertDialog.Builder(this@AdaptiveHomeActivity)
                     .setTitle(R.string.auto_home_import_confirm_title)
-                    .setMessage(R.string.auto_home_import_confirm)
+                    .setMessage(if (prefs.getBoolean("auto_home_auto_arranged_v1", false))
+                        R.string.auto_home_import_confirm_auto else
+                        R.string.auto_home_import_confirm)
                     .setPositiveButton(R.string.auto_home_import_apply) { _, _ ->
                         val count = applyScreenshotImport(report.matches, targetPage)
                         dialog.dismiss()
@@ -604,10 +607,14 @@ class AdaptiveHomeActivity : Activity() {
         }
         val newDockMatches = matches.filter { it.isDock && it.id !in folderMembers }
             .sortedBy { it.x }.map { it.id }.distinct().take(dockSlots)
-        val dockAfter = if (newDockMatches.isEmpty()) dock.toList() else newDockMatches
-        val movedIds = (accepted.map { it.id } + dockAfter).toHashSet()
+        if (accepted.isEmpty() && newDockMatches.isEmpty()) return 0
+        val acceptedIds = accepted.map { it.id }.toHashSet()
+        val dockAfter = (if (newDockMatches.isEmpty()) dock.toList()
+            else newDockMatches).filterNot { it in acceptedIds }
+        val movedIds = (acceptedIds + dockAfter).toHashSet()
+        val replaceAutoSeed = prefs.getBoolean("auto_home_auto_arranged_v1", false)
         val preserved = placed.filter {
-            it.cell / pageSlots != targetPage && it.id !in movedIds
+            !replaceAutoSeed && it.cell / pageSlots != targetPage && it.id !in movedIds
         }
         val combined = preserved + accepted
         val undo = JSONObject()
