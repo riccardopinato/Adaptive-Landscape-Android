@@ -11,7 +11,8 @@ import android.graphics.Shader
 import android.app.role.RoleManager
 import android.os.Build
 import android.os.Handler
-import android.os.Looper
+import android.os.HandlerThread
+import android.os.Process
 import android.os.PowerManager
 import android.os.SystemClock
 import android.service.wallpaper.WallpaperService
@@ -25,21 +26,31 @@ class AdaptiveWallpaperService : WallpaperService() {
 
     private inner class LandscapeEngine : Engine(), SharedPreferences.OnSharedPreferenceChangeListener {
         private val prefs = getSharedPreferences("adaptive_landscape", Context.MODE_PRIVATE)
-        private val handler = Handler(Looper.getMainLooper())
+        // WallpaperService.Engine callbacks are on Android's UI thread.
+        // Own all Canvas, EGL, GLES, and renderer-cache mutations on one
+        // dedicated thread to keep the HOME gestures responsive.
+        private val renderThread = HandlerThread(
+            "DesklandWallpaperRender", Process.THREAD_PRIORITY_DISPLAY
+        ).apply { start() }
+        private val renderHandler = Handler(renderThread.looper)
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val coastalBeach = CoastalBeachRenderer()
         private val gpuOcean = GpuOceanRenderer()
         private var backendStatus = ""
         private var renderEvidence = ""
-        private var visible = false
-        private var settings = WallpaperState()
-        private var offset = 0.5f
+        @Volatile private var visible = false
+        @Volatile private var surfaceReady = false
+        @Volatile private var destroyed = false
+        @Volatile private var settings = WallpaperState()
+        @Volatile private var offset = 0.5f
         private var startTime = SystemClock.uptimeMillis()
         private val frame = object : Runnable {
             override fun run() {
-                if (!visible) return
-                drawFrame()
-                if (visible && !settings.staticScene) handler.postDelayed(this, frameDelay())
+                if (!visible || !surfaceReady || destroyed) return
+                drawFrame() // only the rendering worker calls EGL/Canvas
+                if (visible && surfaceReady && !destroyed && !settings.staticScene) {
+                    renderHandler.postDelayed(this, frameDelay())
+                }
             }
         }
 
@@ -73,8 +84,16 @@ class AdaptiveWallpaperService : WallpaperService() {
 
         private fun reload() {
             settings = WallpaperState.fromPrefs(prefs, isAdaptiveHomeSelected())
-            coastalBeach.invalidate()
-            gpuOcean.invalidateLayout()
+            renderHandler.post {
+                if (destroyed) return@post
+                coastalBeach.invalidate()
+                gpuOcean.invalidateLayout()
+            }
+        }
+
+        private fun requestFrame() {
+            renderHandler.removeCallbacks(frame)
+            if (visible && surfaceReady && !destroyed) renderHandler.post(frame)
         }
 
         private fun reportBackend(name: String) {
@@ -97,48 +116,60 @@ class AdaptiveWallpaperService : WallpaperService() {
         }
 
         override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
-            if (key == "ocean_photo_generation_v1") gpuOcean.invalidatePhotograph()
+            if (key == "ocean_photo_generation_v1") {
+                renderHandler.post {
+                    if (!destroyed) gpuOcean.invalidatePhotograph()
+                }
+            }
             if (key == "scene" || key == "occupied" || key == "config_v2" ||
                 key == "auto_home_config_v1" || key == "auto_home_active_v1" ||
                 key == "ocean_photo_generation_v1") {
                 reload()
-                handler.removeCallbacks(frame)
-                if (visible) handler.post(frame)
+                requestFrame()
             }
         }
 
         override fun onVisibilityChanged(isVisible: Boolean) {
             visible = isVisible
-            handler.removeCallbacks(frame)
-            if (visible) {
-                reload() // Re-check the selected Home role after launcher changes.
-                handler.post(frame)
-            }
+            if (visible) reload() // Role can change while the engine is hidden.
+            requestFrame()
         }
 
         override fun onSurfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
             super.onSurfaceChanged(holder, format, width, height)
-            gpuOcean.resetSurface()
-            if (visible) drawFrame()
+            surfaceReady = width > 0 && height > 0
+            renderHandler.removeCallbacks(frame)
+            renderHandler.post {
+                gpuOcean.resetSurface() // same thread as EGL creation and draw
+                if (visible && surfaceReady && !destroyed) frame.run()
+            }
         }
 
         override fun onSurfaceDestroyed(holder: SurfaceHolder) {
-            gpuOcean.resetSurface()
+            surfaceReady = false
+            renderHandler.removeCallbacks(frame)
+            renderHandler.post { gpuOcean.resetSurface() }
             super.onSurfaceDestroyed(holder)
         }
 
         override fun onOffsetsChanged(xOffset: Float, yOffset: Float, xOffsetStep: Float,
                                       yOffsetStep: Float, xPixelOffset: Int, yPixelOffset: Int) {
             offset = xOffset.coerceIn(0f, 1f)
-            if (visible) drawFrame()
+            requestFrame()
         }
 
         override fun onDestroy() {
             visible = false
-            handler.removeCallbacks(frame)
+            surfaceReady = false
+            destroyed = true
+            renderHandler.removeCallbacks(frame)
             prefs.unregisterOnSharedPreferenceChangeListener(this)
-            coastalBeach.dispose()
-            gpuOcean.dispose()
+            renderHandler.post {
+                // Dispose only after the in-flight GL frame exits.
+                coastalBeach.dispose()
+                gpuOcean.dispose()
+                renderThread.quitSafely()
+            }
             super.onDestroy()
         }
 
