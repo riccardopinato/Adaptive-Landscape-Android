@@ -478,7 +478,22 @@ internal class GpuOceanRenderer {
     }
 
     private fun uploadMask(state: WallpaperState) {
-        if (state == currentConfig) return
+        val previous = currentConfig
+        if (previous != null &&
+            previous.scene == state.scene &&
+            previous.columns == state.columns &&
+            previous.rows == state.rows &&
+            previous.top == state.top &&
+            previous.span == state.span &&
+            previous.gridInset == state.gridInset &&
+            previous.occupied == state.occupied &&
+            previous.zones == state.zones) {
+            // Palette, night, quality, animation and optical settings affect
+            // uniforms, not the sand occupancy mask. Keep the GPU textures,
+            // coastline morph and 160x320 influence field unchanged.
+            currentConfig = state
+            return
+        }
         val now = SystemClock.uptimeMillis()
         val target = fillMask(state)
         val newHasLand = state.occupied.isNotEmpty() || state.zones.isNotEmpty()
