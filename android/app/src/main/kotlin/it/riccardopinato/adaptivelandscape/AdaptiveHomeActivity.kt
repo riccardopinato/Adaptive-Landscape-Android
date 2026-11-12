@@ -23,7 +23,6 @@ import android.os.Process
 import android.os.UserHandle
 import android.os.SystemClock
 import android.provider.Settings
-import android.view.GestureDetector
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -168,32 +167,49 @@ class AdaptiveHomeActivity : Activity() {
         var touchStartX = 0f
         var touchStartY = 0f
         var menuOpened = false
-        val blankGestures = GestureDetector(this,
-            object : GestureDetector.SimpleOnGestureListener() {
-                override fun onDown(e: MotionEvent): Boolean = true
-                override fun onLongPress(e: MotionEvent) {
-                    menuOpened = true
-                    canvas.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                    showHomeMenu()
-                }
-            })
+        val backgroundSlop = ViewConfiguration.get(this).scaledTouchSlop.toFloat()
+        val showMenuAfterHold = Runnable {
+            menuOpened = true
+            canvas.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            showHomeMenu()
+        }
         canvas.setOnTouchListener { _, event ->
-            if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                touchStartX = event.x
-                touchStartY = event.y
-                menuOpened = false
-            }
-            blankGestures.onTouchEvent(event)
-            if (event.actionMasked == MotionEvent.ACTION_UP && !menuOpened) {
-                val dx = event.x - touchStartX
-                val dy = event.y - touchStartY
-                if (dy < -64 * dp && abs(dy) > abs(dx)) {
-                    showAppDrawer()
-                } else if (abs(dx) > 72 * dp && abs(dx) > abs(dy)) {
-                    switchPage(currentPage + if (dx < 0) 1 else -1)
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    touchStartX = event.x
+                    touchStartY = event.y
+                    menuOpened = false
+                    handler.removeCallbacks(showMenuAfterHold)
+                    handler.postDelayed(showMenuAfterHold,
+                        ViewConfiguration.getLongPressTimeout().toLong())
+                    true
                 }
+                MotionEvent.ACTION_MOVE -> {
+                    if (abs(event.x - touchStartX) > backgroundSlop ||
+                        abs(event.y - touchStartY) > backgroundSlop) {
+                        handler.removeCallbacks(showMenuAfterHold)
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    handler.removeCallbacks(showMenuAfterHold)
+                    if (!menuOpened) {
+                        val dx = event.x - touchStartX
+                        val dy = event.y - touchStartY
+                        if (dy < -64 * dp && abs(dy) > abs(dx)) {
+                            showAppDrawer()
+                        } else if (abs(dx) > 72 * dp && abs(dx) > abs(dy)) {
+                            switchPage(currentPage + if (dx < 0) 1 else -1)
+                        }
+                    }
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    handler.removeCallbacks(showMenuAfterHold)
+                    true
+                }
+                else -> true
             }
-            true
         }
         // Subscribe to launcher package changes; do not poll installed apps.
         try {
