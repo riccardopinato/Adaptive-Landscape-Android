@@ -196,3 +196,28 @@ Do not treat the above TODOs as implemented.
 - [BLOCKED] Access to actual Xiaomi/Samsung launcher icon coordinates from
   a plain wallpaper. Only user's own Deskland Home can supply exact coords.
 - [OUT OF SCOPE] Replicating all 13 paid PC themes or GPL artwork.
+
+
+## v0.5.2 — Clean Home & import fallback (roadmap maxi-step 1 + partial 2)
+
+- [CODED SOURCE, NOT DEVICE VERIFIED] Remove full-screen Home chrome: six-button bottom bar,
+  centered setup warning, huge page button, top widget/settings/change-Home buttons.
+- [CODED SOURCE] Swipe up for searchable app drawer; swipe left/right for Home pages;
+  long-press an empty part of the wallpaper for discreet management settings.
+  Long-press app tile retains drag-to-folder; wallpaper remains behind icons.
+- [CODED SOURCE] First new Deskland layout fills free slots with real launchable
+  installed apps across up to three pages; complete app drawer includes remaining
+  apps. Existing icons, folders, dock, widgets and manual wallpaper profiles
+  remain untouched; user can explicitly opt into filling existing empty cells.
+- [CODED SOURCE] One-time native consent flow if animated wallpaper not selected;
+  no permanent overlay or silent system wallpaper replacement.
+- [PENDING CI] Exact-head Android 35 emulator updated for UI/gesture migration,
+  native/Flutter build, ARM64 APK hash/signature.
+- [PENDING USER] Device screenshots, photo quality, performance, gestures,
+  activation and preservation of original Xiaomi launcher layout.
+- [NOT IMPLEMENTED] Automatic exact layout import from other OEM launchers;
+  public Android APIs cannot access that private arrangement. Research
+  supported backup formats and opt-in screenshot-assisted import as
+  separate follow-on PRs, with provenance and local-only privacy safeguards.
+- [DO NOT MERGE] Feature remains Draft until exact-head tests and human/physical
+  acceptance. See `docs/DESKLAND_CLEAN_HOME_V052.md`.

@@ -41,4 +41,7 @@
     <string name="auto_home_reset_confirm">Svuota Home Deskland</string>
     <string name="auto_home_already_pinned">App già presente nella Home o in una cartella</string>
     <string name="auto_home_first_run">Questa è la tua Home Deskland. Tocca per scegliere le tue app.</string>
+    <string name="auto_home_fill">Disponi le app installate nella Home</string>
+    <string name="auto_home_fill_explanation">Conserva la disposizione Deskland attuale e riempi le celle libere con le app installate. Le altre restano nel cassetto delle app. Android non consente di importare automaticamente le posizioni esatte da un altro launcher.</string>
+    <string name="auto_home_settings">Impostazioni Deskland</string>
 </resources>

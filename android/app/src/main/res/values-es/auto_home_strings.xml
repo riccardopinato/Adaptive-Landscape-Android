@@ -41,4 +41,7 @@
     <string name="auto_home_reset_confirm">Vaciar Deskland</string>
     <string name="auto_home_already_pinned">App ya en inicio o en carpeta</string>
     <string name="auto_home_first_run">Este es tu inicio Deskland. Toca para elegir tus apps.</string>
+    <string name="auto_home_fill">Organizar las aplicaciones en Inicio</string>
+    <string name="auto_home_fill_explanation">Conserva el diseño actual de Deskland y llena las celdas libres con las aplicaciones instaladas. Las demás estarán en el cajón. Android no permite importar las posiciones exactas de otro lanzador.</string>
+    <string name="auto_home_settings">Ajustes de Deskland</string>
 </resources>

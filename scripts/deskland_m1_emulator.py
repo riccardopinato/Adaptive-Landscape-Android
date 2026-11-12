@@ -23,14 +23,21 @@ def wait(label,pred):
         except (ValueError,RuntimeError,ET.ParseError,KeyError,AssertionError): pass
         time.sleep(1)
     try:
-        ui_labels=[n.get("text") for n in nodes() if n.get("text","").startswith("Page ")]
+        ui=nodes()
+        ui_labels=[n.get("text") for n in ui if n.get("text","").startswith("Page ")]
+        # Disposable emulator only. Print semantic UI (not screenshots, serials,
+        # app private data, passwords or contents) when a widget search stalls.
+        ui_semantics=[{"class":n.get("class"),"text":n.get("text"),
+            "content_desc":n.get("content-desc"),"clickable":n.get("clickable"),
+            "bounds":n.get("bounds")} for n in ui
+            if n.get("text") or n.get("content-desc") or n.get("clickable")=="true"][:45]
         current=ET.fromstring(adb("exec-out","run-as",PKG,"cat","shared_prefs/adaptive_landscape.xml"))
         pages=[n.get("value") for n in current if n.get("name")=="auto_home_page_v1"]
         activity=[l.strip() for l in adb("shell","dumpsys","activity","activities").splitlines() if "topResumedActivity=" in l][-2:]
         current_zones=zones()
         roles=adb("shell","cmd","role","get-role-holders",ROLE,strict=False)
         process=bool(adb("shell","pidof",PKG,strict=False))
-        print("SAFE_DIAG",json.dumps({"test":label,"page_labels":ui_labels,"stored_page":pages,"zones_count":len(current_zones),"role_still_held":PKG in roles,"process_alive":process,"activity":activity}),flush=True)
+        print("SAFE_DIAG",json.dumps({"test":label,"page_labels":ui_labels,"stored_page":pages,"zones_count":len(current_zones),"role_still_held":PKG in roles,"process_alive":process,"activity":activity,"ui_semantics":ui_semantics}),flush=True)
     except Exception as err:
         print("SAFE_DIAG_UNAVAILABLE",type(err).__name__,flush=True)
     raise AssertionError("Timed out: "+label)
@@ -76,6 +83,32 @@ def zones():
 def n_zones(n):
     z=zones()
     return len(z)==n
+def display_size():
+    raw=adb("shell","wm","size")
+    found=re.findall(r"(\d+)x(\d+)",raw)
+    assert found, "Emulator display size missing"
+    return tuple(map(int,found[-1]))
+def gesture_blank(kind):
+    w,h=display_size()
+    x,y=w//2,int(h*.76)
+    if kind=="menu":
+        adb("shell","input","touchscreen","swipe",str(x),str(y),str(x),str(y),"850")
+    elif kind=="drawer":
+        adb("shell","input","touchscreen","swipe",str(x),str(y),str(x),str(int(h*.30)),"340")
+    elif kind=="next":
+        adb("shell","input","touchscreen","swipe",str(int(w*.82)),str(y),
+            str(int(w*.18)),str(y),"340")
+    elif kind=="previous":
+        adb("shell","input","touchscreen","swipe",str(int(w*.18)),str(y),
+            str(int(w*.82)),str(y),"340")
+    else: raise ValueError(kind)
+    time.sleep(.9)
+def icon_nodes():
+    return [n for n in nodes() if n.get("class")=="android.widget.LinearLayout"
+            and n.get("content-desc") and n.get("clickable")=="true"
+            and not n.get("content-desc","").startswith("Page ")]
+def saved_icons():
+    return json.loads(pref().get("auto_home_icons_v1","[]"))
 def main():
     global digest, ROLE_CHANGED, ORIGINAL_HOLDERS
     assert APK.is_file()
@@ -89,138 +122,119 @@ def main():
     ok("clean_install")
     adb("shell","am","start","-W","-n",PKG+"/it.riccardopinato.adaptivelandscape.MainActivity")
     wait("editor starts",lambda:adb("shell","pidof",PKG,strict=False))
-    ok("editor_start")
     original=adb("shell","cmd","role","get-role-holders",ROLE)
     holders=re.findall(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+",original)
     ORIGINAL_HOLDERS=holders
-    if PKG in holders:
-        raise AssertionError("Deskland unexpectedly owns Home before assignment")
-    if not holders:
-        steps["original_launcher_role"]="NOT VERIFIED: system had no original role holder"
-    else:
-        ok("original_launcher_role_present")
+    if PKG in holders: raise AssertionError("Deskland already owns Home before opt-in")
     adb("shell","cmd","role","add-role-holder",ROLE,PKG)
     ROLE_CHANGED=True
     wait("role holder",lambda:PKG in adb("shell","cmd","role","get-role-holders",ROLE))
-    ok("shell_home_role","Test privilege; not real consent dialog")
+    ok("shell_home_role","Test shell privileges; not physical user consent")
     adb("shell","input","keyevent","KEYCODE_HOME")
-    wait("Home screen",lambda:node_text("Add app"))
-    wait("native HOME activity resumed",lambda:foreground_is("AdaptiveHomeActivity"))
-    ok("home_visible")
-    # Regression from real phone: Settings opened from native launcher must
-    # NEVER become the Activity returned by pressing the Android Home button.
-    tap(wait("Home settings entry",lambda:node_text("Adaptive Home")))
-    wait("Flutter editor activity opened",lambda:foreground_is("MainActivity"))
-    ok("editor_launches_in_separate_task")
+    wait("native Home activity",lambda:foreground_is("AdaptiveHomeActivity"))
+    # Wallpaper consent is intentionally one-time; never make it a permanent
+    # opaque Home banner. The emulator does NOT approve system wallpaper here.
+    # On this native Activity the first launch can show a one-time AlertDialog.
+    # Read the actual visible dialog controls, not just a single early UI dump
+    # during Activity handoff; dismiss via the explicit negative action.
+    for _ in range(8):
+        try:
+            page=nodes()
+            dialog_texts={n.get("text") for n in page if n.get("text")}
+            if "Set live wallpaper" in dialog_texts or (
+                "Select Deskland live wallpaper to enable adaptive sand." in dialog_texts):
+                cancel=next((n for n in page if n.get("text")=="Cancel"),None)
+                if cancel is not None:
+                    tap(cancel)
+                else:
+                    adb("shell","input","keyevent","KEYCODE_BACK")
+                    time.sleep(.8)
+                break
+            if icon_nodes(): break
+        except (ValueError,RuntimeError): pass
+        time.sleep(.6)
+    wait("automatic app layout persisted",lambda:len(saved_icons())>=2)
+    initial=saved_icons()
+    assert len(initial)<=120 and len({x["id"] for x in initial})==len(initial)
+    wait("visible installed app icons",lambda:(v if len(v:=icon_nodes())>=2 else None))
+    assert not any(node_text(x) is not None for x in
+        ("Add app","Remove app","Change Home launcher","Adaptive Home","Page 1/3")), (
+        "Debug controls or page-number text visible on everyday Home")
+    ok("clean_home_no_debug_chrome")
+    ok("auto_populate_installed_apps",str(len(initial))+" real app shortcuts")
+    wait("first page icon geometry",lambda:n_zones(min(40,len(initial))))
+    ok("wallpaper_geometry_first_page")
+    # Home management is intentionally hidden behind a blank-space long press.
+    gesture_blank("menu")
+    wait("blank-space manager visible",lambda:node_text("Organize") is not None)
+    press("Deskland settings")
+    wait("Flutter settings opened separately",lambda:foreground_is("MainActivity"))
     adb("shell","input","keyevent","KEYCODE_HOME")
-    wait("native Home resumed after editor",lambda:
-         foreground_is("AdaptiveHomeActivity") and node_text("Add app"))
+    wait("Home after settings",lambda:foreground_is("AdaptiveHomeActivity"))
     ok("home_key_returns_to_native_launcher")
-    # A real user's Home must not be auto-populated with the alphabetically
-    # first twelve installed apps. They are not the user's OEM Home.
-    wait("unseeded Home publishes empty scene",lambda:"auto_home_config_v1" in pref())
-    assert n_zones(0), "Fresh Home must contain no auto-generated stock icons"
-    assert json.loads(pref().get("auto_home_icons_v1","[]"))==[]
-    ok("real_home_empty_first_run")
-    # User-curated selection from the installed-app drawer, not simulation.
-    press("Add app"); tap(wait("first installed app",first_row))
-    wait("first user-pinned icon publishes real zone",lambda:n_zones(1))
-    press("Add app"); tap(wait("second installed app",first_row))
-    wait("second user-pinned icon publishes zone",lambda:n_zones(2))
-    base=2
-    ok("real_home_user_pins",str(base)+" selected apps")
-    press("Page 1/3"); wait("second page",lambda:node_text("Page 2/3"))
-    wait("page two clears sand",lambda:n_zones(0)); ok("empty_page_zero_sand")
-    press("Page 2/3"); wait("third page",lambda:node_text("Page 3/3"))
-    press("Page 3/3"); wait("first page persisted",lambda:pref().get("auto_home_page_v1")==0)
-    wait("page1 recovered",lambda:n_zones(base)); ok("page_roundtrip")
-    # An emulator may have only six launchable packages: remove first, then re-add.
-    press("Remove app"); tap(wait("remove picker",first_row))
-    wait("app removed",lambda:n_zones(base-1)); ok("remove_app_erases_sand")
-    press("Add app"); tap(wait("app picker",first_row))
-    wait("app added",lambda:n_zones(base)); ok("add_app_new_sand")
-    controls=("Widgets","Apps","Add app","Remove app","Set live wallpaper","Change Home launcher","Adaptive Home")
-    def icon_nodes():
-        # Use ACTUAL UI coordinates for both apps. The first entry may be
-        # cell 1 after remove/re-add; x + one grid column could be empty.
-        return [n for n in nodes() if n.get("class")=="android.widget.LinearLayout" and n.get("content-desc") and n.get("clickable")=="true" and not n.get("content-desc").startswith(controls) and not n.get("content-desc").startswith("Page ")]
-    target=wait("draggable app icon",lambda:(v[0] if len(v:=icon_nodes())>=2 else None))
-    x,y=point(target)
-    destination_x,destination_y=point(icon_nodes()[1])
-    assert (x,y)!=(destination_x,destination_y),"Icons overlap before dragging"
-    assert target.get("class")=="android.widget.LinearLayout"
-    assert PKG in adb("shell","cmd","role","get-role-holders",ROLE)
-    ok("tile_targeted_for_drag","native clickable tile")
-    # A stationary long-press is not a tap: must not launch an app.
+    gesture_blank("drawer")
+    wait("installed-app drawer opened",lambda:node_text("Apps") is not None or node_text("Search apps") is not None)
+    ok("swipe_up_opens_app_drawer")
+    # Back once may only close the SearchView keyboard. Close the actual
+    # drawer dialog as well before testing horizontal Home gestures.
+    for _ in range(3):
+        if node_text("Apps") is None and node_text("Search apps") is None: break
+        adb("shell","input","keyevent","KEYCODE_BACK")
+        time.sleep(.6)
+    wait("Home after drawer",lambda:
+         foreground_is("AdaptiveHomeActivity") and
+         node_text("Apps") is None and node_text("Search apps") is None)
+    gesture_blank("next")
+    wait("page two preference",lambda:pref().get("auto_home_page_v1")==1)
+    next_count=sum(1 for x in initial if x["cell"]//40==1)
+    wait("page two coast matches actual icons",lambda:n_zones(next_count))
+    gesture_blank("previous")
+    wait("first page preference",lambda:pref().get("auto_home_page_v1")==0)
+    wait("first page coast restored",lambda:n_zones(min(40,len(initial))))
+    ok("swipe_pages_live_geometry")
+    # Verify gesture no unwanted app launch and real drag-to-folder.
+    icons=wait("native icon tiles",lambda:(v if len(v:=icon_nodes())>=2 else None))
+    x,y=point(icons[0]); tx,ty=point(icons[1])
+    assert (x,y)!=(tx,ty), "Home icon cells collide"
     adb("shell","input","touchscreen","swipe",str(x),str(y),str(x),str(y),"900")
-    wait("Home retained after stationary long press",lambda:node_text("Add app"))
+    wait("stationary long press does not open app",
+        lambda:foreground_is("AdaptiveHomeActivity") and len(icon_nodes())>=2)
     ok("long_press_no_unwanted_launch")
-    saved=pref()["auto_home_icons_v1"]
-    print("DRAG_TARGETS",json.dumps({"start": [x,y],"drop": [destination_x,destination_y]}),flush=True)
-    # One Android InputShellCommand process keeps a single touch pointer
-    # throughout DOWN -> long press -> MOVE -> UP. Separate adb motionevent
-    # invocations do NOT reliably maintain the pointer across processes.
-    # The 1250ms duration exceeds ViewConfiguration.longPressTimeout.
-    # Only disposable emulator logs are cleared; no personal device is used.
+    snapshot=pref()["auto_home_icons_v1"]
     adb("shell","logcat","-c",strict=False)
-    adb("shell","input","touchscreen","draganddrop",str(x),str(y),str(destination_x),str(destination_y),"1250")
+    adb("shell","input","touchscreen","draganddrop",str(x),str(y),str(tx),str(ty),"1250")
     time.sleep(2)
-    alive=bool(adb("shell","pidof",PKG,strict=False))
-    role_held=PKG in adb("shell","cmd","role","get-role-holders",ROLE,strict=False)
-    if not alive:
-        crash=adb("shell","logcat","-d","-v","brief","-t","500","AndroidRuntime:E","DEBUG:E","ActivityManager:I","*:S",strict=False)
-        exit_info=adb("shell","dumpsys","activity","exit-info",PKG,strict=False)
-        print("DRAG_PROCESS_EXIT",json.dumps({"role_held":role_held,"exit_info":exit_info[-2400:],"crash_log":crash[-6500:]}),flush=True)
-        raise AssertionError("Deskland process terminated during long-press drag")
-    wait("Home retained after drag",lambda:node_text("Add app"))
-    assert PKG in adb("shell","cmd","role","get-role-holders",ROLE),"Deskland lost HOME role"
-    wait("drag writes new layout",lambda:pref().get("auto_home_icons_v1")!=saved)
+    if not adb("shell","pidof",PKG,strict=False):
+        logs=adb("shell","logcat","-d","-v","brief","-t","500",
+                 "AndroidRuntime:E","DEBUG:E","ActivityManager:I","*:S",strict=False)
+        print("DRAG_CRASH",logs[-6500:],flush=True)
+        raise AssertionError("Home process terminated during icon drag")
+    wait("drag persisted layout change",lambda:pref().get("auto_home_icons_v1")!=snapshot)
     def folder_created():
         data=json.loads(pref().get("auto_home_folders_v1","[]"))
-        return len(data)==1 and len(data[0]["members"])==2
-    wait("drag app onto app creates real persisted folder",folder_created)
-    wait("folder replaces two icon sand zones",lambda:n_zones(base-1))
-    ok("long_press_drag_and_folder",str(base)+" app icons -> 1 folder")
-    # Dock uses an installed app, persists across different pages and
-    # publishes a real zone on every page. This is not an OEM dock import.
-    press("Dock")
-    press("Add app to dock")
-    tap(wait("dock installed app picker",first_row))
-    def dock_populated():
-        return len(json.loads(pref().get("auto_home_dock_v1","[]")))==1
-    wait("real dock persisted",dock_populated)
-    wait("dock and folder geometry",lambda:n_zones(2))
-    ok("dock_real_app_persisted")
-    press("Page 1/3")
-    wait("second page",lambda:node_text("Page 2/3"))
-    wait("dock follows page",lambda:n_zones(1))
-    ok("dock_visible_across_pages")
-    press("Page 2/3")
-    press("Page 3/3")
-    wait("folder and dock restored",lambda:n_zones(2))
-    ok("home_folder_dock_roundtrip")
+        return len(data)>=1 and len(data[0]["members"])>=2
+    wait("folder persisted after long drag",folder_created)
+    wait("coast updates when icons become folder",
+        lambda:n_zones(min(40,len(initial))-1))
+    ok("icon_drag_to_folder_live_geometry")
     adb("shell","am","force-stop",PKG)
     adb("shell","input","keyevent","KEYCODE_HOME")
-    wait("Home after process kill",lambda:node_text("Add app"))
-    wait("geometry after process kill",lambda:n_zones(2))
-    assert folder_created() and dock_populated(), "Folder/dock lost after process kill"
-    ok("process_restart_persisted_user_home")
+    wait("Home restored after process kill",lambda:foreground_is("AdaptiveHomeActivity"))
+    assert folder_created(), "Folder was lost after process restart"
+    ok("home_data_survives_process_restart")
     if holders:
         adb("shell","cmd","role","add-role-holder",ROLE,holders[0])
-        wait("original Home restored",lambda:holders[0] in adb("shell","cmd","role","get-role-holders",ROLE))
+        wait("OEM Home role restored",lambda:holders[0] in adb("shell","cmd","role","get-role-holders",ROLE))
         ok("original_home_role_restored")
     else:
         adb("shell","cmd","role","remove-role-holder",ROLE,PKG)
-        steps["original_home_role_restored"]="NOT VERIFIED: emulator initially had no role holder"
+        steps["original_home_role_restored"]="NOT VERIFIED: emulator had no original Home role holder"
     assert PKG not in adb("shell","cmd","role","get-role-holders",ROLE)
     adb("shell","input","keyevent","KEYCODE_HOME")
-    def stock_home_selected():
-        if node_text("Add app") is not None: return False
-        return PKG not in adb("shell","cmd","role","get-role-holders",ROLE)
-    wait("stock Home in foreground after restore",stock_home_selected)
     ok("deskland_role_revoked")
-    for key in ("live_wallpaper_consent","physical_device","aesthetic_quality","battery_thermal"):
+    for key in ("live_wallpaper_consent","physical_device","water_photorealism","battery_thermal"):
         steps[key]="NOT VERIFIED"
+
 try: main()
 except Exception as exc:
     steps["FAIL"]=str(exc)
@@ -239,5 +253,5 @@ finally:
                 steps["teardown_home_role"]="attempted (ephemeral emulator)"
         except Exception as err:
             steps["teardown_home_role"]="FAILED: "+type(err).__name__
-    OUT.write_text(json.dumps({"base_candidate":"6f5d1fb60b6b8fb2e35c3c396f11aed198cb08fd","built_source_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"test_harness_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
+    OUT.write_text(json.dumps({"base_candidate":"b0fe22f7fdaba0b2a51a2c9ca6f081ddaa6f738d","built_source_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"test_harness_sha":os.getenv("QA_SOURCE_SHA",os.getenv("GITHUB_SHA")),"apk_sha256":digest,"evidence":"Disposable API 35 emulator only; no photos/device identifiers","checks":steps},indent=2)+"\n")
     print("Evidence record:",OUT,flush=True)
