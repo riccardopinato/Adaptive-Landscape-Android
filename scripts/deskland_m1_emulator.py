@@ -183,6 +183,13 @@ def main():
     assert pref().get("auto_home_icons_v1","")==saved_before_import, (
         "Curated import test did not restore original Home data")
     ok("curated_screenshot_preservation","manual icons survive collisions and undo")
+    adb("shell","am","start","-n",PKG+
+        "/it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity",
+        "--ez","deskland_qa_home_perf_v1","true")
+    wait("incremental Home no-op and dock reuse check",lambda:
+         pref().get("auto_home_perf_qa_v1")=="PASS")
+    ok("home_incremental_noop_redraw",
+       "duplicate redraw requests skipped; dock view retained across pages")
 
     wait("visible installed app icons",lambda:(v if len(v:=icon_nodes())>=2 else None))
     assert not any(node_text(x) is not None for x in
