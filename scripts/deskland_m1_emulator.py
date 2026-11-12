@@ -175,6 +175,14 @@ def main():
     assert pref().get("auto_home_icons_v1","")==saved_before_import, (
         "Original icons lost after screenshot migration roundtrip")
     ok("screenshot_import_atomic_undo","no layout loss after simulated import")
+    adb("shell","am","start","-n",PKG+
+        "/it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity",
+        "--ez","deskland_qa_curated_layout_v1","true")
+    wait("curated screenshot collision and undo",lambda:
+         pref().get("auto_home_curated_import_qa_v1")=="PASS")
+    assert pref().get("auto_home_icons_v1","")==saved_before_import, (
+        "Curated import test did not restore original Home data")
+    ok("curated_screenshot_preservation","manual icons survive collisions and undo")
 
     wait("visible installed app icons",lambda:(v if len(v:=icon_nodes())>=2 else None))
     assert not any(node_text(x) is not None for x in
