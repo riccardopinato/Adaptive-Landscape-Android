@@ -75,8 +75,9 @@ class AdaptiveWallpaperService : WallpaperService() {
             // full-screen GPU rendering to ~8fps. The wallpaper keeps
             // animating; Android UI gestures take priority. The gesture
             // deadline also expires after abrupt app/process termination.
-            val interacting = SystemClock.uptimeMillis() <
-                prefs.getLong("auto_home_interaction_until_v1", 0L)
+            val now = System.currentTimeMillis()
+            val deadline = prefs.getLong("auto_home_interaction_until_v1", 0L)
+            val interacting = deadline > now && deadline - now <= 30_000L
             return if (power.isPowerSaveMode || interacting) maxOf(125L, target)
                 else target
             // Delay is a ceiling target, not measured FPS; CPU/GPU time is extra.
