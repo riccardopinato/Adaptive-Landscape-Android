@@ -262,12 +262,12 @@ class AdaptiveHomeActivity : Activity() {
                         .setMessage(R.string.auto_home_fill_explanation)
                         .setPositiveButton(R.string.auto_home_fill) { _, _ ->
                             fillHomeFromInstalledApps(onlyIfEmpty = false)
-                            offerWallpaperSetup()
+                            offerFirstRunMigration(fresh)
                         }
                         .setNegativeButton(android.R.string.cancel) { _, _ ->
-                            offerWallpaperSetup()
+                            offerFirstRunMigration(fresh)
                         }.show()
-                } else offerWallpaperSetup()
+                } else offerFirstRunMigration(fresh)
             }
         }
     }
@@ -396,6 +396,24 @@ class AdaptiveHomeActivity : Activity() {
         renderHomeNextFrame()
     }
 
+    private fun offerFirstRunMigration(wasFresh: Boolean) {
+        if (!wasFresh || prefs.getBoolean("auto_home_migration_intro_v1", false)) {
+            offerWallpaperSetup()
+            return
+        }
+        // Ask once, never a permanently visible onboarding banner.
+        prefs.edit().putBoolean("auto_home_migration_intro_v1", true).apply()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_import_title)
+            .setMessage(R.string.auto_home_import_explanation)
+            .setPositiveButton(R.string.auto_home_import_choose) { _, _ ->
+                openPreviousHomeScreenshotPicker()
+            }
+            .setNegativeButton(android.R.string.cancel) { _, _ ->
+                offerWallpaperSetup()
+            }.show()
+    }
+
     private fun offerWallpaperSetup() {
         if (isFinishing || isDestroyed || hasAdaptiveWallpaper()) return
         // A one-time system-consent wizard, not permanent controls on Home.
@@ -414,20 +432,24 @@ class AdaptiveHomeActivity : Activity() {
      * The system file picker grants exactly the selected image; we never ask
      * for media, screenshots, Accessibility, or hidden launcher permissions.
      */
+    private fun openPreviousHomeScreenshotPicker() {
+        try {
+            val picker = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("image/*")
+            startActivityForResult(picker, REQUEST_IMPORT_SCREENSHOT)
+        } catch (_: Exception) {
+            Toast.makeText(this, R.string.auto_home_import_unavailable,
+                Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun choosePreviousHomeScreenshot() {
         AlertDialog.Builder(this)
             .setTitle(R.string.auto_home_import_title)
             .setMessage(R.string.auto_home_import_explanation)
             .setPositiveButton(R.string.auto_home_import_choose) { _, _ ->
-                try {
-                    val picker = Intent(Intent.ACTION_OPEN_DOCUMENT)
-                        .addCategory(Intent.CATEGORY_OPENABLE)
-                        .setType("image/*")
-                    startActivityForResult(picker, REQUEST_IMPORT_SCREENSHOT)
-                } catch (_: Exception) {
-                    Toast.makeText(this, R.string.auto_home_import_unavailable,
-                        Toast.LENGTH_LONG).show()
-                }
+                openPreviousHomeScreenshotPicker()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
@@ -1137,8 +1159,11 @@ class AdaptiveHomeActivity : Activity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_IMPORT_SCREENSHOT) {
-            if (resultCode == RESULT_OK && data?.data != null)
+            if (resultCode == RESULT_OK && data?.data != null) {
                 analyzePreviousHomeScreenshot(data.data!!)
+            } else if (!hasAdaptiveWallpaper() && !isFinishing) {
+                offerWallpaperSetup()
+            }
             return
         }
         super.onActivityResult(requestCode, resultCode, data)
