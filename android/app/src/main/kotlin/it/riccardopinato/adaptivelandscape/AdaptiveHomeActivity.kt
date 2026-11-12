@@ -822,6 +822,8 @@ class AdaptiveHomeActivity : Activity() {
             // Any human rearrangement converts an automatic seed into a
             // curated layout. Keep this marker in the same atomic transaction.
             .putBoolean("auto_home_auto_arranged_v1", automaticallyArranged)
+            // A later manual edit invalidates undo of an older import.
+            .remove("auto_home_migration_undo_v1")
             .apply()
     }
 
@@ -1185,7 +1187,11 @@ class AdaptiveHomeActivity : Activity() {
                 .put("spanX", item.spanX)
                 .put("spanY", item.spanY))
         }
-        prefs.edit().putString("auto_home_widgets_v1", data.toString()).apply()
+        prefs.edit()
+            .putString("auto_home_widgets_v1", data.toString())
+            .putBoolean("auto_home_auto_arranged_v1", false)
+            .remove("auto_home_migration_undo_v1")
+            .apply()
     }
 
     private fun renderWidgets() {
