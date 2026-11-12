@@ -41,4 +41,7 @@
     <string name="auto_home_reset_confirm">Vider Deskland</string>
     <string name="auto_home_already_pinned">App déjà dans accueil ou dossier</string>
     <string name="auto_home_first_run">Voici votre accueil Deskland. Touchez pour choisir vos apps.</string>
+    <string name="auto_home_fill">Organiser les applications sur l’accueil</string>
+    <string name="auto_home_fill_explanation">Conserve la disposition Deskland actuelle et remplit les cases libres avec les applications installées. Les autres restent dans le tiroir. Android ne permet pas d’importer les positions exactes d’un autre lanceur.</string>
+    <string name="auto_home_settings">Paramètres Deskland</string>
 </resources>
