@@ -13,6 +13,9 @@ import android.content.Intent
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.graphics.Color
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
@@ -39,6 +42,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import java.util.Locale
 import kotlin.math.ceil
 import java.util.UUID
 import org.json.JSONArray
@@ -72,6 +76,7 @@ class AdaptiveHomeActivity : Activity() {
         const val APP_WIDGET_HOST_ID = 1453
         const val REQUEST_BIND_WIDGET = 1454
         const val REQUEST_CONFIGURE_WIDGET = 1455
+        const val REQUEST_IMPORT_SCREENSHOT = 1456
     }
 
 
@@ -402,6 +407,230 @@ class AdaptiveHomeActivity : Activity() {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
+    }
+
+    /**
+     * User-initiated migration from an image of their previous launcher.
+     * The system file picker grants exactly the selected image; we never ask
+     * for media, screenshots, Accessibility, or hidden launcher permissions.
+     */
+    private fun choosePreviousHomeScreenshot() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_import_title)
+            .setMessage(R.string.auto_home_import_explanation)
+            .setPositiveButton(R.string.auto_home_import_choose) { _, _ ->
+                try {
+                    val picker = Intent(Intent.ACTION_OPEN_DOCUMENT)
+                        .addCategory(Intent.CATEGORY_OPENABLE)
+                        .setType("image/*")
+                    startActivityForResult(picker, REQUEST_IMPORT_SCREENSHOT)
+                } catch (_: Exception) {
+                    Toast.makeText(this, R.string.auto_home_import_unavailable,
+                        Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun analyzePreviousHomeScreenshot(uri: Uri) {
+        val appsAtSelection = available.toList()
+        val pageAtSelection = currentPage
+        val progress = AlertDialog.Builder(this)
+            .setMessage(R.string.auto_home_import_analyzing)
+            .setCancelable(false)
+            .create()
+        progress.show()
+        Thread {
+            var bitmap: Bitmap? = null
+            try {
+                // Decode in bounded memory and off the UI thread. The screenshot
+                // is never cached, uploaded or persisted, even on failure.
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                contentResolver.openInputStream(uri).use { stream ->
+                    requireNotNull(stream) { "Unreadable image stream" }
+                    BitmapFactory.decodeStream(stream, null, bounds)
+                }
+                require(bounds.outWidth in 200..12000 &&
+                    bounds.outHeight in 300..18000 &&
+                    bounds.outWidth.toLong() * bounds.outHeight <= 50_000_000L) {
+                    "Unsupported screenshot dimensions"
+                }
+                val sample = BitmapFactory.Options().apply {
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                    inSampleSize = generateSequence(1) { it * 2 }
+                        .takeWhile { bounds.outWidth / it > 1200 ||
+                            bounds.outHeight / it > 2500 }.lastOrNull() ?: 1
+                }
+                // Ensure the last tested sample also meets the bounds.
+                if (bounds.outWidth / sample.inSampleSize > 1200 ||
+                    bounds.outHeight / sample.inSampleSize > 2500) {
+                    sample.inSampleSize *= 2
+                }
+                bitmap = contentResolver.openInputStream(uri).use { stream ->
+                    requireNotNull(stream) { "Unreadable image stream" }
+                    BitmapFactory.decodeStream(stream, null, sample)
+                } ?: throw IllegalArgumentException("Cannot decode selected screenshot")
+                val screenshot = requireNotNull(bitmap)
+                val matches = HomeScreenshotMatcher.find(screenshot, appsAtSelection)
+                val preview = HomeScreenshotMatcher.preview(screenshot, matches.matches)
+                runOnUiThread {
+                    progress.dismiss()
+                    if (isFinishing || isDestroyed) { preview.recycle(); return@runOnUiThread }
+                    showImportPreview(preview, matches, pageAtSelection)
+                }
+            } catch (_: Exception) {
+                runOnUiThread {
+                    progress.dismiss()
+                    if (!isFinishing && !isDestroyed)
+                        Toast.makeText(this, R.string.auto_home_import_unavailable,
+                            Toast.LENGTH_LONG).show()
+                }
+            } finally {
+                bitmap?.recycle()
+            }
+        }.apply { name = "DesklandLocalScreenshotImport"; start() }
+    }
+
+    private fun showImportPreview(
+        thumbnail: Bitmap,
+        report: HomeScreenshotMatcher.Result,
+        targetPage: Int
+    ) {
+        val outer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((12 * dp).roundToInt(), (8 * dp).roundToInt(),
+                (12 * dp).roundToInt(), (8 * dp).roundToInt())
+        }
+        val image = ImageView(this).apply {
+            setImageBitmap(thumbnail)
+            adjustViewBounds = true
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = getString(R.string.auto_home_import_preview)
+        }
+        outer.addView(image, LinearLayout.LayoutParams(-1, (300 * dp).roundToInt()))
+        val label = TextView(this).apply {
+            val lines = report.matches.take(14).mapIndexed { index, hit ->
+                val confidence = (hit.confidence * 100).roundToInt()
+                "${index + 1}. ${hit.label} (${confidence}%)"
+            }
+            text = getString(R.string.auto_home_import_found, report.matches.size,
+                report.examinedApps) + "\n" + lines.joinToString("\n") +
+                if (report.matches.size > 14) "\n…" else ""
+            textSize = 13f
+            setPadding(0, (8 * dp).roundToInt(), 0, 0)
+        }
+        val scroll = android.widget.ScrollView(this)
+        scroll.addView(label)
+        outer.addView(scroll, LinearLayout.LayoutParams(-1, (150 * dp).roundToInt()))
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.auto_home_import_page, targetPage + 1))
+            .setMessage(R.string.auto_home_import_review)
+            .setView(outer)
+            .setPositiveButton(R.string.auto_home_import_apply, null)
+            .setNegativeButton(android.R.string.cancel, null)
+            .create()
+        dialog.setOnDismissListener {
+            image.setImageDrawable(null)
+            thumbnail.recycle()
+        }
+        dialog.show()
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
+            isEnabled = report.matches.isNotEmpty()
+            setOnClickListener {
+                // At this point nothing has touched the current layout.
+                // Explicit confirmation makes the undoable replacement opt-in.
+                AlertDialog.Builder(this@AdaptiveHomeActivity)
+                    .setTitle(R.string.auto_home_import_confirm_title)
+                    .setMessage(R.string.auto_home_import_confirm)
+                    .setPositiveButton(R.string.auto_home_import_apply) { _, _ ->
+                        val count = applyScreenshotImport(report.matches, targetPage)
+                        dialog.dismiss()
+                        Toast.makeText(this@AdaptiveHomeActivity,
+                            getString(R.string.auto_home_import_applied, count),
+                            Toast.LENGTH_LONG).show()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+        }
+    }
+
+    /**
+     * Replace only one page of icon shortcuts. All original Deskland
+     * entities are snapshotted in ONE SharedPreferences transaction.
+     * Folder membership and widgets are never changed by this adapter.
+     */
+    private fun applyScreenshotImport(
+        matches: List<HomeScreenshotMatcher.Match>, targetPage: Int
+    ): Int {
+        if (targetPage !in 0 until maxPages || matches.isEmpty()) return 0
+        val folderMembers = folders.flatMap { it.members }.toHashSet()
+        val restricted = folders.filter { it.cell / pageSlots == targetPage }
+            .map { it.cell }.toHashSet()
+        for (widget in placedWidgets) if (widget.cell / pageSlots == targetPage)
+            restricted.addAll(widgetCells(widget))
+        val accepted = ArrayList<PlacedIcon>()
+        val used = HashSet<String>()
+        val occupied = restricted.toHashSet()
+        for (match in matches.filter { !it.isDock }.sortedByDescending { it.confidence }) {
+            val cell = targetPage * pageSlots + match.destCell
+            if (match.id in folderMembers || cell in occupied ||
+                !used.add(match.id)) continue
+            occupied.add(cell)
+            accepted.add(PlacedIcon(match.id, cell))
+        }
+        val newDockMatches = matches.filter { it.isDock && it.id !in folderMembers }
+            .sortedBy { it.x }.map { it.id }.distinct().take(dockSlots)
+        val dockAfter = if (newDockMatches.isEmpty()) dock.toList() else newDockMatches
+        val movedIds = (accepted.map { it.id } + dockAfter).toHashSet()
+        val preserved = placed.filter {
+            it.cell / pageSlots != targetPage && it.id !in movedIds
+        }
+        val combined = preserved + accepted
+        val undo = JSONObject()
+            .put("icons", prefs.getString("auto_home_icons_v1", "[]"))
+            .put("folders", prefs.getString("auto_home_folders_v1", "[]"))
+            .put("dock", prefs.getString("auto_home_dock_v1", "[]"))
+            .put("auto", prefs.getBoolean("auto_home_auto_arranged_v1", false))
+            .put("page", currentPage)
+        val encoded = JSONArray()
+        combined.forEach { encoded.put(JSONObject().put("id", it.id).put("cell", it.cell)) }
+        prefs.edit()
+            .putString("auto_home_migration_undo_v1", undo.toString())
+            .putString("auto_home_icons_v1", encoded.toString())
+            .putString("auto_home_dock_v1", JSONArray(dockAfter).toString())
+            .putBoolean("auto_home_auto_arranged_v1", false)
+            .apply()
+        restoreSavedLayout()
+        renderHomeNextFrame()
+        return accepted.size + newDockMatches.size
+    }
+
+    private fun undoLastScreenshotImport() {
+        val raw = prefs.getString("auto_home_migration_undo_v1", null) ?: return
+        try {
+            val old = JSONObject(raw)
+            val icons = old.getString("icons")
+            val groups = old.getString("folders")
+            val favs = old.getString("dock")
+            JSONArray(icons); JSONArray(groups); JSONArray(favs)
+            val page = old.optInt("page", 0).coerceIn(0, maxPages - 1)
+            prefs.edit()
+                .putString("auto_home_icons_v1", icons)
+                .putString("auto_home_folders_v1", groups)
+                .putString("auto_home_dock_v1", favs)
+                .putBoolean("auto_home_auto_arranged_v1", old.optBoolean("auto", false))
+                .remove("auto_home_migration_undo_v1")
+                .putInt("auto_home_page_v1", page)
+                .apply()
+            currentPage = page
+            restoreSavedLayout()
+            renderHomeNextFrame()
+        } catch (_: Exception) {
+            Toast.makeText(this, R.string.auto_home_import_unavailable,
+                Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun saveLayout() {
@@ -907,6 +1136,11 @@ class AdaptiveHomeActivity : Activity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == REQUEST_IMPORT_SCREENSHOT) {
+            if (resultCode == RESULT_OK && data?.data != null)
+                analyzePreviousHomeScreenshot(data.data!!)
+            return
+        }
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_BIND_WIDGET || requestCode == REQUEST_CONFIGURE_WIDGET) {
             if (resultCode != RESULT_OK) {
@@ -1325,34 +1559,34 @@ class AdaptiveHomeActivity : Activity() {
     private fun showHomeMenu() {
         // These actions are only reachable by long-pressing blank wallpaper;
         // they must never obscure the ordinary Home or cover app icons.
-        val options = arrayOf(
-            getString(R.string.auto_home_settings),
-            getString(R.string.auto_home_apps),
-            getString(R.string.auto_home_widgets),
-            getString(R.string.auto_home_add),
-            getString(R.string.auto_home_manage),
-            getString(R.string.auto_home_folder_manage),
-            getString(R.string.auto_home_dock),
-            getString(R.string.auto_home_fill),
-            getString(R.string.auto_home_wallpaper),
-            getString(R.string.auto_home_change_home)
-        )
+        val actions = mutableListOf<Pair<String, () -> Unit>>()
+        actions.add(getString(R.string.auto_home_settings) to {
+            startActivity(Intent(this, MainActivity::class.java).addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+        })
+        actions.add(getString(R.string.auto_home_import_title) to {
+            choosePreviousHomeScreenshot()
+        })
+        if (prefs.contains("auto_home_migration_undo_v1")) {
+            actions.add(getString(R.string.auto_home_import_undo) to {
+                undoLastScreenshotImport()
+            })
+        }
+        actions.add(getString(R.string.auto_home_apps) to { showAppDrawer() })
+        actions.add(getString(R.string.auto_home_widgets) to { showWidgetActions() })
+        actions.add(getString(R.string.auto_home_add) to { showAppPicker() })
+        actions.add(getString(R.string.auto_home_manage) to { showRemovePicker() })
+        actions.add(getString(R.string.auto_home_folder_manage) to { showFolderManager() })
+        actions.add(getString(R.string.auto_home_dock) to { showDockManager() })
+        actions.add(getString(R.string.auto_home_fill) to {
+            fillHomeFromInstalledApps(onlyIfEmpty = false)
+        })
+        actions.add(getString(R.string.auto_home_wallpaper) to { selectWallpaper() })
+        actions.add(getString(R.string.auto_home_change_home) to { openHomeSettings() })
         AlertDialog.Builder(this).setTitle(R.string.auto_home_organize)
-            .setItems(options) { _, choice ->
-                when (choice) {
-                    0 -> startActivity(Intent(this, MainActivity::class.java).addFlags(
-                        Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
-                    1 -> showAppDrawer()
-                    2 -> showWidgetActions()
-                    3 -> showAppPicker()
-                    4 -> showRemovePicker()
-                    5 -> showFolderManager()
-                    6 -> showDockManager()
-                    7 -> fillHomeFromInstalledApps(onlyIfEmpty = false)
-                    8 -> selectWallpaper()
-                    9 -> openHomeSettings()
-                }
+            .setItems(actions.map { it.first }.toTypedArray()) { _, choice ->
+                actions.getOrNull(choice)?.second?.invoke()
             }.setNegativeButton(android.R.string.cancel, null).show()
     }
 
