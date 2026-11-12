@@ -19,6 +19,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -93,6 +94,11 @@ class AdaptiveHomeActivity : Activity() {
     // Dock order is independent of every page and never auto-seeded.
     private val dock = ArrayList<String>()
     private val views = LinkedHashMap<String, View>()
+    // App icon lookup can cross launcher/package boundaries; keep only the
+    // drawable constant states, creating independent instances for each tile.
+    private val iconStates = HashMap<String, Drawable.ConstantState>()
+    private var lastRenderedHomeKey: String? = null
+    private var renderQueued = false
     private val widgetViews = LinkedHashMap<Int, View>()
     private val placedWidgets = ArrayList<PlacedWidget>()
     private val widgetManager by lazy { AppWidgetManager.getInstance(this) }
@@ -109,8 +115,10 @@ class AdaptiveHomeActivity : Activity() {
     // Never modify FrameLayout children while Android is measuring or
     // dispatching the touch that ended an icon drag.
     private fun renderHomeNextFrame() {
-        if (!::canvas.isInitialized) return
+        if (!::canvas.isInitialized || renderQueued) return
+        renderQueued = true
         canvas.postOnAnimation {
+            renderQueued = false
             if (!isFinishing && !isDestroyed) renderHome()
         }
     }
@@ -129,8 +137,10 @@ class AdaptiveHomeActivity : Activity() {
         handler.post {
             if (!isFinishing && !isDestroyed) {
                 loadLaunchableApps()
+                iconStates.clear()
+                lastRenderedHomeKey = null
                 restoreSavedLayout()
-                renderHome()
+                renderHomeNextFrame()
             }
         }
     }
@@ -293,6 +303,9 @@ class AdaptiveHomeActivity : Activity() {
 
     override fun onPause() {
         handler.removeCallbacks(publishPending)
+        // A gesture interrupted by Home/background transitions must not leave
+        // the wallpaper in its lower-priority interaction profile.
+        endHomeDragBudget()
         if (isSelectedHome()) publishHomePositions()
         try { widgetHost.stopListening() } catch (_: RuntimeException) { }
         super.onPause()
@@ -300,6 +313,7 @@ class AdaptiveHomeActivity : Activity() {
 
     override fun onDestroy() {
         handler.removeCallbacks(publishPending)
+        endHomeDragBudget()
         if (callbackRegistered) launcherApps.unregisterCallback(packageCallback)
         super.onDestroy()
     }
@@ -845,8 +859,31 @@ class AdaptiveHomeActivity : Activity() {
     private fun topFor(cell: Int): Float =
         cellCenter(cell).second * canvas.height - iconHeight() * 0.5f
 
+    private fun homeRenderKey(): String = buildString {
+        append(currentPage).append('|').append(canvas.width).append('x')
+            .append(canvas.height)
+        for (item in placed) if (item.cell / pageSlots == currentPage)
+            append("|i:").append(item.id).append(':').append(item.cell)
+        for (folder in folders) if (folder.cell / pageSlots == currentPage) {
+            append("|f:").append(folder.id).append(':').append(folder.cell)
+                .append(':').append(folder.name)
+            folder.members.forEach { append(':').append(it) }
+        }
+        dock.forEach { append("|d:").append(it) }
+        for (item in placedWidgets) if (item.cell / pageSlots == currentPage)
+            append("|w:").append(item.widgetId).append(':').append(item.cell)
+                .append(':').append(item.spanX).append('x').append(item.spanY)
+    }
+
     private fun renderHome() {
         if (!::canvas.isInitialized || canvas.width < 100 || canvas.height < 100) return
+        if (draggingId != null) return // Never tear down an active gesture.
+        val key = homeRenderKey()
+        if (key == lastRenderedHomeKey && canvas.childCount > 0) return
+        lastRenderedHomeKey = key
+        // Full view creation is now limited to actual visible-layout changes,
+        // not duplicate onResume/layout callbacks. Hosted widget views stay
+        // alive through no-op redraw requests.
         canvas.removeAllViews()
         views.clear()
         widgetViews.clear()
@@ -890,6 +927,20 @@ class AdaptiveHomeActivity : Activity() {
         attachTouch(tile, id, onLaunch)
     }
 
+    private fun cachedIcon(info: LauncherActivityInfo): Drawable {
+        val id = info.componentName.flattenToString()
+        val cached = iconStates[id]
+        if (cached != null) return cached.newDrawable(resources).mutate()
+        val original = info.getIcon(0)
+        val state = original.constantState
+        if (state != null) {
+            if (iconStates.size >= 160) iconStates.clear()
+            iconStates[id] = state
+            return state.newDrawable(resources).mutate()
+        }
+        return original.mutate()
+    }
+
     private fun makeFolderTile(folder: PlacedFolder,
                                known: Map<String, LauncherActivityInfo>): View {
         val vertical = LinearLayout(this).apply {
@@ -907,7 +958,7 @@ class AdaptiveHomeActivity : Activity() {
         val mini = (21 * dp).roundToInt()
         for (member in folder.members.take(4)) {
             val icon = ImageView(this).apply {
-                setImageDrawable(known[member]?.getIcon(0))
+                setImageDrawable(known[member]?.let(::cachedIcon))
                 scaleType = ImageView.ScaleType.FIT_CENTER
             }
             preview.addView(icon, GridLayout.LayoutParams().apply {
@@ -940,7 +991,7 @@ class AdaptiveHomeActivity : Activity() {
             setPadding((3 * dp).roundToInt(), 0, (3 * dp).roundToInt(), 0)
         }
         val image = ImageView(this).apply {
-            setImageDrawable(info.getIcon(0))
+            setImageDrawable(cachedIcon(info))
             scaleType = ImageView.ScaleType.FIT_CENTER
             isFocusable = false
         }
@@ -961,6 +1012,18 @@ class AdaptiveHomeActivity : Activity() {
         vertical.isFocusable = true
         vertical.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         return vertical
+    }
+
+    private fun beginHomeDragBudget() {
+        // One preference write per gesture, not per MotionEvent. The deadline
+        // expires after an interrupted/crashed gesture without a cleanup call.
+        prefs.edit().putLong("auto_home_interaction_until_v1",
+            SystemClock.uptimeMillis() + 30_000L).apply()
+    }
+
+    private fun endHomeDragBudget() {
+        if (prefs.getLong("auto_home_interaction_until_v1", 0L) != 0L)
+            prefs.edit().remove("auto_home_interaction_until_v1").apply()
     }
 
     private fun attachTouch(view: View, id: String, onLaunch: () -> Unit) {
@@ -999,7 +1062,11 @@ class AdaptiveHomeActivity : Activity() {
                         cancelledByGesture = true
                         handler.removeCallbacks(armDrag)
                     }
-                    if (armed && (abs(dx) > slop || abs(dy) > slop)) moving = true
+                    if (armed && !moving &&
+                        (abs(dx) > slop || abs(dy) > slop)) {
+                        moving = true
+                        beginHomeDragBudget()
+                    }
                     if (moving) {
                         draggingId = id
                         v.x = (startLeft + dx).coerceIn(0f,
@@ -1013,8 +1080,10 @@ class AdaptiveHomeActivity : Activity() {
                 MotionEvent.ACTION_UP -> {
                     handler.removeCallbacks(armDrag)
                     if (moving) {
+                        endHomeDragBudget()
                         snapToNearestCell(id, v)
                         draggingId = null
+                        lastRenderedHomeKey = null // Even a rejected drop must snap back.
                         saveLayout()
                         renderHomeNextFrame()
                     } else if (!armed && !cancelledByGesture) {
@@ -1027,7 +1096,9 @@ class AdaptiveHomeActivity : Activity() {
                 }
                 MotionEvent.ACTION_CANCEL -> {
                     handler.removeCallbacks(armDrag)
+                    endHomeDragBudget()
                     draggingId = null
+                    lastRenderedHomeKey = null
                     renderHomeNextFrame()
                     true
                 }
@@ -1896,8 +1967,11 @@ class AdaptiveHomeActivity : Activity() {
     private fun requestPublish() {
         handler.removeCallbacks(publishPending)
         val now = SystemClock.uptimeMillis()
-        if (now - lastPublishedAt >= 90L) publishHomePositions()
-        else handler.postDelayed(publishPending, 90L - (now - lastPublishedAt))
+        // A moving tile is visually handled by Android view properties. Push
+        // geometry to the coast at a lower rate to avoid JSON/GL upload storms.
+        val interval = if (draggingId != null) 180L else 90L
+        if (now - lastPublishedAt >= interval) publishHomePositions()
+        else handler.postDelayed(publishPending, interval - (now - lastPublishedAt))
     }
 
     private fun publishHomePositions() {
