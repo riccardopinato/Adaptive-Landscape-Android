@@ -99,5 +99,17 @@
   "autoHomeStatusDataReady": "Positions received by renderer",
   "autoHomeStatusDisclaimer": "This confirms data routing, not visible sand pixels. Folders are not supported yet.",
   "autoHomeStatusRefresh": "Refresh diagnostic",
-  "autoHomeStatusOpenHome": "Open Deskland Home"
+  "autoHomeStatusOpenHome": "Open Deskland Home",
+  "xiaomiGesturesTitle": "Xiaomi/HyperOS: keep system gestures",
+  "xiaomiGesturesExplanation": "Some HyperOS versions switch to three navigation buttons when Deskland becomes the default Home. An ordinary launcher cannot re-enable Xiaomi system gestures. To keep genuine Back, Home and Recents gestures, select Xiaomi Home as the default launcher and set Deskland as a live wallpaper. With Xiaomi Home, Deskland cannot automatically follow icon positions: use manual calibration instead.",
+  "xiaomiGesturesModeDeskland": "Current Home: Deskland. Xiaomi may be using navigation buttons.",
+  "xiaomiGesturesModeOther": "Current Home: another launcher. Select the original Xiaomi Home to keep system gestures.",
+  "xiaomiGesturesStepWallpaper": "1. Set Deskland live wallpaper",
+  "xiaomiGesturesStepHome": "2. Choose Xiaomi Home in system settings",
+  "xiaomiGesturesStepNavigation": "3. Choose system navigation gestures",
+  "xiaomiGesturesSettingsFallback": "Direct navigation settings are unavailable. In Xiaomi Settings, open Home screen > System navigation > Gestures.",
+  "xiaomiGesturesWarningTitle": "Xiaomi may turn off system gestures",
+  "xiaomiGesturesWarningBody": "Making Deskland the default Home can force three-button navigation on HyperOS. Deskland cannot override this system restriction. You can keep Xiaomi gestures by using Xiaomi Home with the Deskland wallpaper instead. Continue anyway?",
+  "xiaomiGesturesContinue": "Use Deskland Home anyway",
+  "xiaomiGesturesNote": "These controls only open Android settings. Nothing is changed automatically, and existing Deskland layouts remain saved."
 }
