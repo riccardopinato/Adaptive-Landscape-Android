@@ -44,4 +44,20 @@
     <string name="auto_home_fill">Installierte Apps auf Home anordnen</string>
     <string name="auto_home_fill_explanation">Das bestehende Deskland-Layout bleibt erhalten. Freie Plätze werden mit installierten Apps gefüllt; alle weiteren Apps bleiben in der Übersicht. Android kann die genauen Positionen eines anderen Launchers nicht übernehmen.</string>
     <string name="auto_home_settings">Deskland-Einstellungen</string>
+    <string name="auto_home_import_title">Screenshot des bisherigen Startbildschirms importieren</string>
+    <string name="auto_home_import_explanation">Wähle einen Screenshot deines bisherigen Startbildschirms. Deskland vergleicht die Symbole lokal mit installierten Apps und liest keine privaten Daten anderer Launcher. Prüfe die Treffer vor dem Übernehmen. Ordner und Widgets können nicht rekonstruiert werden.</string>
+    <string name="auto_home_import_choose">Screenshot auswählen</string>
+    <string name="auto_home_import_unavailable">Bild konnte nicht analysiert werden. Dein Startbildschirm bleibt unverändert.</string>
+    <string name="auto_home_import_analyzing">App-Symbole werden lokal abgeglichen…</string>
+    <string name="auto_home_import_preview">Alter Startbildschirm mit erkannten Symbolen</string>
+    <string name="auto_home_import_found">%1$d Symbole erkannt (Katalog: %2$d Apps)</string>
+    <string name="auto_home_import_page">Auf Seite %1$d importieren</string>
+    <string name="auto_home_import_review">Grüne Kreise markieren Schätzungen. Unbekannte Symbole werden nicht erfunden. Bei falscher Vorschau abbrechen.</string>
+    <string name="auto_home_import_apply">Positionen übernehmen</string>
+    <string name="auto_home_import_confirm_title">Verknüpfungen ersetzen?</string>
+    <string name="auto_home_import_confirm">Verknüpfungen dieser Seite werden ersetzt und passende Apps von anderen Seiten verschoben. Ordner und Widgets bleiben erhalten. Import kann rückgängig gemacht werden.</string>
+    <string name="auto_home_import_applied">%1$d Verknüpfungen importiert</string>
+    <string name="auto_home_import_undo">Letzten Import rückgängig machen</string>
+    <string name="auto_home_import_review_auto">Grüne Kreise zeigen geschätzte Positionen. Beim Import werden die automatisch angeordneten Apps durch erkannte Verknüpfungen ersetzt; alle anderen bleiben im App-Drawer.</string>
+    <string name="auto_home_import_confirm_auto">Automatische Deskland-Verknüpfungen durch erkannte Apps ersetzen? Alle anderen Apps bleiben im Drawer, Ordner und Widgets bleiben erhalten. Der Import ist rückgängig zu machen.</string>
 </resources>

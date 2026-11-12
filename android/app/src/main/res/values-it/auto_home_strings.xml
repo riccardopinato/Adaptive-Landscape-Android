@@ -44,4 +44,20 @@
     <string name="auto_home_fill">Disponi le app installate nella Home</string>
     <string name="auto_home_fill_explanation">Conserva la disposizione Deskland attuale e riempi le celle libere con le app installate. Le altre restano nel cassetto delle app. Android non consente di importare automaticamente le posizioni esatte da un altro launcher.</string>
     <string name="auto_home_settings">Impostazioni Deskland</string>
+    <string name="auto_home_import_title">Importa screenshot della vecchia Home</string>
+    <string name="auto_home_import_explanation">Seleziona uno screenshot della tua Home precedente. Deskland confronta localmente le icone con le app installate, senza leggere il layout privato del vecchio launcher. Controlli tutte le corrispondenze prima di applicarle. Cartelle e widget non sono recuperabili da uno screenshot.</string>
+    <string name="auto_home_import_choose">Scegli screenshot</string>
+    <string name="auto_home_import_unavailable">Screenshot non leggibile o analizzabile. La Home non è stata modificata.</string>
+    <string name="auto_home_import_analyzing">Confronto delle icone sul dispositivo…</string>
+    <string name="auto_home_import_preview">Vecchia Home con le corrispondenze proposte</string>
+    <string name="auto_home_import_found">%1$d icone abbinate (catalogo: %2$d app)</string>
+    <string name="auto_home_import_page">Importa nella pagina %1$d</string>
+    <string name="auto_home_import_review">I cerchi verdi sono stime. Le icone non riconosciute non vengono inventate. Se l’anteprima è sbagliata, annulla: la disposizione attuale rimane invariata.</string>
+    <string name="auto_home_import_apply">Applica le posizioni</string>
+    <string name="auto_home_import_confirm_title">Sostituire le scorciatoie della pagina?</string>
+    <string name="auto_home_import_confirm">Sostituisce le icone della pagina Deskland selezionata e sposta i collegamenti abbinati dalle altre pagine. Mantiene cartelle e widget. Puoi annullare l’importazione dal menu Home.</string>
+    <string name="auto_home_import_applied">%1$d scorciatoie importate</string>
+    <string name="auto_home_import_undo">Annulla ultima importazione</string>
+    <string name="auto_home_import_review_auto">I cerchi verdi indicano le posizioni stimate. Applicando l’importazione, la disposizione alfabetica automatica sarà sostituita dalle scorciatoie riconosciute. Le altre app resteranno nel cassetto.</string>
+    <string name="auto_home_import_confirm_auto">Sostituire le icone disposte automaticamente da Deskland con quelle riconosciute nello screenshot? Le altre app resteranno nel cassetto. Cartelle e widget saranno mantenuti. Puoi annullare l’importazione.</string>
 </resources>

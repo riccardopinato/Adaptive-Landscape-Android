@@ -42,3 +42,8 @@ prima di pubblicare sullo Store.
 ### Modalità Home adattiva sperimentale (v0.5.1)
 
 La selezione del launcher predefinito e la conferma dello sfondo animato avvengono separatamente nelle schermate di sistema Android; l'app non si attribuisce autonomamente i relativi privilegi. Le preferenze di Home (`auto_home_icons_v1`, `auto_home_folders_v1`, `auto_home_dock_v1`, `auto_home_widgets_v1`) rimangono locali e non contengono testi dei widget o contenuti delle app. La funzione è sperimentale: la compatibilità dei provider widget e l'eventuale backup automatico dei dati richiedono una verifica prima dello Store. Il renderer opera su un thread dedicato per ridurre il carico sul thread principale; questo dettaglio non modifica la natura dei dati trattati.
+
+
+### v0.5.3 — Recupero volontario della disposizione da screenshot
+
+Se sceglie «Importa screenshot della vecchia Home», l'utente apre volontariamente un singolo file immagine tramite il selettore documenti Android (`ACTION_OPEN_DOCUMENT`). Lo screenshot viene decodificato in memoria con limiti di dimensione e analizzato localmente con un confronto dei pixel delle icone delle applicazioni installate; non si usa OCR remoto, non si invia il file in rete e non si salva una copia dell'immagine. L'anteprima con cerchi verdi è una stima e può non riconoscere icon pack, cartelle, widget o icone diverse dall'originale. Il layout Deskland cambia solo dopo due conferme esplicite. L'app conserva una singola snapshot locale del layout precedente (`auto_home_migration_undo_v1`) per consentire l'annullamento. Questa snapshot contiene soltanto identificatori delle app e posizioni già gestiti dalla Home Deskland; non contiene screenshot o dati di altre applicazioni.

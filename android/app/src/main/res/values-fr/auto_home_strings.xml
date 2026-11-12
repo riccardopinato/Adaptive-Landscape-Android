@@ -44,4 +44,20 @@
     <string name="auto_home_fill">Organiser les applications sur l’accueil</string>
     <string name="auto_home_fill_explanation">Conserve la disposition Deskland actuelle et remplit les cases libres avec les applications installées. Les autres restent dans le tiroir. Android ne permet pas d’importer les positions exactes d’un autre lanceur.</string>
     <string name="auto_home_settings">Paramètres Deskland</string>
+    <string name="auto_home_import_title">Importer une capture de l’ancien accueil</string>
+    <string name="auto_home_import_explanation">Choisissez une capture de votre ancien écran d’accueil. Deskland compare localement les icônes aux applis installées sans lire les données du lanceur précédent. Vérifiez les correspondances avant d’appliquer. Dossiers et widgets ne sont pas récupérés.</string>
+    <string name="auto_home_import_choose">Choisir une capture</string>
+    <string name="auto_home_import_unavailable">Impossible d’analyser l’image. Votre accueil est inchangé.</string>
+    <string name="auto_home_import_analyzing">Comparaison locale des icônes…</string>
+    <string name="auto_home_import_preview">Ancien accueil et correspondances suggérées</string>
+    <string name="auto_home_import_found">%1$d icônes reconnues (catalogue : %2$d applis)</string>
+    <string name="auto_home_import_page">Importer vers la page %1$d</string>
+    <string name="auto_home_import_review">Les cercles verts sont des estimations. Aucune icône inconnue n’est inventée. Annulez si l’aperçu est incorrect.</string>
+    <string name="auto_home_import_apply">Appliquer les positions</string>
+    <string name="auto_home_import_confirm_title">Remplacer les raccourcis ?</string>
+    <string name="auto_home_import_confirm">Les raccourcis de cette page sont remplacés, et les applis correspondantes sont déplacées depuis d’autres pages. Dossiers et widgets restent inchangés. Vous pourrez annuler l’import.</string>
+    <string name="auto_home_import_applied">%1$d raccourcis importés</string>
+    <string name="auto_home_import_undo">Annuler le dernier import</string>
+    <string name="auto_home_import_review_auto">Les cercles verts indiquent des positions estimées. L’import remplace la disposition automatique par les raccourcis reconnus ; les autres applis restent dans le tiroir.</string>
+    <string name="auto_home_import_confirm_auto">Remplacer les raccourcis automatiques par ceux reconnus dans la capture ? Les autres applis restent disponibles, les dossiers et widgets sont conservés. Annulation possible.</string>
 </resources>

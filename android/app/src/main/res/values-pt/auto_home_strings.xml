@@ -44,4 +44,20 @@
     <string name="auto_home_fill">Organizar aplicações na página inicial</string>
     <string name="auto_home_fill_explanation">Mantém a disposição atual do Deskland e preenche os espaços livres com aplicações instaladas. As restantes ficam na lista de aplicações. O Android não permite importar as posições exatas de outro lançador.</string>
     <string name="auto_home_settings">Definições Deskland</string>
+    <string name="auto_home_import_title">Importar captura do ecrã inicial anterior</string>
+    <string name="auto_home_import_explanation">Escolhe uma captura do ecrã inicial anterior. O Deskland compara os ícones com as aplicações instaladas localmente, sem ler dados privados do outro launcher. Revê os resultados antes de aplicar. Pastas e widgets não são recuperáveis.</string>
+    <string name="auto_home_import_choose">Escolher captura</string>
+    <string name="auto_home_import_unavailable">Não foi possível analisar a imagem. O ecrã inicial não mudou.</string>
+    <string name="auto_home_import_analyzing">A comparar ícones neste dispositivo…</string>
+    <string name="auto_home_import_preview">Ecrã anterior com correspondências propostas</string>
+    <string name="auto_home_import_found">%1$d ícones identificados (catálogo: %2$d apps)</string>
+    <string name="auto_home_import_page">Importar para a página %1$d</string>
+    <string name="auto_home_import_review">Os círculos verdes são estimativas. Ícones desconhecidos não são inventados. Cancela se a pré-visualização estiver incorreta.</string>
+    <string name="auto_home_import_apply">Aplicar posições</string>
+    <string name="auto_home_import_confirm_title">Substituir atalhos?</string>
+    <string name="auto_home_import_confirm">Isto substitui os atalhos desta página e move as apps correspondentes de outras páginas. Pastas e widgets permanecem. Podes desfazer a importação.</string>
+    <string name="auto_home_import_applied">%1$d atalhos importados</string>
+    <string name="auto_home_import_undo">Desfazer última importação</string>
+    <string name="auto_home_import_review_auto">Os círculos verdes indicam posições estimadas. A importação substitui a disposição automática pelos atalhos reconhecidos; as outras aplicações ficam na lista.</string>
+    <string name="auto_home_import_confirm_auto">Substituir os atalhos automáticos pelos identificados na imagem? As outras aplicações permanecem na lista, pastas e widgets ficam intactos. Podes desfazer.</string>
 </resources>

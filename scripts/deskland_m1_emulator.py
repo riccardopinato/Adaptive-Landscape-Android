@@ -137,11 +137,12 @@ def main():
     # On this native Activity the first launch can show a one-time AlertDialog.
     # Read the actual visible dialog controls, not just a single early UI dump
     # during Activity handoff; dismiss via the explicit negative action.
-    for _ in range(8):
+    for _ in range(14):
         try:
             page=nodes()
             dialog_texts={n.get("text") for n in page if n.get("text")}
-            if "Set live wallpaper" in dialog_texts or (
+            if ("Import previous Home screenshot" in dialog_texts or
+                "Set live wallpaper" in dialog_texts or
                 "Select Deskland live wallpaper to enable adaptive sand." in dialog_texts):
                 cancel=next((n for n in page if n.get("text")=="Cancel"),None)
                 if cancel is not None:
@@ -149,13 +150,40 @@ def main():
                 else:
                     adb("shell","input","keyevent","KEYCODE_BACK")
                     time.sleep(.8)
-                break
+                # Migrating from an old Home and activating the wallpaper are
+                # two independent user consent dialogs. The second appears
+                # AFTER the first is closed; dismiss both in this smoke test.
+                continue
             if icon_nodes(): break
         except (ValueError,RuntimeError): pass
         time.sleep(.6)
     wait("automatic app layout persisted",lambda:len(saved_icons())>=2)
     initial=saved_icons()
     assert len(initial)<=120 and len({x["id"] for x in initial})==len(initial)
+    adb("shell","am","start","-n",PKG+
+        "/it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity",
+        "--ez","deskland_qa_screenshot_matcher_v1","true")
+    wait("native synthetic icon-matching fixture",lambda:
+         pref().get("auto_home_screenshot_qa_v1")=="PASS")
+    ok("offline_screenshot_icon_matching","synthetic in-RAM icon artwork")
+    saved_before_import=pref().get("auto_home_icons_v1","")
+    adb("shell","am","start","-n",PKG+
+        "/it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity",
+        "--ez","deskland_qa_migration_undo_v1","true")
+    wait("screenshot layout import and atomic undo",lambda:
+         pref().get("auto_home_import_undo_qa_v1")=="PASS")
+    assert pref().get("auto_home_icons_v1","")==saved_before_import, (
+        "Original icons lost after screenshot migration roundtrip")
+    ok("screenshot_import_atomic_undo","no layout loss after simulated import")
+    adb("shell","am","start","-n",PKG+
+        "/it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity",
+        "--ez","deskland_qa_curated_layout_v1","true")
+    wait("curated screenshot collision and undo",lambda:
+         pref().get("auto_home_curated_import_qa_v1")=="PASS")
+    assert pref().get("auto_home_icons_v1","")==saved_before_import, (
+        "Curated import test did not restore original Home data")
+    ok("curated_screenshot_preservation","manual icons survive collisions and undo")
+
     wait("visible installed app icons",lambda:(v if len(v:=icon_nodes())>=2 else None))
     assert not any(node_text(x) is not None for x in
         ("Add app","Remove app","Change Home launcher","Adaptive Home","Page 1/3")), (
