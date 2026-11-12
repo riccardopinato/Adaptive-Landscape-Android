@@ -58,4 +58,6 @@
     <string name="auto_home_import_confirm">Les raccourcis de cette page sont remplacés, et les applis correspondantes sont déplacées depuis d’autres pages. Dossiers et widgets restent inchangés. Vous pourrez annuler l’import.</string>
     <string name="auto_home_import_applied">%1$d raccourcis importés</string>
     <string name="auto_home_import_undo">Annuler le dernier import</string>
+    <string name="auto_home_import_review_auto">Les cercles verts indiquent des positions estimées. L’import remplace la disposition automatique par les raccourcis reconnus ; les autres applis restent dans le tiroir.</string>
+    <string name="auto_home_import_confirm_auto">Remplacer les raccourcis automatiques par ceux reconnus dans la capture ? Les autres applis restent disponibles, les dossiers et widgets sont conservés. Annulation possible.</string>
 </resources>
