@@ -253,7 +253,13 @@ class AdaptiveHomeActivity : Activity() {
         if (fresh) fillHomeFromInstalledApps(onlyIfEmpty = true)
         canvas.post {
             renderHome()
-            if (!prefs.getBoolean("auto_home_setup_prompt_v2", false)) {
+            if (prefs.getBoolean("auto_home_setup_prompt_v2", false) &&
+                !prefs.getBoolean("auto_home_migration_intro_v1", false)) {
+                // A user upgrading from 0.5.2 never sees the first-run flow
+                // again. Offer screenshot migration once, without changing
+                // the existing Home before explicit consent.
+                offerFirstRunMigration(fresh)
+            } else if (!prefs.getBoolean("auto_home_setup_prompt_v2", false)) {
                 prefs.edit().putBoolean("auto_home_setup_prompt_v2", true).apply()
                 if (!fresh && available.isNotEmpty() &&
                     prefs.getBoolean("auto_home_auto_arranged_v1", false).not()) {
@@ -414,7 +420,7 @@ class AdaptiveHomeActivity : Activity() {
     }
 
     private fun offerFirstRunMigration(wasFresh: Boolean) {
-        if (!wasFresh || prefs.getBoolean("auto_home_migration_intro_v1", false)) {
+        if (prefs.getBoolean("auto_home_migration_intro_v1", false)) {
             offerWallpaperSetup()
             return
         }
