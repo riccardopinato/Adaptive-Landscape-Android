@@ -345,6 +345,7 @@ class AdaptiveHomeActivity : Activity() {
         runCuratedScreenshotQaIfRequested(intent)
         runHomePerformanceQaIfRequested(intent)
         runFrameMonitorQaIfRequested(intent)
+        runGestureCompatibilityQaIfRequested(intent)
         renderHomeNextFrame()
     }
 
@@ -518,6 +519,16 @@ class AdaptiveHomeActivity : Activity() {
         val ok = HomeFrameMonitor.syntheticSelfTest() &&
             catalogLoaded && canvas.childCount > 0
         prefs.edit().putString("auto_home_frame_monitor_qa_v1",
+            if (ok) "PASS" else "FAIL").apply()
+    }
+
+    private fun runGestureCompatibilityQaIfRequested(intent: Intent?) {
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0 ||
+            intent?.getBooleanExtra("deskland_qa_gesture_compat_v1", false) != true) return
+        // Synthetic only: never opens system Settings, changes navigation
+        // overlays, alters the HOME role or touches user layout data.
+        val ok = GestureCompatibility.syntheticSelfTest()
+        prefs.edit().putString("auto_home_gesture_compat_qa_v1",
             if (ok) "PASS" else "FAIL").apply()
     }
 
@@ -2006,6 +2017,11 @@ class AdaptiveHomeActivity : Activity() {
             fillHomeFromInstalledApps(onlyIfEmpty = false)
         })
         actions.add(getString(R.string.auto_home_wallpaper) to { selectWallpaper() })
+        if (GestureCompatibility.hasXiaomiGestureRisk()) {
+            actions.add(getString(R.string.auto_home_xiaomi_gestures) to {
+                showXiaomiGestureGuidance()
+            })
+        }
         actions.add(getString(R.string.auto_home_change_home) to { openHomeSettings() })
         AlertDialog.Builder(this).setTitle(R.string.auto_home_organize)
             .setItems(actions.map { it.first }.toTypedArray()) { _, choice ->
@@ -2109,6 +2125,20 @@ class AdaptiveHomeActivity : Activity() {
                 placed.removeAll { it.id == options[index].id }
                 saveLayout()
                 renderHomeNextFrame()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showXiaomiGestureGuidance() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_home_xiaomi_gestures)
+            .setMessage(R.string.auto_home_xiaomi_gestures_help)
+            .setPositiveButton(R.string.auto_home_change_home) { _, _ ->
+                openHomeSettings()
+            }
+            .setNeutralButton(R.string.auto_home_wallpaper) { _, _ ->
+                selectWallpaper()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
