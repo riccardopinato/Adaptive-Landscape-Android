@@ -188,7 +188,7 @@ print('PASS: auto Home dual-mask smooth interpolation and drag publisher source 
 # on Android's main thread. Shader upload must reuse fixed image storage.
 engine = (base / 'AdaptiveWallpaperService.kt').read_text(encoding='utf-8')
 gpu = (base / 'GpuOceanRenderer.kt').read_text(encoding='utf-8')
-assert 'HandlerThread(' in engine and 'renderHandler.post(frame)' in engine
+assert 'HandlerThread(' in engine and 'renderHandler.postDelayed(frame,' in engine
 assert 'renderThread.quitSafely()' in engine
 assert 'private fun drawFrame()' in engine
 assert 'if (visible) drawFrame()' not in engine, 'Do not render in UI Engine callbacks'
