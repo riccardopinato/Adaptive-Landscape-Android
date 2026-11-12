@@ -12,6 +12,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
+import android.content.pm.ApplicationInfo
 import android.graphics.Color
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -244,6 +245,7 @@ class AdaptiveHomeActivity : Activity() {
         try { widgetHost.startListening() } catch (_: RuntimeException) { }
         restoreWidgets()
         loadLaunchableApps()
+        runScreenshotMatcherQaIfRequested(intent)
         restoreSavedLayout()
         val fresh = !prefs.contains("auto_home_icons_v1") &&
             !prefs.contains("auto_home_folders_v1") &&
@@ -279,6 +281,7 @@ class AdaptiveHomeActivity : Activity() {
             finish()
             return
         }
+        runScreenshotMatcherQaIfRequested(intent)
         renderHomeNextFrame()
     }
 
@@ -293,6 +296,20 @@ class AdaptiveHomeActivity : Activity() {
         handler.removeCallbacks(publishPending)
         if (callbackRegistered) launcherApps.unregisterCallback(packageCallback)
         super.onDestroy()
+    }
+
+    private fun runScreenshotMatcherQaIfRequested(intent: Intent?) {
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE == 0 ||
+            intent?.getBooleanExtra("deskland_qa_screenshot_matcher_v1", false) != true) return
+        // Only an explicitly requested, debuggable emulator may execute this.
+        // No device screenshot, package contents or personal data are read.
+        val apps = available.toList()
+        Thread {
+            val status = if (runCatching {
+                    HomeScreenshotMatcher.syntheticSelfTest(apps)
+                }.getOrDefault(false)) "PASS" else "FAIL"
+            prefs.edit().putString("auto_home_screenshot_qa_v1", status).apply()
+        }.apply { name = "DesklandSyntheticMatcherQA"; start() }
     }
 
     private fun isSelectedHome(): Boolean {
