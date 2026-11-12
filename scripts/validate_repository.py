@@ -167,7 +167,7 @@ assert 'auto_home_icons_v1' in home and 'requestPublish()' in home
 assert 'gridInset' in (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
 for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'values-pt'):
     assert (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').is_file()
-assert '0.5.2+17' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert '0.5.3+18' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
 print('PASS: experimental opt-in native Auto Home source; NOT physical tested')
 
 # Desktop-behavior parity requires a temporal transition, not instantaneous
@@ -212,3 +212,29 @@ for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'valu
     assert 'name="auto_home_fill"' in strings
     assert 'name="auto_home_settings"' in strings
 print('PASS: v0.5.2 clean wallpaper Home, gesture controls and privacy-safe auto app fill')
+
+# v0.5.3: import is a user-confirmed, local-only screenshot adapter with
+# an atomic Home layout snapshot; source-level gates are not physical QA.
+matcher_path = base / 'HomeScreenshotMatcher.kt'
+assert matcher_path.is_file()
+matcher = matcher_path.read_text(encoding='utf-8')
+home = (base / 'AdaptiveHomeActivity.kt').read_text(encoding='utf-8')
+manifest_source = manifest.read_text(encoding='utf-8')
+assert 'ACTION_OPEN_DOCUMENT' in home
+assert 'HomeScreenshotMatcher.find' in home
+assert 'HomeScreenshotMatcher.preview' in home
+assert 'auto_home_migration_undo_v1' in home and 'undoLastScreenshotImport' in home
+assert 'applyScreenshotImport(' in home and 'auto_home_auto_arranged_v1' in home
+assert 'offerFirstRunMigration(fresh)' in home
+assert 'deskland_qa_screenshot_matcher_v1' in home
+assert 'syntheticSelfTest' in matcher
+assert 'SystemClock.uptimeMillis() + 12_000L' in matcher
+assert 'INTERNET' not in manifest_source and 'READ_MEDIA_IMAGES' not in manifest_source
+assert 'AccessibilityService' not in manifest_source
+for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'values-pt'):
+    resources = (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').read_text(encoding='utf-8')
+    for key in ('auto_home_import_title', 'auto_home_import_explanation',
+                'auto_home_import_apply', 'auto_home_import_confirm_auto',
+                'auto_home_import_undo'):
+        assert 'name="' + key + '"' in resources, (lang, key)
+print('PASS: v0.5.3 local screenshot migration, explicit preview, atomic undo')
