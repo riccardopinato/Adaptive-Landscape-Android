@@ -179,7 +179,7 @@ assert 'blendCurrentMask' in gpu and 'maskMorphDurationMs' in gpu
 assert 'maskUploadScratch' in gpu and 'glTexSubImage2D' in gpu
 assert 'maskFromHasLand && mixAmount < 1f' in gpu
 assert 'publishHomePositions()' in home
-assert 'isEmpty() || placed.size' in home
+assert 'private fun pinAppToCurrentPage(' in home and 'firstOrNull { freeCell(it) }' in home
 assert (root / 'test/auto_home_zone_contract_test.dart').is_file()
 assert (root / 'docs/PC_TO_MOBILE_BEHAVIOR_PARITY.md').is_file()
 print('PASS: auto Home dual-mask smooth interpolation and drag publisher source gates')
