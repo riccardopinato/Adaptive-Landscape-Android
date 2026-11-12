@@ -439,9 +439,18 @@ class AdaptiveHomeActivity : Activity() {
             }
         }
         // Remaining apps (if more than 120 slots) always remain in the drawer.
-        prefs.edit().putBoolean("auto_home_auto_arranged_v1", true).apply()
-        saveLayout()
+        saveLayout(automaticallyArranged = true)
         renderHomeNextFrame()
+    }
+
+    private var wallpaperOfferAfterFirstImport = false
+
+    private fun completeFirstRunScreenshotFlow() {
+        if (!wallpaperOfferAfterFirstImport) return
+        wallpaperOfferAfterFirstImport = false
+        canvas.post {
+            if (!isFinishing && !isDestroyed) offerWallpaperSetup()
+        }
     }
 
     private fun offerFirstRunMigration(wasFresh: Boolean) {
@@ -455,6 +464,9 @@ class AdaptiveHomeActivity : Activity() {
             .setTitle(R.string.auto_home_import_title)
             .setMessage(R.string.auto_home_import_explanation)
             .setPositiveButton(R.string.auto_home_import_choose) { _, _ ->
+                // Wallpaper consent follows screenshot review, not the file
+                // picker or an in-progress image analysis dialog.
+                wallpaperOfferAfterFirstImport = true
                 openPreviousHomeScreenshotPicker()
             }
             .setNegativeButton(android.R.string.cancel) { _, _ ->
@@ -489,6 +501,7 @@ class AdaptiveHomeActivity : Activity() {
         } catch (_: Exception) {
             Toast.makeText(this, R.string.auto_home_import_unavailable,
                 Toast.LENGTH_LONG).show()
+            completeFirstRunScreenshotFlow()
         }
     }
 
@@ -552,9 +565,11 @@ class AdaptiveHomeActivity : Activity() {
             } catch (_: Exception) {
                 runOnUiThread {
                     progress.dismiss()
-                    if (!isFinishing && !isDestroyed)
+                    if (!isFinishing && !isDestroyed) {
                         Toast.makeText(this, R.string.auto_home_import_unavailable,
                             Toast.LENGTH_LONG).show()
+                        completeFirstRunScreenshotFlow()
+                    }
                 }
             } finally {
                 bitmap?.recycle()
@@ -604,6 +619,7 @@ class AdaptiveHomeActivity : Activity() {
         dialog.setOnDismissListener {
             image.setImageDrawable(null)
             thumbnail.recycle()
+            completeFirstRunScreenshotFlow()
         }
         dialog.show()
         dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.apply {
@@ -639,6 +655,8 @@ class AdaptiveHomeActivity : Activity() {
     ): Int {
         if (targetPage !in 0 until maxPages || matches.isEmpty()) return 0
         val folderMembers = folders.flatMap { it.members }.toHashSet()
+        val replaceAutoSeed = prefs.getBoolean("auto_home_auto_arranged_v1", false) &&
+            folders.isEmpty() && placedWidgets.isEmpty()
         val restricted = folders.filter { it.cell / pageSlots == targetPage }
             .map { it.cell }.toHashSet()
         for (widget in placedWidgets) if (widget.cell / pageSlots == targetPage)
@@ -648,21 +666,35 @@ class AdaptiveHomeActivity : Activity() {
         val occupied = restricted.toHashSet()
         for (match in matches.filter { !it.isDock }.sortedByDescending { it.confidence }) {
             val cell = targetPage * pageSlots + match.destCell
+            val existing = if (replaceAutoSeed) null else
+                placed.firstOrNull { it.cell == cell }
+            // A screenshot is a proposal, never permission to overwrite an
+            // unrelated manually placed icon in the selected page.
             if (match.id in folderMembers || cell in occupied ||
+                (existing != null && existing.id != match.id) ||
                 !used.add(match.id)) continue
             occupied.add(cell)
             accepted.add(PlacedIcon(match.id, cell))
         }
         val newDockMatches = matches.filter { it.isDock && it.id !in folderMembers }
             .sortedBy { it.x }.map { it.id }.distinct().take(dockSlots)
-        if (accepted.isEmpty() && newDockMatches.isEmpty()) return 0
         val acceptedIds = accepted.map { it.id }.toHashSet()
-        val dockAfter = (if (newDockMatches.isEmpty()) dock.toList()
-            else newDockMatches).filterNot { it in acceptedIds }
+        val proposedDock = if (replaceAutoSeed) {
+            if (newDockMatches.isEmpty()) dock.toList() else newDockMatches
+        } else {
+            // A curated dock is never replaced by an approximate screenshot:
+            // append only when free slots remain.
+            (dock + newDockMatches).distinct().take(dockSlots)
+        }
+        val dockAfter = proposedDock.filterNot { it in acceptedIds }
+        if (accepted.isEmpty() && dockAfter == dock) return 0
+        val importedDockCount = dockAfter.count { it !in dock }
         val movedIds = (acceptedIds + dockAfter).toHashSet()
-        val replaceAutoSeed = prefs.getBoolean("auto_home_auto_arranged_v1", false)
+        val importedCells = accepted.map { it.cell }.toHashSet()
+        // Preserve every other curated shortcut, including unrecognized icons
+        // on the selected page, unless the same app was explicitly moved.
         val preserved = placed.filter {
-            !replaceAutoSeed && it.cell / pageSlots != targetPage && it.id !in movedIds
+            !replaceAutoSeed && it.id !in movedIds && it.cell !in importedCells
         }
         val combined = preserved + accepted
         val undo = JSONObject()
@@ -681,7 +713,7 @@ class AdaptiveHomeActivity : Activity() {
             .apply()
         restoreSavedLayout()
         renderHomeNextFrame()
-        return accepted.size + newDockMatches.size
+        return accepted.size + importedDockCount
     }
 
     private fun undoLastScreenshotImport() {
@@ -710,7 +742,7 @@ class AdaptiveHomeActivity : Activity() {
         }
     }
 
-    private fun saveLayout() {
+    private fun saveLayout(automaticallyArranged: Boolean = false) {
         val icons = JSONArray()
         for (item in placed) icons.put(JSONObject()
             .put("id", item.id).put("cell", item.cell))
@@ -723,6 +755,9 @@ class AdaptiveHomeActivity : Activity() {
             .putString("auto_home_icons_v1", icons.toString())
             .putString("auto_home_folders_v1", groups.toString())
             .putString("auto_home_dock_v1", JSONArray(dock).toString())
+            // Any human rearrangement converts an automatic seed into a
+            // curated layout. Keep this marker in the same atomic transaction.
+            .putBoolean("auto_home_auto_arranged_v1", automaticallyArranged)
             .apply()
     }
 
@@ -1216,8 +1251,8 @@ class AdaptiveHomeActivity : Activity() {
         if (requestCode == REQUEST_IMPORT_SCREENSHOT) {
             if (resultCode == RESULT_OK && data?.data != null) {
                 analyzePreviousHomeScreenshot(data.data!!)
-            } else if (!hasAdaptiveWallpaper() && !isFinishing) {
-                offerWallpaperSetup()
+            } else {
+                completeFirstRunScreenshotFlow()
             }
             return
         }
