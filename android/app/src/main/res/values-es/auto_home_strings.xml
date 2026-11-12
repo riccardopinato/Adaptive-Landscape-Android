@@ -58,4 +58,6 @@
     <string name="auto_home_import_confirm">Se sustituyen los accesos directos de esta página y se trasladan las apps coincidentes de otras páginas. Se conservan carpetas y widgets. Puedes deshacer la importación.</string>
     <string name="auto_home_import_applied">%1$d accesos directos importados</string>
     <string name="auto_home_import_undo">Deshacer última importación</string>
+    <string name="auto_home_import_review_auto">Los círculos verdes son posiciones estimadas. La importación sustituirá la distribución automática por las apps reconocidas; las demás seguirán en el cajón.</string>
+    <string name="auto_home_import_confirm_auto">¿Sustituir los accesos automáticos por los reconocidos? Las demás apps seguirán en el cajón. Las carpetas y widgets se conservan. Puedes deshacer.</string>
 </resources>
