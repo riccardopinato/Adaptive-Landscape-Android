@@ -128,7 +128,8 @@ def main():
     # Wallpaper consent is intentionally one-time; never make it a permanent
     # opaque Home banner. The emulator does NOT approve system wallpaper here.
     try:
-        if node_text("Set live wallpaper") or node_text("Select Deskland live wallpaper to enable adaptive sand."):
+        if (node_text("Set live wallpaper") is not None or
+            node_text("Select Deskland live wallpaper to enable adaptive sand.") is not None):
             adb("shell","input","keyevent","KEYCODE_BACK")
             time.sleep(.8)
     except (ValueError,RuntimeError): pass
@@ -151,7 +152,7 @@ def main():
     wait("Home after settings",lambda:foreground_is("AdaptiveHomeActivity"))
     ok("home_key_returns_to_native_launcher")
     gesture_blank("drawer")
-    wait("installed-app drawer opened",lambda:node_text("Apps") or node_text("Search apps"))
+    wait("installed-app drawer opened",lambda:node_text("Apps") is not None or node_text("Search apps") is not None)
     ok("swipe_up_opens_app_drawer")
     adb("shell","input","keyevent","KEYCODE_BACK")
     wait("Home after drawer",lambda:foreground_is("AdaptiveHomeActivity"))
