@@ -167,7 +167,7 @@ assert 'auto_home_icons_v1' in home and 'requestPublish()' in home
 assert 'gridInset' in (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
 for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'values-pt'):
     assert (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').is_file()
-assert '0.5.4+19' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert '0.5.5+20' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
 print('PASS: experimental opt-in native Auto Home source; NOT physical tested')
 
 # Desktop-behavior parity requires a temporal transition, not instantaneous
@@ -253,3 +253,20 @@ assert 'requestFrameQueued.compareAndSet(false, true)' in wallpaper
 assert 'if (settings.scene != "beach") requestFrame()' in wallpaper
 assert 'deskland_qa_home_perf_v1' in home
 print('PASS: v0.5.4 incremental Home views, dynamic gesture budget, paced wallpaper')
+
+# v0.5.5: device-local Home frame pacing evidence and adaptive GPU budget.
+monitor = (base / 'HomeFrameMonitor.kt').read_text(encoding='utf-8')
+home = (base / 'AdaptiveHomeActivity.kt').read_text(encoding='utf-8')
+wallpaper = (base / 'AdaptiveWallpaperService.kt').read_text(encoding='utf-8')
+gpu = (base / 'GpuOceanRenderer.kt').read_text(encoding='utf-8')
+assert 'Choreographer.FrameCallback' in monitor
+assert 'HomeFrameMonitor.syntheticSelfTest()' in home
+assert 'frameMonitor.start(' in home and 'frameMonitor.stop().toJson()' in home
+assert 'auto_home_perf_last_session_v1' in home
+assert 'if (!catalogLoaded || !callbackRegistered)' in home
+assert 'auto_home_jank_budget_until_v1' in home and 'auto_home_jank_budget_until_v1' in wallpaper
+assert 'underPressure -> maxOf(100L, target)' in wallpaper
+assert 'if (fresh == settings) return' in wallpaper
+assert 'previous.occupied == state.occupied' in gpu and 'previous.zones == state.zones' in gpu
+assert (root / 'scripts/deskland_home_perf_capture.ps1').is_file()
+print('PASS: v0.5.5 local Home timing, cached warm resume and adaptive GPU frame budget')
