@@ -1,11 +1,15 @@
 name: Deskland M1 frozen APK emulator smoke
 on:
   pull_request:
-    branches: [feat/deskland-android-widget-host-v049]
+    branches: [feat/deskland-android-widget-host-v049, qa/deskland-m1-emulator-source-frozen]
     paths:
       - .github/workflows/deskland-m1-emulator.yml
       - scripts/deskland_m1_emulator.py
       - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveHomeActivity.kt
+      - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveWallpaperService.kt
+      - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/GpuOceanRenderer.kt
+      - scripts/validate_repository.py
+      - pubspec.yaml
       - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/MainActivity.kt
       - android/app/src/main/AndroidManifest.xml
       - docs/DESKLAND_M1_EXECUTION.md
@@ -29,6 +33,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - name: Validate native renderer and privacy contracts
+        run: python3 scripts/validate_repository.py
       - name: Set up Flutter for this source SHA
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
