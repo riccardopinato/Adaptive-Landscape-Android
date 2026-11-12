@@ -60,4 +60,6 @@
     <string name="auto_home_import_undo">Undo last screenshot import</string>
     <string name="auto_home_import_review_auto">The green circles are estimated icon locations. Applying the import will replace the alphabetical auto-arrangement with the recognized shortcuts. Unrecognized apps remain accessible in the drawer.</string>
     <string name="auto_home_import_confirm_auto">Replace the automatically arranged Deskland shortcuts with the matches from this screenshot? The remaining installed apps stay in the drawer. Existing folders and widgets are preserved. You can undo the import.</string>
+    <string name="auto_home_xiaomi_gestures">Xiaomi gestures: keep system Home</string>
+    <string name="auto_home_xiaomi_gestures_help">HyperOS may force navigation buttons when Deskland is your default Home. For native Back, Home and Recents gestures, set Deskland as the live wallpaper, choose the original Xiaomi Home as your default launcher, then choose Gestures under Xiaomi system navigation settings. Deskland cannot read Xiaomi icon locations in this mode. Nothing is switched automatically.</string>
 </resources>

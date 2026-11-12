@@ -60,4 +60,6 @@
     <string name="auto_home_import_undo">Letzten Import rückgängig machen</string>
     <string name="auto_home_import_review_auto">Grüne Kreise zeigen geschätzte Positionen. Beim Import werden die automatisch angeordneten Apps durch erkannte Verknüpfungen ersetzt; alle anderen bleiben im App-Drawer.</string>
     <string name="auto_home_import_confirm_auto">Automatische Deskland-Verknüpfungen durch erkannte Apps ersetzen? Alle anderen Apps bleiben im Drawer, Ordner und Widgets bleiben erhalten. Der Import ist rückgängig zu machen.</string>
+    <string name="auto_home_xiaomi_gestures">Xiaomi-Gesten: System-Launcher beibehalten</string>
+    <string name="auto_home_xiaomi_gestures_help">HyperOS kann bei Deskland als Standard-Launcher drei Tasten erzwingen. Für native Systemgesten Deskland als Live-Hintergrund einstellen, Xiaomi Home als Launcher wählen und in den Xiaomi-Navigationseinstellungen Gesten aktivieren. Deskland kann in diesem Modus keine Xiaomi-Iconpositionen lesen. Es werden keine Einstellungen automatisch geändert.</string>
 </resources>

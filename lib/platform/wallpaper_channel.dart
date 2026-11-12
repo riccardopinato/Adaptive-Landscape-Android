@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 class WallpaperConfig {
   const WallpaperConfig({this.scene = 'meadow', this.occupied = '', this.configJson, this.nativeBackend, this.oceanPhotoEnabled = false,
     this.desklandHomeSelected = false, this.desklandWallpaperSelected = false,
+    this.xiaomiGestureRestrictionPossible = false,
     this.autoHomeActive = false, this.autoHomeZones = 0, this.autoHomeRevision = 0,
     this.renderSource = 'not_rendered', this.renderZones = 0, this.renderRevision = -1});
   final String scene;
@@ -13,6 +14,7 @@ class WallpaperConfig {
   final bool oceanPhotoEnabled;
   final bool desklandHomeSelected;
   final bool desklandWallpaperSelected;
+  final bool xiaomiGestureRestrictionPossible;
   final bool autoHomeActive;
   final int autoHomeZones;
   final int autoHomeRevision;
@@ -35,6 +37,7 @@ class WallpaperChannel {
       nativeBackend: data?['backend'] is String ? data!['backend'] as String : null,
       oceanPhotoEnabled: data?['oceanPhoto'] == true,
       desklandHomeSelected: data?['desklandHomeSelected'] == true,
+      xiaomiGestureRestrictionPossible: data?['xiaomiGestureRestrictionPossible'] == true,
       desklandWallpaperSelected: data?['desklandWallpaperSelected'] == true,
       autoHomeActive: data?['autoHomeActive'] == true,
       autoHomeZones: data?['autoHomeZones'] is int ? data!['autoHomeZones'] as int : 0,
@@ -82,6 +85,20 @@ class WallpaperChannel {
   Future<void> openAdaptiveHome() async {
     if (!supported) return;
     await _channel.invokeMethod<void>('openAdaptiveHome');
+  }
+
+  /// Opens system default-app selection. Never silently changes Home.
+  Future<void> openSystemHomeSettings() async {
+    if (!supported) return;
+    await _channel.invokeMethod<void>('openSystemHomeSettings');
+  }
+
+  /// Xiaomi-specific navigation-mode settings, if available; falls back
+  /// to general Android settings. Returns true only for the direct page.
+  /// Does NOT change the OS gesture mode or grant privileges.
+  Future<bool> openSystemNavigationSettings() async {
+    if (!supported) return false;
+    return await _channel.invokeMethod<bool>('openSystemNavigationSettings') ?? false;
   }
 
   Future<void> openLiveWallpaperPicker() async {

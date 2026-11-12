@@ -167,7 +167,7 @@ assert 'auto_home_icons_v1' in home and 'requestPublish()' in home
 assert 'gridInset' in (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
 for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'values-pt'):
     assert (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').is_file()
-assert '0.5.5+20' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert '0.5.6+21' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
 print('PASS: experimental opt-in native Auto Home source; NOT physical tested')
 
 # Desktop-behavior parity requires a temporal transition, not instantaneous
@@ -270,3 +270,32 @@ assert 'if (fresh == settings) return' in wallpaper
 assert 'previous.occupied == state.occupied' in gpu and 'previous.zones == state.zones' in gpu
 assert (root / 'scripts/deskland_home_perf_capture.ps1').is_file()
 print('PASS: v0.5.5 local Home timing, cached warm resume and adaptive GPU frame budget')
+
+# v0.5.6: opt-in Xiaomi stock Home + Deskland wallpaper path preserves
+# real OEM system gestures when HyperOS disallows gesture nav in third-party
+# launchers. Normal Android APIs cannot force system navigation mode.
+compat = (base / 'GestureCompatibility.kt').read_text(encoding='utf-8')
+editor = (root / 'lib/main.dart').read_text(encoding='utf-8')
+bridge = (base / 'MainActivity.kt').read_text(encoding='utf-8')
+channel = (root / 'lib/platform/wallpaper_channel.dart').read_text(encoding='utf-8')
+home = (base / 'AdaptiveHomeActivity.kt').read_text(encoding='utf-8')
+assert 'fun hasXiaomiGestureRisk()' in compat
+assert 'syntheticSelfTest()' in compat
+assert 'xiaomiGestureRestrictionPossible' in bridge and 'xiaomiGestureRestrictionPossible' in channel
+for method in ('openSystemHomeSettings', 'openSystemNavigationSettings'):
+    assert '"' + method + '"' in bridge and method in channel and method in editor
+assert 'Settings.ACTION_HOME_SETTINGS' in bridge
+assert 'GestureCompatibility.XIAOMI_NAVIGATION_SETTINGS' in bridge
+assert 'Settings.ACTION_SETTINGS' in bridge
+assert 'xiaomiGesturesWarningTitle' in editor and 'xiaomiGesturesWarningBody' in editor
+assert 'al-xiaomi-native-gestures' in editor
+assert 'deskland_qa_gesture_compat_v1' in home
+for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'values-pt'):
+    xml = (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').read_text(encoding='utf-8')
+    assert 'name="auto_home_xiaomi_gestures"' in xml
+    assert 'name="auto_home_xiaomi_gestures_help"' in xml
+assert 'android.permission.WRITE_SECURE_SETTINGS' not in manifest_source
+assert 'android.permission.BIND_ACCESSIBILITY_SERVICE' not in manifest_source
+assert 'android.permission.SYSTEM_ALERT_WINDOW' not in manifest_source
+assert 'com.android.internal.systemui.navbar.gestural' not in bridge
+print('PASS: v0.5.6 safe HyperOS stock-Home native-gesture compatibility and informed opt-in')

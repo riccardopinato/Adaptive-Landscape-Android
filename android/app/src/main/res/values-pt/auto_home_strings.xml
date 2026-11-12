@@ -60,4 +60,6 @@
     <string name="auto_home_import_undo">Desfazer última importação</string>
     <string name="auto_home_import_review_auto">Os círculos verdes indicam posições estimadas. A importação substitui a disposição automática pelos atalhos reconhecidos; as outras aplicações ficam na lista.</string>
     <string name="auto_home_import_confirm_auto">Substituir os atalhos automáticos pelos identificados na imagem? As outras aplicações permanecem na lista, pastas e widgets ficam intactos. Podes desfazer.</string>
+    <string name="auto_home_xiaomi_gestures">Gestos Xiaomi: manter launcher do sistema</string>
+    <string name="auto_home_xiaomi_gestures_help">HyperOS pode impor três botões quando Deskland é o launcher padrão. Para manter os gestos nativos, configure Deskland como papel de parede animado, escolha Xiaomi Home como launcher e ative Gestos nas definições de navegação Xiaomi. Deskland não consegue ler as posições dos ícones Xiaomi neste modo. Nada é alterado automaticamente.</string>
 </resources>

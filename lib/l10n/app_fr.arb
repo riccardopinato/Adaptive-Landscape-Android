@@ -99,5 +99,17 @@
   "autoHomeStatusDataReady": "Positions reçues par le moteur graphique",
   "autoHomeStatusDisclaimer": "Cela confirme les données, pas les pixels de sable. Les dossiers ne sont pas encore pris en charge.",
   "autoHomeStatusRefresh": "Actualiser le diagnostic",
-  "autoHomeStatusOpenHome": "Ouvrir l'accueil Deskland"
+  "autoHomeStatusOpenHome": "Ouvrir l'accueil Deskland",
+  "xiaomiGesturesTitle": "Xiaomi/HyperOS : conserver les gestes",
+  "xiaomiGesturesExplanation": "Certaines versions de HyperOS imposent trois boutons si Deskland devient le lanceur par défaut. Une application ordinaire ne peut pas réactiver les gestes Xiaomi. Pour conserver les véritables gestes Retour, Accueil et Récents, choisissez Xiaomi Home comme lanceur et Deskland comme fond animé. Dans Xiaomi Home, le sable ne peut pas suivre automatiquement les icônes : utilisez le calibrage manuel.",
+  "xiaomiGesturesModeDeskland": "Accueil actuel : Deskland. Xiaomi peut afficher les boutons de navigation.",
+  "xiaomiGesturesModeOther": "Accueil actuel : autre lanceur. Choisissez Xiaomi Home pour conserver les gestes.",
+  "xiaomiGesturesStepWallpaper": "1. Définir le fond animé Deskland",
+  "xiaomiGesturesStepHome": "2. Choisir Xiaomi Home dans les paramètres",
+  "xiaomiGesturesStepNavigation": "3. Activer les gestes système",
+  "xiaomiGesturesSettingsFallback": "Page directe indisponible. Dans Xiaomi : Paramètres > Écran d’accueil > Navigation système > Gestes.",
+  "xiaomiGesturesWarningTitle": "Xiaomi peut désactiver les gestes système",
+  "xiaomiGesturesWarningBody": "Choisir Deskland comme accueil par défaut peut imposer trois boutons sous HyperOS. Deskland ne peut pas contourner cette restriction. Pour conserver les gestes, utilisez Xiaomi Home et le fond Deskland. Continuer ?",
+  "xiaomiGesturesContinue": "Utiliser Deskland Home malgré tout",
+  "xiaomiGesturesNote": "Ces commandes ouvrent uniquement les paramètres Android. Aucun changement automatique ni suppression de disposition."
 }

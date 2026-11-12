@@ -99,5 +99,17 @@
   "autoHomeStatusDataReady": "Posiciones recibidas por el renderizador",
   "autoHomeStatusDisclaimer": "Solo confirma el intercambio de datos, no que se vea arena. Las carpetas aún no funcionan.",
   "autoHomeStatusRefresh": "Actualizar diagnóstico",
-  "autoHomeStatusOpenHome": "Abrir inicio de Deskland"
+  "autoHomeStatusOpenHome": "Abrir inicio de Deskland",
+  "xiaomiGesturesTitle": "Xiaomi/HyperOS: conserva los gestos",
+  "xiaomiGesturesExplanation": "Algunas versiones de HyperOS muestran tres botones si Deskland es el inicio predeterminado. Un lanzador normal no puede reactivar los gestos Xiaomi. Para conservar los gestos reales de Atrás, Inicio y Recientes, usa Xiaomi Home como lanzador y Deskland como fondo animado. Con Xiaomi Home, la arena no puede seguir automáticamente los iconos: usa la calibración manual.",
+  "xiaomiGesturesModeDeskland": "Inicio actual: Deskland. Xiaomi podría estar usando botones de navegación.",
+  "xiaomiGesturesModeOther": "Inicio actual: otro lanzador. Elige el Xiaomi Home original para conservar los gestos.",
+  "xiaomiGesturesStepWallpaper": "1. Configurar fondo animado Deskland",
+  "xiaomiGesturesStepHome": "2. Elegir Xiaomi Home en ajustes",
+  "xiaomiGesturesStepNavigation": "3. Activar gestos del sistema",
+  "xiaomiGesturesSettingsFallback": "No están disponibles los ajustes directos. En Xiaomi ve a Ajustes > Pantalla de inicio > Navegación del sistema > Gestos.",
+  "xiaomiGesturesWarningTitle": "Xiaomi podría desactivar los gestos",
+  "xiaomiGesturesWarningBody": "Al elegir Deskland como inicio, HyperOS puede activar los tres botones. Deskland no puede evitar esta restricción. Para conservar los gestos, usa Xiaomi Home con el fondo Deskland. ¿Continuar?",
+  "xiaomiGesturesContinue": "Usar Deskland Home igualmente",
+  "xiaomiGesturesNote": "Los botones solo abren ajustes de Android. No hay cambios automáticos ni borrado de diseños."
 }

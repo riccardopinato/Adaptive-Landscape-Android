@@ -99,5 +99,17 @@
   "autoHomeStatusDataReady": "Posizioni ricevute dal renderer",
   "autoHomeStatusDisclaimer": "Questo stato conferma lo scambio dati, non la presenza visiva della sabbia. Le cartelle non sono ancora supportate.",
   "autoHomeStatusRefresh": "Aggiorna diagnosi",
-  "autoHomeStatusOpenHome": "Apri la Home Deskland"
+  "autoHomeStatusOpenHome": "Apri la Home Deskland",
+  "xiaomiGesturesTitle": "Xiaomi/HyperOS: mantieni le gesture",
+  "xiaomiGesturesExplanation": "Alcune versioni di HyperOS attivano i tre pulsanti quando Deskland diventa la Home predefinita. Un normale launcher non può riattivare le gesture Xiaomi. Per mantenere i gesti di sistema Indietro, Home e Recenti, scegli Xiaomi Home come launcher predefinito e usa Deskland come sfondo animato. Con Xiaomi Home la sabbia non può seguire automaticamente le icone: usa la calibrazione manuale.",
+  "xiaomiGesturesModeDeskland": "Home attuale: Deskland. Xiaomi potrebbe aver attivato i pulsanti di navigazione.",
+  "xiaomiGesturesModeOther": "Home attuale: un altro launcher. Seleziona Xiaomi Home originale per mantenere le gesture di sistema.",
+  "xiaomiGesturesStepWallpaper": "1. Imposta lo sfondo animato Deskland",
+  "xiaomiGesturesStepHome": "2. Seleziona Xiaomi Home nelle impostazioni",
+  "xiaomiGesturesStepNavigation": "3. Attiva le gesture di sistema",
+  "xiaomiGesturesSettingsFallback": "Impostazioni di navigazione dirette non disponibili. Su Xiaomi vai in Impostazioni > Schermata Home > Navigazione di sistema > Gesti.",
+  "xiaomiGesturesWarningTitle": "Xiaomi potrebbe disattivare le gesture di sistema",
+  "xiaomiGesturesWarningBody": "Impostare Deskland come Home predefinita può forzare i tre pulsanti su HyperOS. Deskland non può aggirare questa limitazione di sistema. Puoi mantenere le gesture usando Xiaomi Home con lo sfondo Deskland. Vuoi continuare comunque?",
+  "xiaomiGesturesContinue": "Usa comunque la Home Deskland",
+  "xiaomiGesturesNote": "Questi pulsanti aprono soltanto le impostazioni Android. Nessuna modifica automatica e nessuna perdita dei layout Deskland salvati."
 }

@@ -197,6 +197,15 @@ def main():
          pref().get("auto_home_frame_monitor_qa_v1")=="PASS")
     ok("home_frame_monitor_synthetic",
        "Choreographer pacing thresholds, catalog initialized, UI present")
+    adb("shell","am","start","-n",PKG+
+        "/it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity",
+        "--ez","deskland_qa_gesture_compat_v1","true")
+    wait("Xiaomi system gesture compatibility pure fixture",lambda:
+         pref().get("auto_home_gesture_compat_qa_v1")=="PASS")
+    assert PKG in adb("shell","cmd","role","get-role-holders",ROLE), (
+        "Gesture guidance must not silently switch the default HOME")
+    ok("xiaomi_gesture_compatibility",
+       "vendor detection, no privileged mode changes, Home role preserved")
 
     wait("visible installed app icons",lambda:(v if len(v:=icon_nodes())>=2 else None))
     assert not any(node_text(x) is not None for x in

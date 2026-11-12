@@ -241,3 +241,30 @@ Do not treat the above TODOs as implemented.
 - [NOT IMPLEMENTED] Exact OEM Home coordinate read, OEM backup parser or Nova
   .novabackup adapter; no unsupported private access or AccessibilityService.
 - [DO NOT MERGE] Until CI and physical UX gate; APK stays experimental.
+
+
+## v0.5.6 — Xiaomi/HyperOS native system gestures compatibility (P0)
+
+- [USER PHYSICAL FAIL] Setting Deskland Home as the Xiaomi default launcher forces
+  three-button navigation instead of the user's native full-screen gestures.
+  This behavior is consistent with HyperOS restrictions on third-party launchers;
+  it must not be misrepresented as a problem solved by toggling an Android flag.
+- [CODED — PR #38] Xiaomi-family identification; explicit warning before
+  requesting the HOME role; stock Xiaomi Home + Deskland live wallpaper path;
+  guided links to system wallpaper, default Home, and navigation-mode settings
+  with fallback; native Home menu help; 6 Flutter + native locales.
+- [NO NEW PRIVILEGES] No accessibility global-gesture interception, root,
+  LSPosed, overlay hiding, Shizuku, silent system-setting changes, or reading
+  another launcher's private database. Existing Deskland layouts remain intact.
+- [TRADE-OFF] With Xiaomi Home selected, full gestures depend on OEM settings
+  and Deskland works as a regular live wallpaper; the sand mask requires manual
+  calibration because only Deskland's own launcher can track real app views.
+- [CI GATE] Exact PR head build and Android emulator are necessary to validate
+  runtime/feature wiring; they cannot establish HyperOS physical compatibility.
+- [PHYSICAL GATE OPEN] Test native Back/Home/Recents on real Xiaomi/HyperOS
+  *after* manual re-selection of Xiaomi Home and manual reactivation of Gestures.
+  Compare launcher role switching, wallpaper, icon/manual profiles and safe
+  cancellation, plus signed update compatibility.
+- [DO NOT MERGE] PR #38 remains Draft until OEM navigation test and user
+  approval; previous PR #37 and parent chain remain in Draft.
+  See `docs/DESKLAND_HYPEROS_GESTURES_V056.md`.

@@ -143,6 +143,10 @@ class MainActivity : FlutterActivity() {
                         "backend" to prefs.getString("render_backend_v1", "not_started"),
                         "oceanPhoto" to OceanPhotoStore.exists(this),
                         "desklandHomeSelected" to isDesklandHomeSelected(),
+                        // This is an OEM compatibility warning, not a claim that
+                        // the active navigation mode can be read or changed.
+                        "xiaomiGestureRestrictionPossible" to
+                            GestureCompatibility.hasXiaomiGestureRisk(),
                         "desklandWallpaperSelected" to isDesklandWallpaperSelected(),
                         "autoHomeActive" to prefs.getBoolean("auto_home_active_v1", false),
                         "autoHomeZones" to runCatching {
@@ -251,6 +255,35 @@ class MainActivity : FlutterActivity() {
                         } catch (error: Exception) {
                             autoHomeResult = null
                             result.error("HOME_ROLE_FAILED", error.message, null)
+                        }
+                    }
+                    "openSystemHomeSettings" -> {
+                        try {
+                            // Only Android system Settings can choose a default HOME.
+                            startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
+                            result.success(null)
+                        } catch (error: Exception) {
+                            result.error("HOME_SETTINGS_UNAVAILABLE", error.message, null)
+                        }
+                    }
+                    "openSystemNavigationSettings" -> {
+                        try {
+                            // OEM-specific, OPTIONAL shortcut to Xiaomi's screen.
+                            // It does not enable gestures or alter any setting.
+                            val direct = try {
+                                startActivity(Intent(
+                                    GestureCompatibility.XIAOMI_NAVIGATION_SETTINGS))
+                                true
+                            } catch (_: android.content.ActivityNotFoundException) {
+                                startActivity(Intent(Settings.ACTION_SETTINGS))
+                                false
+                            } catch (_: SecurityException) {
+                                startActivity(Intent(Settings.ACTION_SETTINGS))
+                                false
+                            }
+                            result.success(direct)
+                        } catch (error: Exception) {
+                            result.error("NAVIGATION_SETTINGS_UNAVAILABLE", error.message, null)
                         }
                     }
                     "openPicker" -> {
