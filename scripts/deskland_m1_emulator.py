@@ -141,7 +141,8 @@ def main():
         try:
             page=nodes()
             dialog_texts={n.get("text") for n in page if n.get("text")}
-            if "Set live wallpaper" in dialog_texts or (
+            if ("Import previous Home screenshot" in dialog_texts or
+                "Set live wallpaper" in dialog_texts or
                 "Select Deskland live wallpaper to enable adaptive sand." in dialog_texts):
                 cancel=next((n for n in page if n.get("text")=="Cancel"),None)
                 if cancel is not None:
@@ -156,6 +157,13 @@ def main():
     wait("automatic app layout persisted",lambda:len(saved_icons())>=2)
     initial=saved_icons()
     assert len(initial)<=120 and len({x["id"] for x in initial})==len(initial)
+    adb("shell","am","start","-n",PKG+
+        "/it.riccardopinato.adaptivelandscape.AdaptiveHomeActivity",
+        "--ez","deskland_qa_screenshot_matcher_v1","true")
+    wait("native synthetic icon-matching fixture",lambda:
+         pref().get("auto_home_screenshot_qa_v1")=="PASS")
+    ok("offline_screenshot_icon_matching","synthetic in-RAM icon artwork")
+
     wait("visible installed app icons",lambda:(v if len(v:=icon_nodes())>=2 else None))
     assert not any(node_text(x) is not None for x in
         ("Add app","Remove app","Change Home launcher","Adaptive Home","Page 1/3")), (
