@@ -39,6 +39,11 @@ internal class GpuOceanRenderer {
     // shape morphing when the user moves, adds or removes an icon.
     private val maskWidth = 160
     private val maskHeight = 320
+    // One reusable direct transfer buffer for the two fixed-size 2D masks.
+    // Never allocate a new direct buffer and storage object on each drag.
+    private val maskUploadScratch: ByteBuffer =
+        ByteBuffer.allocateDirect(maskWidth * maskHeight * 4)
+            .order(ByteOrder.nativeOrder())
     private var maskFrom: ByteArray? = null
     private var maskTo: ByteArray? = null
     private var maskFromHasLand = false
@@ -295,6 +300,10 @@ internal class GpuOceanRenderer {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+            // Allocate GLES2 texture storage once per context, then update in
+            // place via glTexSubImage2D instead of reallocating every drag.
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
+                maskWidth, maskHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null)
             GLES20.glGenTextures(1, texture, 0)
             maskPreviousTexture = texture[0]
             GLES20.glActiveTexture(GLES20.GL_TEXTURE2)
@@ -303,6 +312,10 @@ internal class GpuOceanRenderer {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+            // Allocate GLES2 texture storage once per context, then update in
+            // place via glTexSubImage2D instead of reallocating every drag.
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
+                maskWidth, maskHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null)
             GLES20.glGenTextures(1, texture, 0)
             photoTexture = texture[0]
             GLES20.glActiveTexture(GLES20.GL_TEXTURE1)
@@ -453,13 +466,15 @@ internal class GpuOceanRenderer {
     private fun uploadMaskTexture(textureId: Int, unit: Int, bytes: ByteArray) {
         GLES20.glActiveTexture(unit)
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
-        val buffer = ByteBuffer.allocateDirect(bytes.size)
-            .order(ByteOrder.nativeOrder())
-        buffer.put(bytes)
-        buffer.position(0)
-        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA,
-            maskWidth, maskHeight, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,
-            buffer)
+        require(bytes.size == maskWidth * maskHeight * 4) {
+            "Invalid occupancy texture buffer"
+        }
+        maskUploadScratch.clear()
+        maskUploadScratch.put(bytes)
+        maskUploadScratch.position(0)
+        GLES20.glTexSubImage2D(GLES20.GL_TEXTURE_2D, 0, 0, 0,
+            maskWidth, maskHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE,
+            maskUploadScratch)
     }
 
     private fun uploadMask(state: WallpaperState) {

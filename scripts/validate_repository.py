@@ -78,9 +78,10 @@ assert 'al-import-ocean-photo' in dart and 'al-ocean-photo-status' in dart
 version_line = next((line.strip() for line in
     (root / 'pubspec.yaml').read_text(encoding='utf-8').splitlines()
     if line.startswith('version:')), '')
-assert version_line.startswith('version: 0.4.')
+assert version_line.startswith(('version: 0.4.', 'version: 0.5.'))
 parts = version_line.split(':', 1)[1].strip().split('+')
-assert len(parts) == 2 and int(parts[0].split('.')[2]) >= 2 and int(parts[1]) >= 9
+release = tuple(int(part) for part in parts[0].split('.'))
+assert len(parts) == 2 and release >= (0, 4, 2) and int(parts[1]) >= 9
 print('PASS: v0.4.2 local photo import, metadata stripping, GPU texture and UI contract')
 
 # v0.4.3: photo preview uses local image sampler and is explicitly ephemeral.
@@ -92,7 +93,7 @@ assert 'uniform float uUsePhoto;' in frag and 'uPhotoAspect' in frag
 assert 'setImageSampler(2, photograph ?? _toneAtlas!' in web
 assert 'FilePicker.pickFile(type: FileType.image)' in editor
 assert 'al-web-before-after' in editor and '_clearWebOceanPhoto' in editor
-assert int(parts[0].split('.')[2]) >= 3 and int(parts[1]) >= 10
+assert release >= (0, 4, 3) and int(parts[1]) >= 10
 print('PASS: v0.4.3 local Web photographic preview and comparison source contract')
 
 # v0.4.4: optical tuning is optional in schema2 and bound on native/Web.
@@ -114,7 +115,7 @@ assert 'gridInset' in cfg and 'gridInset' in native_state
 assert 'field.gridInset' in mask and 'gridInset' in field
 assert 'InteractiveViewer(' in editor and 'al-precision-calibration' in editor
 assert 'al-calibrate-top' in editor and 'al-calibrate-side' in editor
-assert int(parts[0].split('.')[2]) >= 5 and int(parts[1]) >= 12
+assert release >= (0, 4, 5) and int(parts[1]) >= 12
 print('PASS: v0.4.5 normalized Home insets and manual zoom calibration')
 
 # v0.4.6: native photo path skips procedural shading, quality controls image memory and pacing.
@@ -126,7 +127,7 @@ assert 'quality.hashCode().toLong()' in gpu
 assert '"balanced" -> 83L' in engine and '"high" -> 63L' in engine
 assert 'maxOf(125L, target)' in engine
 assert '_framesPerPreviewCycle' in (root / 'lib/main.dart').read_text(encoding='utf-8')
-assert int(parts[0].split('.')[2]) >= 6 and int(parts[1]) >= 13
+assert release >= (0, 4, 6) and int(parts[1]) >= 13
 print('PASS: v0.4.6 photo fast path, tiered GPU texture budget and pacing targets')
 
 # Prephysical QA handoff: source capture is never a physical PASS.
@@ -166,7 +167,7 @@ assert 'auto_home_icons_v1' in home and 'requestPublish()' in home
 assert 'gridInset' in (root / 'lib/core/landscape_config.dart').read_text(encoding='utf-8')
 for lang in ('values', 'values-it', 'values-es', 'values-fr', 'values-de', 'values-pt'):
     assert (root / 'android/app/src/main/res' / lang / 'auto_home_strings.xml').is_file()
-assert '0.4.7+14' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
+assert '0.5.1+16' in (root / 'pubspec.yaml').read_text(encoding='utf-8')
 print('PASS: experimental opt-in native Auto Home source; NOT physical tested')
 
 # Desktop-behavior parity requires a temporal transition, not instantaneous
@@ -175,10 +176,24 @@ gpu = (base / 'GpuOceanRenderer.kt').read_text(encoding='utf-8')
 home = (base / 'AdaptiveHomeActivity.kt').read_text(encoding='utf-8')
 assert 'uMaskPrevious' in gpu and 'uMaskMix' in gpu
 assert 'blendCurrentMask' in gpu and 'maskMorphDurationMs' in gpu
-assert 'ByteBuffer.allocateDirect(bytes.size)' in gpu
+assert 'maskUploadScratch' in gpu and 'glTexSubImage2D' in gpu
 assert 'maskFromHasLand && mixAmount < 1f' in gpu
 assert 'publishHomePositions()' in home
-assert 'isEmpty() || placed.size' in home
+assert 'private fun pinAppToCurrentPage(' in home and 'firstOrNull { freeCell(it) }' in home
 assert (root / 'test/auto_home_zone_contract_test.dart').is_file()
 assert (root / 'docs/PC_TO_MOBILE_BEHAVIOR_PARITY.md').is_file()
 print('PASS: auto Home dual-mask smooth interpolation and drag publisher source gates')
+
+# v0.5.1 P0: wallpaper engine callbacks must never do GLES/Canvas render
+# on Android's main thread. Shader upload must reuse fixed image storage.
+engine = (base / 'AdaptiveWallpaperService.kt').read_text(encoding='utf-8')
+gpu = (base / 'GpuOceanRenderer.kt').read_text(encoding='utf-8')
+assert 'HandlerThread(' in engine and 'renderHandler.post(frame)' in engine
+assert 'renderThread.quitSafely()' in engine
+assert 'private fun drawFrame()' in engine
+assert 'if (visible) drawFrame()' not in engine, 'Do not render in UI Engine callbacks'
+assert 'renderHandler.post { gpuOcean.resetSurface() }' in engine
+assert 'GLES20.glTexSubImage2D' in gpu
+assert 'maskUploadScratch.clear()' in gpu
+assert 'ByteBuffer.allocateDirect(bytes.size)' not in gpu
+print('PASS: v0.5.1 serialized wallpaper renderer thread and reusable coast GPU storage')
