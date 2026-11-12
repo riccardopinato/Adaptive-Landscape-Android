@@ -1,13 +1,17 @@
 name: Deskland M1 optimized ARM64 APK (internal QA)
 on:
   pull_request:
-    branches: [feat/deskland-android-widget-host-v049]
+    branches: [feat/deskland-android-widget-host-v049, qa/deskland-m1-emulator-source-frozen]
     paths:
       - .github/workflows/deskland-m1-arm64-release.yml
       - android/app/src/main/AndroidManifest.xml
       - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/MainActivity.kt
       - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveWallpaperService.kt
       - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveHomeActivity.kt
+      - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/AdaptiveWallpaperService.kt
+      - android/app/src/main/kotlin/it/riccardopinato/adaptivelandscape/GpuOceanRenderer.kt
+      - scripts/validate_repository.py
+      - pubspec.yaml
       - lib/main.dart
       - lib/platform/wallpaper_channel.dart
       - lib/l10n/*.arb
@@ -28,6 +32,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - name: Validate native renderer and privacy contracts
+        run: python3 scripts/validate_repository.py
       - name: Select Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
         with:
