@@ -202,7 +202,7 @@ print('PASS: v0.5.1 serialized wallpaper renderer thread and reusable coast GPU 
 # First-run placement is local-only and never claims OEM position access.
 home = (base / 'AdaptiveHomeActivity.kt').read_text(encoding='utf-8')
 assert 'showHomeMenu()' in home and 'showAppDrawer()' in home
-assert 'GestureDetector(' in home and 'onLongPress(e: MotionEvent)' in home
+assert 'showMenuAfterHold = Runnable' in home and 'handler.postDelayed(showMenuAfterHold' in home
 assert 'fillHomeFromInstalledApps(onlyIfEmpty = true)' in home
 assert 'auto_home_auto_arranged_v1' in home
 assert 'renderPageDots()' in home and 'renderChrome()' not in home
