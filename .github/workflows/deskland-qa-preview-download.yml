@@ -1,0 +1,74 @@
+name: Deskland verified QA preview - direct public APK
+on:
+  push:
+    branches:
+      - feat/deskland-clean-home-bootstrap-v052
+    paths:
+      - .github/workflows/deskland-qa-preview-download.yml
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: deskland-qa-preview-052
+  cancel-in-progress: false
+jobs:
+  publish-verified-preview:
+    if: github.repository == 'riccardopinato/Adaptive-Landscape-Android'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: riccardopinato/Adaptive-Landscape-Android
+      SOURCE_SHA: 65efd5e2ac2723bbd86b08d1c1c547a95e6233ef
+      EMULATOR_RUN: '43140555216'
+      ARM64_RUN: '43140555355'
+      EXPECTED_SHA256: c13bbbfc3a25157cbde34a231358e6b3abb81e391c157809c1543379d668b0ce
+      RELEASE_TAG: deskland-v0.5.2-pr34-emulator-pass
+      PUBLIC_APK: Deskland-v0.5.2-ARM64-EXPERIMENTAL.apk
+    steps:
+      - name: Require green emulator and ARM64 workflows for the same frozen source SHA
+        run: |
+          set -euo pipefail
+          for ID in "$EMULATOR_RUN" "$ARM64_RUN"; do
+            RESULT="$(gh api "repos/$REPO/actions/runs/$ID" --jq '[.conclusion,.head_sha,.event] | join(" ")')"
+            echo "Verified run $ID: $RESULT"
+            test "$RESULT" = "success $SOURCE_SHA pull_request"
+          done
+      - name: Download EXACT verified APK artifact, not a rebuild or chat attachment
+        run: |
+          set -euo pipefail
+          mkdir -p verified
+          gh run download "$ARM64_RUN" --repo "$REPO" --name Deskland-M1-ARM64-optimized-APK-NOT-PLAY-SIGNED --dir verified
+          test -s verified/app-release.apk
+          printf '%s  %s\n' "$EXPECTED_SHA256" verified/app-release.apk | sha256sum --check
+          mv verified/app-release.apk "$PUBLIC_APK"
+          file "$PUBLIC_APK"
+      - name: Publish clearly labeled public experimental pre-release
+        run: |
+          set -euo pipefail
+          NOTES="$(cat <<'EOF'
+          EXPERIMENTAL ANDROID LAUNCHER — NOT READY FOR USE AS DAILY HOME.
+          Source: PR #34 exact commit 65efd5e2ac2723bbd86b08d1c1c547a95e6233ef.
+          Android 35 emulator smoke: PASS (run 43140555216).
+          ARM64 optimized APK verification: PASS (run 43140555355).
+          Expected APK SHA256: c13bbbfc3a25157cbde34a231358e6b3abb81e391c157809c1543379d668b0ce.
+          v0.5.2 build 17; ARM64 only. Internally test-signed, NOT Google Play signed.
+          Exact position import from Xiaomi/Samsung/Pixel Home is NOT available.
+          Physical handset, realistic water appearance, energy use, widget compatibility and
+          seamless upgrades from other signing keys are NOT CERTIFIED.
+          No merge to main; this is a test APK for opt-in testing only.
+          Restore the original Home from Android Settings > Default apps > Home.
+          EOF
+          )"
+          if gh release view "$RELEASE_TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "Preview tag already exists; refuse silent replacement"
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" "$PUBLIC_APK" \
+            --repo "$REPO" \
+            --target "$SOURCE_SHA" \
+            --prerelease \
+            --title "Deskland v0.5.2 Clean Home - emulator PASS (experimental APK)" \
+            --notes "$NOTES"
+          echo "Direct APK: https://github.com/$REPO/releases/download/$RELEASE_TAG/$PUBLIC_APK"
