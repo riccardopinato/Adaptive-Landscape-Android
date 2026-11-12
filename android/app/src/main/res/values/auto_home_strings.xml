@@ -58,4 +58,6 @@
     <string name="auto_home_import_confirm">This replaces the app shortcuts on the selected Deskland page and moves matching shortcuts from other pages. It preserves your existing folders and widgets. Undo is available from the Home menu.</string>
     <string name="auto_home_import_applied">%1$d shortcuts imported</string>
     <string name="auto_home_import_undo">Undo last screenshot import</string>
+    <string name="auto_home_import_review_auto">The green circles are estimated icon locations. Applying the import will replace the alphabetical auto-arrangement with the recognized shortcuts. Unrecognized apps remain accessible in the drawer.</string>
+    <string name="auto_home_import_confirm_auto">Replace the automatically arranged Deskland shortcuts with the matches from this screenshot? The remaining installed apps stay in the drawer. Existing folders and widgets are preserved. You can undo the import.</string>
 </resources>
