@@ -687,7 +687,7 @@ class AdaptiveHomeActivity : Activity() {
         if (next == currentPage) return
         currentPage = next
         prefs.edit().putInt("auto_home_page_v1", currentPage).apply()
-        renderHome()
+        renderHomeNextFrame()
     }
 
     private fun hasAdaptiveWallpaper(): Boolean = try {
@@ -1433,7 +1433,7 @@ class AdaptiveHomeActivity : Activity() {
                 .toTypedArray()) { _, index ->
                 placed.removeAll { it.id == options[index].id }
                 saveLayout()
-                renderHome()
+                renderHomeNextFrame()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
