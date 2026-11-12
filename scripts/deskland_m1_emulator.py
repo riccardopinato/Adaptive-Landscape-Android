@@ -137,7 +137,7 @@ def main():
     # On this native Activity the first launch can show a one-time AlertDialog.
     # Read the actual visible dialog controls, not just a single early UI dump
     # during Activity handoff; dismiss via the explicit negative action.
-    for _ in range(8):
+    for _ in range(14):
         try:
             page=nodes()
             dialog_texts={n.get("text") for n in page if n.get("text")}
@@ -150,7 +150,10 @@ def main():
                 else:
                     adb("shell","input","keyevent","KEYCODE_BACK")
                     time.sleep(.8)
-                break
+                # Migrating from an old Home and activating the wallpaper are
+                # two independent user consent dialogs. The second appears
+                # AFTER the first is closed; dismiss both in this smoke test.
+                continue
             if icon_nodes(): break
         except (ValueError,RuntimeError): pass
         time.sleep(.6)
