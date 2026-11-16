@@ -5,6 +5,7 @@ Original **Flutter + native Android Live Wallpaper** project. This is a reproduc
 - Web demo: https://riccardopinato.github.io/Adaptive-Landscape-Android/
 - APK build artifacts: https://github.com/riccardopinato/Adaptive-Landscape-Android/actions/workflows/development.yml
 - Roadmap and evidence: [docs/ROADMAP.md](docs/ROADMAP.md)
+- **External dock/launcher references (research only):** [OpenTaskbar MIT + lumabar proprietary, 16 Nov 2026](docs/EXTERNAL_DOCK_REFERENCES_2026-11-16.md); no code copied, Android launcher P0 first.
 - Android release safety: [docs/RELEASE_PLAY_CHECKLIST.md](docs/RELEASE_PLAY_CHECKLIST.md)
 - Physical QA matrix: [docs/QA_MATRIX.md](docs/QA_MATRIX.md)
 - Privacy (IT): [docs/PRIVACY_IT.md](docs/PRIVACY_IT.md)
