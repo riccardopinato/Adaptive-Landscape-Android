@@ -1,0 +1,152 @@
+name: REA CLI independent consumer — Flutter Android artifact research
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/rea-independent-flutter-research.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-own-apk:
+    name: Build own APK and inspect via REA CLI (no MCP)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Validate app source contracts
+        run: python3 scripts/validate_repository.py
+      - name: Install Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: "3.41.4"
+          channel: stable
+          cache: true
+      - name: Pin Android Java toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x "$JAVA_HOME_17_X64/bin/java"
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          flutter config --jdk-dir="$JAVA_HOME_17_X64"
+      - name: Build independently owned app APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash BOOTSTRAP_LINUX_MAC.sh generated_app
+          cd generated_app
+          flutter build apk --release --target-platform android-arm64
+          test -s build/app/outputs/flutter-apk/app-release.apk
+      - name: Verify input identity and structure without executing APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$GITHUB_WORKSPACE/generated_app/build/app/outputs/flutter-apk/app-release.apk"
+          mkdir -p "$RUNNER_TEMP/rea-independent"
+          python - "$apk" "$RUNNER_TEMP/rea-independent/artifact.json" <<'PY'
+          import hashlib,json,sys,zipfile
+          from pathlib import Path
+          path=Path(sys.argv[1])
+          with path.open("rb") as stream: digest=hashlib.file_digest(stream,"sha256").hexdigest()
+          with zipfile.ZipFile(path) as pack:
+              names=set(pack.namelist())
+              assert "AndroidManifest.xml" in names and "lib/arm64-v8a/libapp.so" in names,names
+              assert "lib/arm64-v8a/libflutter.so" in names,names
+          result={"sha256":digest,"size_bytes":path.stat().st_size,
+                  "source_sha":__import__("os").environ["GITHUB_SHA"],
+                  "abi":"arm64-v8a","runtime_certified":False}
+          Path(sys.argv[2]).write_text(json.dumps(result,indent=2)+"\n")
+          print("INDEPENDENT_FLUTTER_APK_IDENTITY_PASS")
+          PY
+      - name: Install pinned REA CLI and verify engine version
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "24"
+      - name: Install REA npm package in temporary research area
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/rea-cli" --no-save --omit=optional --no-audit --no-fund rea-agents@6.9.0
+          "$RUNNER_TEMP/rea-cli/node_modules/.bin/rea" --version --json > "$RUNNER_TEMP/rea-independent/rea-version.json"
+          python - "$RUNNER_TEMP/rea-independent/rea-version.json" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          assert d["name"]=="rea-agents" and d["version"]=="6.9.0"
+          assert d["supported_runtime"]["satisfied"] is True
+          print("REA_VERSION_6_9_0_PASS")
+          PY
+      - name: Execute REA Flutter build identification and AOT static research
+        shell: bash
+        run: |
+          set -euo pipefail
+          rea="$RUNNER_TEMP/rea-cli/node_modules/.bin/rea"
+          apk="$GITHUB_WORKSPACE/generated_app/build/app/outputs/flutter-apk/app-release.apk"
+          out="$RUNNER_TEMP/rea-independent"
+          timeout 120 "$rea" identify-flutter-build "$apk" --json > "$out/flutter-build.json"
+          timeout 120 "$rea" inspect-dart-aot "$apk" --abi arm64-v8a --json > "$out/flutter-aot.json"
+          python - "$out" <<'PY'
+          import json,sys
+          from pathlib import Path
+          root=Path(sys.argv[1])
+          names=("flutter-build.json","flutter-aot.json")
+          for name in names:
+              d=json.loads((root/name).read_text())
+              assert isinstance(d,dict) and isinstance(d.get("normalized_result"),dict),(name,d)
+              print(name+" PASS; keys="+",".join(sorted(d["normalized_result"])))
+          PY
+      - name: Acquire exact vetted JADX dependency and run REA Android static inspection
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar="$RUNNER_TEMP/rea-independent/jadx-headless-mcp-0.7.1-all.jar"
+          curl -fL --retry 3 --connect-timeout 20 --max-time 180 \
+            "https://github.com/1013503897/jadx-headless-mcp/releases/download/v0.7.1/jadx-headless-mcp-0.7.1-all.jar" -o "$jar"
+          echo "6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75  $jar" | sha256sum -c -
+          export REA_JADX_MCP_JAR="$jar"
+          rea="$RUNNER_TEMP/rea-cli/node_modules/.bin/rea"
+          apk="$GITHUB_WORKSPACE/generated_app/build/app/outputs/flutter-apk/app-release.apk"
+          timeout 150 "$rea" inspect-android-package "$apk" --json > "$RUNNER_TEMP/rea-independent/android-package.json"
+          python - "$RUNNER_TEMP/rea-independent/android-package.json" <<'PY'
+          import json,sys
+          from pathlib import Path
+          p=Path(sys.argv[1]);d=json.loads(p.read_text())
+          assert isinstance(d,dict) and isinstance(d.get("normalized_result"),dict)
+          print("REA_ANDROID_STATIC_PASS keys="+",".join(sorted(d["normalized_result"])))
+          PY
+      - name: Create minimal non-sensitive machine-readable evidence receipt
+        if: always()
+        shell: bash
+        run: |
+          python - "$RUNNER_TEMP/rea-independent" <<'PY'
+          import hashlib,json,sys
+          from pathlib import Path
+          root=Path(sys.argv[1])
+          result={"schema_version":1,"mode":"CLI_ONLY_NO_MCP",
+                  "consumer":"riccardopinato/Adaptive-Landscape-Android",
+                  "source_sha":__import__("os").environ["GITHUB_SHA"],
+                  "scope":"INDEPENDENT_APK_BUILD_AND_STATIC_REA_NOT_RUNTIME",
+                  "admission":"RESEARCH_ONLY_NOT_CERTIFIED"}
+          path=root/"artifact.json"
+          if path.is_file():result["apk"]=json.loads(path.read_text())
+          for kind in ["flutter-build","flutter-aot","android-package"]:
+              p=root/(kind+".json")
+              result[kind]={"present":p.is_file(),"sha256":(
+                  hashlib.sha256(p.read_bytes()).hexdigest() if p.is_file() else None)}
+          (root/"summary.json").write_text(json.dumps(result,indent=2)+"\n")
+          print("INDEPENDENT_REA_RECEIPT_CREATED")
+          PY
+      - name: Upload summary only, never APK or raw REA metadata
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: rea-independent-consumer-summary
+          retention-days: 30
+          if-no-files-found: warn
+          path: ${{ runner.temp }}/rea-independent/summary.json
