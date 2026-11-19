@@ -1,6 +1,6 @@
 # Adaptive Landscape Android
 
-**Ricerca Deskland / REA (19/11/2026):** [pilota statico Windows→Android](docs/REA_DESKLAND_PILOT_2026-11-19.md) — sorgenti e limiti verificati; installer originale assente, nessuna estrazione di eseguibile o modifica al wallpaper.
+**Ricerca Deskland / REA (19/11/2026):** [pilota statico Windows→Android](docs/REA_DESKLAND_PILOT_2026-11-19.md) — sorgente e **release pubblica v0.1.3** analizzati staticamente: 43/43 hash del pacchetto verificati, host .NET x64 ispezionato. L'**installer storico dell'utente resta assente**; nessuna modifica al wallpaper.
 
 
 Original **Flutter + native Android Live Wallpaper** project. This is a reproducible **source overlay**: GitHub Actions bootstraps a full Flutter/Gradle project, runs Dart tests and Android build, and publishes a Flutter Web editor preview.
