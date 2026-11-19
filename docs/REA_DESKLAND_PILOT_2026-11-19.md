@@ -47,6 +47,31 @@ Evidence source URLs:
 - https://github.com/BLEZZ0102/Deskland/blob/9818b577402ff476e1b59da07970c56472713126/host/README.md
 - https://github.com/BLEZZ0102/Deskland/blob/9818b577402ff476e1b59da07970c56472713126/prototype/themes.json
 
+## Installer static inventory — source recipe only, NOT extracted bytes
+
+The *public preview* installer recipe is fully visible in:
+- https://github.com/BLEZZ0102/Deskland/blob/9818b577402ff476e1b59da07970c56472713126/tools/installer.nsi
+- https://github.com/BLEZZ0102/Deskland/blob/9818b577402ff476e1b59da07970c56472713126/tools/build-installer.ps1
+- https://github.com/BLEZZ0102/Deskland/blob/9818b577402ff476e1b59da07970c56472713126/tools/version.json
+
+| Source-declared property | Expected outcome **if built from these scripts** |
+|---|---|
+| Package format | NSIS 3.13, LZMA solid compression, x64 Windows 10+ |
+| Install authority | Per-user, no elevation; $LOCALAPPDATA/Programs/Deskland Preview |
+| Runtime engine | Deskland.exe + WebView2 Core/WinForms/Loader DLLs |
+| Runtime prerequisite | Edge WebView2 Runtime; installer checks registry and can run a Microsoft-signed bootstrapper if absent, requiring network |
+| Themes / bundled files | Beach and Meadow only as executable themes; eleven other preview cards remain locked; local HTML/JS and artwork |
+| Source preservation | Deskland-source.zip deliberately bundled beside program assets, containing selected GPL source and notices |
+| Windows integration | Start-menu launcher/uninstaller; HKCU installer and uninstall registry keys; optional autostart handled by host |
+| Install/update/uninstall flow | Stop previously installed running instance, write Uninstall.exe, delete only scripted files/shortcuts and matching Run key |
+| Release metadata | tools/version.json declares 0.1.3; build recipe writes a SHA-256 companion and per-file manifest |
+
+**Evidence boundary:** all rows above are source-code-derived *expected behavior*
+for the upstream v0.1.3 build recipe. None confirms that the old uploaded
+Deskland-Setup.exe has the same version, structure, signature, files, hashes,
+registry effects, installer runtime actions or network behavior. No execution,
+binary extraction or installation performed.
+
 ## Android design decision matrix
 
 | Windows capability | Android alternative | Feasibility / current evidence |
@@ -92,6 +117,6 @@ Evidence source URLs:
    rights. Propose only bounded independently authored changes and test
    rendered UI plus physical wallpaper lifecycle and battery effect.
 
-**Pilot outcome to date:** 6 upstream source-side architecture/behavior findings
+**Pilot outcome to date:** 7 source-side architecture/packaging groups
 and 8 Android feasibility decisions documented; **0 validated findings from
 the unavailable installer; 0 copied code/assets; 0 Golden promotions**.
