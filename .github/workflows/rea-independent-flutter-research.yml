@@ -20,6 +20,12 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Record exact checked-out app source SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "REA_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          git rev-parse HEAD
       - name: Validate app source contracts
         run: python3 scripts/validate_repository.py
       - name: Install Flutter
@@ -60,7 +66,7 @@ jobs:
               assert "AndroidManifest.xml" in names and "lib/arm64-v8a/libapp.so" in names,names
               assert "lib/arm64-v8a/libflutter.so" in names,names
           result={"sha256":digest,"size_bytes":path.stat().st_size,
-                  "source_sha":__import__("os").environ["GITHUB_SHA"],
+                  "source_sha":__import__("os").environ["REA_SOURCE_SHA"],
                   "abi":"arm64-v8a","runtime_certified":False}
           Path(sys.argv[2]).write_text(json.dumps(result,indent=2)+"\n")
           print("INDEPENDENT_FLUTTER_APK_IDENTITY_PASS")
@@ -130,7 +136,7 @@ jobs:
           root=Path(sys.argv[1])
           result={"schema_version":1,"mode":"CLI_ONLY_NO_MCP",
                   "consumer":"riccardopinato/Adaptive-Landscape-Android",
-                  "source_sha":__import__("os").environ["GITHUB_SHA"],
+                  "source_sha":__import__("os").environ["REA_SOURCE_SHA"],
                   "scope":"INDEPENDENT_APK_BUILD_AND_STATIC_REA_NOT_RUNTIME",
                   "admission":"RESEARCH_ONLY_NOT_CERTIFIED"}
           path=root/"artifact.json"
