@@ -1,6 +1,15 @@
-# Deskland Windows → Android — REA intelligence pilot (source-only)
+# Deskland Windows → Android — REA intelligence pilot (source + verified public binary)
 
-**2026-11-19 | SOURCE-OBSERVED | INSTALLER-BINARY BLOCKED | NO APP CODE CHANGED**
+**2026-11-19 | SOURCE + PUBLIC PREVIEW BINARY VERIFIED | HISTORICAL INSTALLER BLOCKED | NO APP CODE CHANGED**
+
+## Verified real public installer and .NET host (incremental addendum)
+
+- **Canonical report:** [AppLab public Preview real-binary dossier](https://github.com/riccardopinato/AppLab/blob/main/integration/intelligence/REA_DESKLAND_PREVIEW_BINARY_REPORT_2026-11-19.md); [REA CLI run #44615407360](https://github.com/riccardopinato/AppLab/actions/runs/44615407360) (repo branch/pending merge at this update).
+- The official 28,001,125-byte `Deskland-Preview-0.1.3-win-x64-Setup.exe` has SHA-256 `e253cad56f1ea0ee2fb9d13ebe8a44f7dbe7232a506ba752cbe54c939c17bf44`, verified against the official checksum. Its **NSIS outer installer is x86 PE32** and imports 7 DLLs / 163 Windows functions. No PE embedded certificate security table.
+- Static NSIS 7-Zip extraction (no execution) produced **48 physical files** and checked **all 43/43 published payload hashes**. Five extra installer stage files include Microsoft WebView2 bootstrapper and NSIS plugins; the actual runtime UI/side effects have not been observed.
+- Extracted **`host/bin/Deskland.exe`**: SHA-256 `5337c513e8c14dc492900d315cd57e287e9dfb4ba750ccf96c2fb668fa4ea530` (matches manifest), 94,208 bytes, **PE32+ x86_64 managed IL-only**; `Deskland` assembly v0.1.3.0, CLR metadata `v4.0.30319`, 28 defined types, 200 managed methods and 40 P/Invoke `ImplMap` records. Seven assembly references include WebView2 Core + WinForms v1.0.4191.47.
+- **Android decision:** no new transferable product capability was found beyond the source-only map below. Do not copy GPL code/assets, add Windows shell dependencies or alter current Android editor/wallpaper. Continue physical/visual wallpaper and battery QA separately.
+- **Scope restriction:** the user's originally uploaded `Deskland-Setup.exe` remains inaccessible in this chat. This v0.1.3 preview is a **different binary**, not a substitute or a claim of analysing the historical upload.
 
 ## Immutable study scope
 
@@ -9,9 +18,9 @@
 | Windows upstream | BLEZZ0102/Deskland@9818b577402ff476e1b59da07970c56472713126 | SOURCE |
 | Windows product rights | Upstream LICENSE GPL-3.0, NOTICE and TRADEMARKS | SOURCE |
 | Android consumer | riccardopinato/Adaptive-Landscape-Android@2dcaf70a1d4962e9e81490d84df4f89f355cb7d4 | SOURCE |
-| External research tool | morluto/rea@4491c84c82140a43fa12390b727840a433875ba8 (MIT, package v6.9.0) | DOCUMENTATION ONLY; NOT RUN |
+| External research tool | morluto/rea@4491c84c82140a43fa12390b727840a433875ba8 (MIT, package v6.9.0) | Real CLI inspection of **public** preview PASS; no MCP |
 | Original uploaded Deskland-Setup.exe | Previously attached to a different chat; its binary bytes are not available in this session | **BLOCKED / NO HASH** |
-| Public upstream release v0.1.3 | GitHub release contains a 28,001,125-byte Deskland-Preview-0.1.3-win-x64-Setup.exe | METADATA ONLY; not the uploaded installer |
+| Public upstream release v0.1.3 | GitHub release contains a 28,001,125-byte Deskland-Preview-0.1.3-win-x64-Setup.exe | REAL STATIC BINARY + NSIS EXTRACTION VERIFIED, not the uploaded installer |
 
 An earlier conversation described an NSIS Windows installer of about 260 MiB,
 “Deskland Website Installer v0.1.31”. That statement is **historical context**,
@@ -99,7 +108,7 @@ binary extraction or installation performed.
 - Findings here describe source; no APK build, binary inventory, installation,
   Windows runtime capture, user visual sign-off or physical device certification.
 
-## Next evidence gate — Windows installer (separately authorized)
+## Next evidence gate — historic Windows installer (separately authorized)
 
 1. Obtain the **exact historic installer bytes** through a legitimate accessible
    file attachment or local on-device path; calculate SHA-256, bytes, PE architecture
